@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "图文交错数据格式标准",
+  "properties": {
+    "track_id": {
+      "type": "string",
+      "description": "全局唯一id，不随获取、清洗方法的变化而变化。可以是uuid，也可以是hash值"
+    },
+    "id": {
+      "type": "string",
+      "description": "全局唯一的数据ID。一条原始数据，经过多次清洗，其内容可能会发生变化，这种情况下，每次清洗出的数据，应该具有不同的ID。"
+    },
+    "url": {
+      "type": "string",
+      "description": "来源URL。非网页数据，该字段可以留空。"
+    },
+    "title": {
+      "type": "string",
+      "description": "网页的标题"
+    },
+    "base_url": {
+      "type": "string",
+      "description": "网页的base url，如果有"
+    },
+    "content_list": {
+      "type": "array",
+      "description": "文档中的内容列表，包含文本、图像、或其它媒体内容的信息。",
+      "items": {
+        "$ref": "#/definitions/ContentItem"
+      }
+    },
+    "language": {
+      "type": "string",
+      "description": "多语言数据集，可采用该字段标识每篇文档的语言。",
+      "enum": ["zh", "zh-Hans", "en", "zh-Hant", "code-python", "code-java", "code-c", "code-cpp"]
+    },
+    "split": {
+      "type": "string",
+      "enum": ["train", "val", "test", "exam"]
+    },
+    "data_source": {
+      "type": "string",
+      "enum": [
+        "code-github",
+        "zh-zhihu-article",
+        "zh-zhihu-answer",
+        "zh-baidu-jingyan",
+        "zh-cnnews",
+        "mm-laion-5b",
+        "zh-toutiao-news",
+        "mm-cc-12m"
+      ]
+    },
+    "subset": {
+      "type": "string",
+      "description": "有些data_source，可能有多个子集，在这里记录。"
+    },
+    "sub_path": {
+      "type": "string",
+      "description": "数据的子路径。"
+    },
+    "labels": {
+      "type": "object",
+      "$ref": "#/definitions/LabelItem",
+      "description": "文档的标签。该字段是一个对象（字典），对象中的各个字段对应的值应该尽可能是基本类型（数值、布尔值、标签等）。"
+    },
+    "pii": {
+      "type": "object",
+      "description": "个人隐私信息识别结果"
+    },
+    "html": {
+      "type": "string",
+      "description": "网页的完整HTML文本"
+    },
+    "main_html": {
+      "type": "string",
+      "description": "网页的主要HTML文本"
+    },
+    "remark": {
+      "type": "object",
+      "description": "备注信息，例如：点赞数，爬取时的主机名等。key-value结构体，key不要求在文档之间对其。"
+    },
+    "doc_loc": {
+      "type": "string",
+      "description": "数据的唯一S3路径"
+    },
+    "track_loc": {
+      "type": "array",
+      "description": "数据之前的S3路径列表",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "anyOf": [
+    {
+      "required": ["main_html"]
+    },
+    {
+      "required": ["body_bytes"]
+    },
+    {
+      "required": ["html"]
+    }
+  ],
+  "required": ["track_id", "url"],
+  "definitions": {
+    "ContentItem": {
+      "type": "object",
+      "description": "content_list item",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["image", "text", "audio", "video", "table", "list", "code", "quote", "hr", "equation"]
+        },
+        "html": {
+          "type": "string"
+        },
+        "text_level": {
+          "type": "integer",
+          "maximum": 9,
+          "minimum": 0,
+          "default": 0,
+          "description": "文本的heading级别，0表示普通正文，1表示一级标题，以此类推。当type为text时，该字段才有意义。"
+        },
+        "text_format": {
+          "type": "string",
+          "enum": ["text", "md", "latex"]
+        },
+        "text": {
+          "type": "string"
+        },
+        "table_caption": {
+          "type": "string",
+          "description": "表格的caption，当type为table时，该字段才有意义。"
+        },
+        "img_urls": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "当type为image时，该字段为图片的url"
+        },
+        "img_url_hash": {
+          "type": "string",
+          "description": "当type为image时，该字段为图片的hash值"
+        },
+        "img_path": {
+          "type": "string",
+          "description": "图像的s3路径"
+        },
+        "img_alt": {
+          "type": "string",
+          "description": "图像的alt属性"
+        },
+        "img_data": {
+          "type": "string",
+          "description": "当type为image，且图像链接为data url时，该字段为data url的内容。"
+        },
+        "img_title": {
+          "type": "string",
+          "description": "图像的title属性"
+        },
+        "img_caption": {
+          "type": "string",
+          "description": "图像的caption"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "当type为video/audio时，该字段包含了媒体文件的链接。"
+        }
+      },
+      "required": ["type"]
+    },
+    "LabelItem": {
+      "type": "object",
+      "properties": {
+        "is_safe": {
+          "type": "boolean",
+          "description": "表示内容是安全的，无需进行其他内容相关的过滤。"
+        },
+        "pjwk_cates": {
+          "type": "object",
+          "description": "世界知识树分类"
+        },
+        "subject_cates": {
+          "type": "object",
+          "description": "学科分类"
+        },
+        "xp_num": {
+          "type": "string",
+          "description": "抽取时名中的规则"
+        },
+        "drop_list": {
+          "type": "boolean",
+          "description": "抽取时是否有丢弃正文中的列表"
+        },
+        "has_gov_cn": {
+          "type": "boolean",
+          "description": "是否有gov.cn域名"
+        },
+        "is_url_gfwed": {
+          "type": "boolean",
+          "description": "域名是否在防火墙名单中"
+        },
+        "source_charset": {
+          "type": "string",
+          "description": "源网页的字符集"
+        },
+        "en_fluency_bert_prob": {
+          "type": "number",
+          "description": "英文流利度"
+        },
+        "en_non_ad_bert_prob": {
+          "type": "number",
+          "description": "英文非广告概率"
+        },
+        "en_politics_ft_prob": {
+          "type": "number",
+          "description": "涉政概率"
+        },
+        "en_toxic_ft_prob": {
+          "type": "number",
+          "description": "毒害概率"
+        },
+        "domain_level": {
+          "type": "string",
+          "description": "域名等级"
+        },
+        "unsafe_word_min_level": {
+          "type": "string",
+          "description": "关键字等级"
+        }
+      }
+    }
+  }
+}

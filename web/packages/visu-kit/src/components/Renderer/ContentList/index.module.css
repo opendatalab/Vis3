@@ -1,0 +1,7 @@
+.contentList :global(.markdown-body) {
+  min-height: auto;
+}
+
+.contentList ol {
+  list-style-type: decimal;
+}

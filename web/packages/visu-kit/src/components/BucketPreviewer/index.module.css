@@ -1,0 +1,16 @@
+.list :global(.ant-list-header) + div {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0px;
+}
+
+:global(.ant-form-item-control-input) + div {
+  position: absolute;
+}
+
+.shortcutPathDropdown :global(.ant-dropdown-menu .ant-dropdown-menu-item) {
+  &:hover {
+    background-color: rgb(239 246 255) !important;
+    color: rgb(59 130 246) !important;
+  }
+}

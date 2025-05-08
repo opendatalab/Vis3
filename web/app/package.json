@@ -1,0 +1,35 @@
+{
+  "name": "visu-web-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@headlessui/react": "^2.2.2",
+    "@tanstack/react-query": "^5.75.4",
+    "@tanstack/react-router": "^1.119.0",
+    "@tanstack/react-router-devtools": "^1.119.1",
+    "@visu/i18n": "workspace:*",
+    "@visu/kit": "workspace:*",
+    "antd": "^5.24.9",
+    "axios": "^1.9.0",
+    "clsx": "^2.1.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.5",
+    "@tanstack/router-plugin": "^1.119.0",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^4.1.5",
+    "typescript": "^5.8.2",
+    "vite": "^6.3.5"
+  }
+}
