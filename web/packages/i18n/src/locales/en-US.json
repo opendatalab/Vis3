@@ -41,6 +41,11 @@
   "copy": "Copy",
   "copied": "Copied",
 
+  "upload": {
+    "drag": "Click or drag file to this area to upload",
+    "recommend": "Recommend format: json, jsonl, jsonl.gz compressed file, warc, warc.gz, epub"
+  },
+
   "renderer": {
     "downloadZipFile": "Download ZIP File",
     "close": "Close",

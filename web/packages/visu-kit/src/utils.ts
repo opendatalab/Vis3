@@ -1,3 +1,7 @@
+import { getPathType } from './components/Renderer/utils';
+
+export { getPathType };
+
 export function gid() {
   return Math.random().toString(36).substr(2)
 }

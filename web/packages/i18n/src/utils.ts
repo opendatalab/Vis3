@@ -1,9 +1,6 @@
-
-
 function isObject(obj: any) {
   return obj && typeof obj === 'object' && !Array.isArray(obj);
 }
-
 
 export function merge(target: any, ...sources: any[]): any {
   if (!sources.length) {

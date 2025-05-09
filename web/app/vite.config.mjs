@@ -21,8 +21,13 @@ export default defineConfig({
         target: 'https://data-workbench-dev.dc.shlab.tech',
         changeOrigin: true,
         secure: false,
-        // rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      // '/api/s3': {
+      //   target: 'http://127.0.0.1:8909',
+      //   changeOrigin: true,
+      //   secure: false,
+      //   rewrite: (path) => path.replace(/^\/api\/s3/, '/api'),
+      // },
     },
   },
 

@@ -13,8 +13,9 @@ export interface RenderBlockContextType {
   onNext?: () => void
   prevable?: boolean
   onPrev?: () => void
-  onClose: () => void
+  onClose?: () => void
   goParent: () => void
+  dataSource?: BucketItem
 }
 
 export const PreviewBlockContext = createContext<RenderBlockContextType>({} as RenderBlockContextType)

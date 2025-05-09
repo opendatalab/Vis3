@@ -76,10 +76,10 @@ function RouteComponent() {
         pageSize={pageSize}
         pageNo={pageNo}
         bucketUrl="/api/s3/v1/bucket"
-        downloadUrl="/api/s3/v1/download"
-        previewUrl="/api/s3/v1/file_preview"
-        mimeTypeUrl="/api/s3/v1/mimetype"
-        offsetTop={56 + 32}
+        downloadUrl="/api/s3/v1/bucket/download"
+        previewUrl="/api/s3/v1/bucket/file_preview"
+        mimeTypeUrl="/api/s3/v1/bucket/mimetype"
+        offsetTop={88}
       />
     </div>
   )

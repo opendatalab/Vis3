@@ -96,11 +96,13 @@ function extractRenderAs(mimeType: string) {
 export interface RenderBlockProps {
   block: BlockInfo
   updateBlock: (id: string, values: Partial<BlockInfo>) => void
-  onClose: () => void
+  onClose?: () => void
   initialParams?: BucketParams
+  enableFetch?: boolean
+  dataSource?: BucketItem
 }
 
-export function RenderBlock({ block, updateBlock, onClose, initialParams }: RenderBlockProps) {
+export function RenderBlock({ block, updateBlock, onClose, initialParams, enableFetch = true, dataSource }: RenderBlockProps) {
   const { id, path, pathType } = block
   const [pageSize, setPageSize] = useState(initialParams?.pageSize || 50)
   const [pageNo, setPageNo] = useState(initialParams?.pageNo || 1)
@@ -115,7 +117,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
   // TODO: 去除mimetype接口调用
   const { data: mimeTypeResult } = useQuery({
     queryKey: ['mimetype', path],
-    enabled: !!path && !path.endsWith('/'),
+    enabled: !!path && !path.endsWith('/') && enableFetch,
     queryFn: () => axios.get(mimeTypeUrl, { params: { path } }),
   })
   const params = useMemo(() => ({
@@ -124,15 +126,23 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
     pageSize,
   }), [path, pageNo, pageSize])
 
-  const { data, error, isFetching } = useBuckets(bucketUrl, true, params)
+  const { data, error, isFetching } = useBuckets(bucketUrl, enableFetch, params)
+
+  const finalData = useMemo(() => {
+    if (dataSource) {
+      return dataSource
+    }
+
+    return data
+  }, [dataSource, data])
 
   const folders = useMemo(() => {
-    if (Array.isArray(data)) {
-      return formatBucketList(data, pathWithoutQuery)
+    if (Array.isArray(finalData)) {
+      return formatBucketList(finalData, pathWithoutQuery)
     }
 
     return []
-  }, [data, pathWithoutQuery])
+  }, [finalData, pathWithoutQuery])
 
   useEffect(() => {
     setTotal(folders.length)
@@ -151,7 +161,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
 
   const [prevBytes, setPrevBytes] = useState<number[]>([])
   const hasPrev = prevBytes.length > 0
-  const fileObject = data as unknown as BucketItem
+  const fileObject = finalData as unknown as BucketItem
   const url = fileObject?.path ?? ''
   const totalSize = fileObject?.size ?? 0
   const range = getBytes(url.split('?')[1])
@@ -288,9 +298,14 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
     onPrev: handlePrevLine,
     goParent: handleGoParent,
     onClose,
-  }), [block, data, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose])
+    dataSource,
+  }), [block, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource])
 
   const extraTitle = useMemo(() => {
+    if (dataSource) {
+      return null
+    }
+
     return (
       <>
         {
@@ -365,13 +380,13 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
         }
       </>
     )
-  }, [block.pathType, path, totalSize, fileObject, id, handleGoParent, pageNo, isFetching, folders.length, pageSize, handlePageNoChange, t])
+  }, [block.pathType, path, totalSize, fileObject, id, handleGoParent, pageNo, isFetching, folders.length, pageSize, handlePageNoChange, t, dataSource])
 
   const extra = useMemo(() => {
     return (
       <>
         {
-          id !== 'origin' && (
+          id !== 'origin' && !dataSource && (
             <Tooltip title={t('renderer.openInNewTab')}>
               <a href={`${bucketUrl}?path=${encodeURIComponent(path)}&page_size=${pageSize}&page_no=${pageNo}`} target="_blank" rel="noopener noreferrer">
                 <Button type="text" size="small" icon={<ExportOutlined />} />
@@ -380,14 +395,14 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
           )
         }
         {
-          block.pathType !== 'folder' && (
+          block.pathType !== 'folder' && !dataSource && (
             <Tooltip title={t('renderer.downloadFile')}>
               <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => download(downloadUrl, pathWithoutQuery)} />
             </Tooltip>
           )
         }
         {
-          id !== 'origin' && (
+          id !== 'origin' || onClose && (
             <>
               <Divider type="vertical" />
               <Tooltip title={t('renderer.close')}>

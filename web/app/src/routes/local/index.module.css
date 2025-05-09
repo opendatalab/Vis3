@@ -1,0 +1,23 @@
+
+.uploadDragger {
+  width: 600px;
+  height: 280px;
+
+  :global(.ant-upload-drag) {
+    background: #fff;
+    border: Mixed solid rgba(215, 216, 221, 1)
+  }
+}
+
+.fileList {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  
+  :global(.ant-list-item-meta-title) {
+    /* 显示省略号 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 180px;
+  }
+}
