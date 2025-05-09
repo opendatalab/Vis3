@@ -1,4 +1,4 @@
-import clsx from 'clsx'
+import styled from '@emotion/styled'
 import 'github-markdown-css/github-markdown.css'
 import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -6,14 +6,23 @@ import rehypeMathjax from 'rehype-mathjax'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-
+import { useTheme } from '../theme'
 
 export interface MarkdownPreviewProps {
   value: string
   inline?: boolean
 }
 
+const MarkdownContainer = styled.div<{ $inline?: boolean }>`
+  ${props => !props.$inline && `
+    padding: 1.5rem;
+  `}
+  
+  /* github-markdown-css内容将通过className应用 */
+`
+
 export default function MarkdownPreview({ value, inline}: MarkdownPreviewProps) {
+  const { tokens } = useTheme();
   const parsedValue = useMemo(() => {
     try {
       const jsonValue = JSON.parse(value)
@@ -36,15 +45,13 @@ export default function MarkdownPreview({ value, inline}: MarkdownPreviewProps) 
   }, [value])
 
   return (
-    <ReactMarkdown
-        // @ts-ignore
-      className={clsx({
-        'p-6': !inline,
-      }, 'markdown-body')}
-      remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[rehypeMathjax, rehypeRaw]}
-    >
-      {parsedValue}
-    </ReactMarkdown>
+    <MarkdownContainer $inline={inline} className="markdown-body">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[rehypeMathjax, rehypeRaw]}
+      >
+        {parsedValue}
+      </ReactMarkdown>
+    </MarkdownContainer>
   )
 }

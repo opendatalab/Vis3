@@ -15,7 +15,7 @@
     "@tanstack/react-router-devtools": "^1.119.1",
     "@visu/i18n": "workspace:*",
     "@visu/kit": "workspace:*",
-    "antd": "^5.24.9",
+    "antd": "^5.21.4",
     "axios": "^1.9.0",
     "clsx": "^2.1.1",
     "react": "^18.3.1",

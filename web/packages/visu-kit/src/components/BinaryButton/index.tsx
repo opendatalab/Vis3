@@ -4,6 +4,7 @@ import type { ForwardedRef } from 'react'
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 
 export interface BinaryButtonProps {
+  className?: string
   activated: boolean
   onChange?: (activated: boolean) => void
   title?: string
@@ -20,7 +21,7 @@ export interface BinaryButtonRef {
   setActivated: (activated: boolean) => void
 }
 
-function InnerBinaryButton({ btnRef, activated: propsActivated, onChange, title, onTitle, offTitle, icon, placement, onIcon, offIcon }: BinaryButtonProps) {
+function InnerBinaryButton({ btnRef, activated: propsActivated, onChange, title, onTitle, offTitle, icon, placement, onIcon, offIcon, className }: BinaryButtonProps) {
   const [activated, setActivated] = useState(propsActivated)
 
   useImperativeHandle(btnRef, () => ({
@@ -54,7 +55,13 @@ function InnerBinaryButton({ btnRef, activated: propsActivated, onChange, title,
 
   return (
     <Tooltip title={finalTitle} placement={placement}>
-      <Button size="small" type={activated ? 'primary' : 'text'} onClick={() => handleOnChange(!activated)} icon={finalIcon} />
+      <Button
+        className={className}
+        type={activated ? 'primary' : 'text'}
+        size="small" 
+        onClick={() => handleOnChange(!activated)} 
+        icon={finalIcon}
+      />
     </Tooltip>
   )
 }

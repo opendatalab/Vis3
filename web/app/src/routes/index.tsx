@@ -1,7 +1,8 @@
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router'
-import BucketPreviewer, { BucketParams, Button } from '@visu/kit'
+import BucketPreviewer, { BucketParams } from '@visu/kit'
 import '@visu/kit/dist/index.css'
-import { useCallback } from 'react'
+import { Button } from 'antd'
+import { useCallback, useRef } from 'react'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -39,47 +40,47 @@ const supportedCloudPlatforms = [
 ]
 
 function RouteComponent() {
+  const bodyRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
   const navigate = useNavigate()
-
-  const path = searchParams.get('path') || ''
-  const pageSize = Number(searchParams.get('page_size')) || 50
-  const pageNo = Number(searchParams.get('page_no')) || 1
+  const search = location.search as Record<string, string | number>
+  const path = search.path || ''
+  const pageSize = Number(search.page_size) || 50
+  const pageNo = Number(search.page_no) || 1
 
   const onParamsChange = useCallback((params: Partial<BucketParams>) => {
-    const existingParams = Object.fromEntries(searchParams.entries()) as Record<string, string | number>
+    const newSearch = {} as Record<string, string | number>
     if (typeof params.path === 'string') {
-      existingParams.path = params.path
+      newSearch.path = params.path
     }
 
     if (params.pageNo) {
-      existingParams.page_no = params.pageNo
+      newSearch.page_no = params.pageNo
     }
 
     if (params.pageSize) {
-      existingParams.page_size = params.pageSize
+      newSearch.page_size = params.pageSize
     }
     
     navigate({
       to: '/',
-      search: existingParams,
+      search: { ...search, ...newSearch },
     })
-  }, [navigate, searchParams])
+  }, [navigate, search])
 
   return (
-    <div className="container mx-auto">
-      <Button variant="primary" size="lg">asd</Button>
+    <div className="p-4 flex flex-1 flex-col" ref={bodyRef}>
       <BucketPreviewer
-          url={path}
-          onParamsChange={onParamsChange}
-          pageSize={pageSize}
-          pageNo={pageNo}
-          bucketUrl="/api/s3/v1/bucket"
-          downloadUrl="/api/s3/v1/download"
-          previewUrl="/api/s3/v1/preview"
-          mimeTypeUrl="/api/s3/v1/mime_type"
-        />
+        url={path as string}
+        onParamsChange={onParamsChange}
+        pageSize={pageSize}
+        pageNo={pageNo}
+        bucketUrl="/api/s3/v1/bucket"
+        downloadUrl="/api/s3/v1/download"
+        previewUrl="/api/s3/v1/file_preview"
+        mimeTypeUrl="/api/s3/v1/mimetype"
+        offsetTop={56 + 32}
+      />
     </div>
   )
   
@@ -94,7 +95,7 @@ function RouteComponent() {
       {/* 添加路径卡片区域 */}
       <div className="max-w-3xl mx-auto bg-gray-50 rounded-lg p-8 mb-8 flex flex-col items-center">
         {/* 添加路径按钮 */}
-        <Button variant="primary" size="lg">
+        <Button type="primary" size="large">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
             <path d="M12 4v16m-8-8h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
           </svg>

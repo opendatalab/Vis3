@@ -1,4 +1,6 @@
 import { DownOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
+import { useTranslation } from '@visu/i18n'
 import type { MenuProps } from 'antd'
 import { Divider, Dropdown } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -14,30 +16,28 @@ import usePreview from '../stateHooks/usePreview'
 
 export type MDRenderType = 'katex' | 'mathjax'
 
-const markdownRenderers = [
-  {
-    key: 'katex',
-    text: 'KaTex',
-    label: (
-      <div className="flex flex-col">
-        KaTex
-        <span className="text-secondary">适合常见md文档，渲染速度快</span>
-      </div>
-    ),
-    value: 'katex',
-  },
-  {
-    key: 'mathjax',
-    text: 'MathJax',
-    label: (
-      <div className="flex flex-col">
-        MathJax
-        <span className="text-secondary">适合复杂数学公式，渲染速度慢</span>
-      </div>
-    ),
-    value: 'mathjax',
-  },
-]
+const FlexColumn = styled.div`
+  display: flex;
+  flex-direction: column;
+`
+
+const SecondaryText = styled.span`
+  color: var(--ant-color-secondary);
+`
+
+const DropdownTrigger = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: normal;
+  cursor: pointer;
+`
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
 
 export default function MarkdownCard({ className, name, value, extraTail }: RendererProps) {
   const ref = useRef<HTMLDivElement>(null)
@@ -45,6 +45,32 @@ export default function MarkdownCard({ className, name, value, extraTail }: Rend
   const [mdRenderer, setMdRenderer] = useState<MDRenderType>('katex')
   const [copyButton] = useCopy(value)
   const [stateValue, setStateValue] = useState(value)
+  const { t } = useTranslation()
+
+  const markdownRenderers = useMemo(() => [
+    {
+      key: 'katex',
+      text: 'KaTex',
+      label: (
+        <FlexColumn>
+          KaTex
+          <SecondaryText>{t('renderer.katexDesc')}</SecondaryText>
+        </FlexColumn>
+      ),
+      value: 'katex',
+    },
+    {
+      key: 'mathjax',
+      text: 'MathJax',
+      label: (
+        <FlexColumn>
+          MathJax
+          <SecondaryText>{t('renderer.mathjaxDesc')}</SecondaryText>
+        </FlexColumn>
+      ),
+      value: 'mathjax',
+    },
+  ], [t])
 
   useEffect(() => {
     setStateValue(value)
@@ -56,9 +82,9 @@ export default function MarkdownCard({ className, name, value, extraTail }: Rend
     onClick: ({ key }) => {
       setMdRenderer(key as MDRenderType)
     },
-  }), [mdRenderer])
+  }), [mdRenderer, markdownRenderers])
 
-  const selectedRenderer = useMemo(() => markdownRenderers.find(item => item.value === mdRenderer), [mdRenderer])
+  const selectedRenderer = useMemo(() => markdownRenderers.find(item => item.value === mdRenderer), [mdRenderer, markdownRenderers])
 
   const contextValue = useMemo(() => ({
     wrap: false,
@@ -78,20 +104,20 @@ export default function MarkdownCard({ className, name, value, extraTail }: Rend
           <>
             <Divider type="vertical" />
             <Dropdown menu={markdownDropdownMenu}>
-              <div className="flex items-center gap-1 font-normal cursor-pointer">
+              <DropdownTrigger>
                 {selectedRenderer?.text}
                 <DownOutlined />
-              </div>
+              </DropdownTrigger>
             </Dropdown>
           </>
         )}
         extra={(
-          <div className="flex gap-2 items-center">
+          <ExtraContainer>
             {previewButton as React.ReactNode}
             <FullScreenButton elementRef={ref as React.RefObject<HTMLElement>} />
             {copyButton}
             {extraTail}
-          </div>
+          </ExtraContainer>
         )}
       >
         {preview

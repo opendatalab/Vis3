@@ -2,7 +2,7 @@ import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { python } from '@codemirror/lang-python'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
-import clsx from 'clsx'
+import { useTranslation } from '@visu/i18n'
 import { useMemo } from 'react'
 
 import { useCodeViewerContext } from './context'
@@ -42,11 +42,12 @@ export function JsonViewer({ className }: JsonViewerProps) {
     return exts
   }, [wrap])
 
-  return <CodeMirror className={clsx(className, 'border')} value={code} height="auto" extensions={extensions} onChange={onChange} />
+  return <CodeMirror className={className} value={code} height="auto" extensions={extensions} onChange={onChange} />
 }
 
 export function TextViewer({ className }: { className?: string }) {
   const { wrap, value, onChange } = useCodeViewerContext()
+  const { t } = useTranslation()
 
   const validJson = useMemo(() => {
     try {
@@ -65,18 +66,18 @@ export function TextViewer({ className }: { className?: string }) {
       }
       catch (err) {
         console.error(err)
-        return `不可解析成字符串的数据的数据: ${typeof value}`
+        return `${t('codeViewer.unparsableData')}: ${typeof value}`
       }
     }
 
     return value
-  }, [value])
+  }, [value, t])
 
   if (typeof validJson === 'object') {
     return <JsonViewer />
   }
 
   return (
-    <CodeMirror className={clsx('border', className)} value={code} height="auto" extensions={wrap ? [EditorView.lineWrapping, ...plugins] : plugins} onChange={onChange} />
+    <CodeMirror className={className} value={code} height="auto" extensions={wrap ? [EditorView.lineWrapping, ...plugins] : plugins} onChange={onChange} />
   )
 }

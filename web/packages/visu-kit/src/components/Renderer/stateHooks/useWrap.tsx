@@ -1,17 +1,19 @@
+import { useTranslation } from '@visu/i18n'
 import { useMemo, useState } from 'react'
 
 import LineWrapIcon from '../../../assets/line-wrap.svg?react'
 import BinaryButton from '../../../components/BinaryButton'
 
-export default function useWrap(parentWrap?: boolean): [React.ReactNode, { wrap: boolean | undefined }] {
-  const [wrap, setWrap] = useState<boolean | undefined>(undefined)
-  const finalWrap = wrap ?? parentWrap ?? false
-
+export default function useWrap(initialWrap = false): [React.ReactNode, { wrap: boolean }, (wrap: boolean) => void] {
+  const [wrap, setWrap] = useState(initialWrap)
+  const { t } = useTranslation()
+  
+  const finalWrap = wrap ?? false
   const node = useMemo(() => (
-    <BinaryButton activated={finalWrap} onTitle="取消换行" offTitle="换行" onIcon={<LineWrapIcon />} offIcon={<LineWrapIcon />} onChange={setWrap} />
-  ), [finalWrap])
+    <BinaryButton activated={finalWrap} onTitle={t('renderer.cancelLineWrap')} offTitle={t('renderer.lineWrap')} onIcon={<LineWrapIcon />} offIcon={<LineWrapIcon />} onChange={setWrap} />
+  ), [finalWrap, t])
 
-  const state = useMemo(() => ({ wrap }), [wrap])
+  const state = useMemo(() => ({ wrap: finalWrap }), [finalWrap])
 
-  return [node, state]
+  return [node, state, setWrap]
 }

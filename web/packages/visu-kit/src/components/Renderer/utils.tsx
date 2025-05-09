@@ -1,3 +1,5 @@
+import styled from '@emotion/styled'
+import { i18n } from '@visu/i18n'
 import { Button, Modal } from 'antd'
 import type { AxiosError } from 'axios'
 
@@ -18,6 +20,14 @@ import {
 } from '../../components/Icon'
 import { BucketItem } from '../../types'
 import { isAudio, isImage, isVideo, isZip } from '../../utils'
+
+const FooterContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  padding-top: 1rem;
+`
 
 export const fileTypeIconMapping = {
   json: <JsonIcon />,
@@ -155,16 +165,17 @@ export function getFullPath(input: BucketItem, path: string) {
 
 export function handleBucketError(e: AxiosError<{ err_code: number, detail: { bucket: string, endpoint: string }[] }> | null, path: string) {
   const errorCode = e?.response?.data?.err_code
+  
 
   Modal.destroyAll()
 
   if (errorCode === 40001) {
     Modal.warning({
-      title: '暂无查看权限',
-      content: '如需获取查看权限，请选择AK&SK并添加此地址',
+      title: i18n.t('renderer.noPermission'),
+      content: i18n.t('renderer.needPermission'),
       footer: (
-        <div className="flex gap-2 items-center justify-end pt-4">
-          <Button onClick={() => Modal.destroyAll()}>我知道了</Button>
+        <FooterContainer>
+          <Button onClick={() => Modal.destroyAll()}>{i18n.t('renderer.iKnow')}</Button>
           <Button
             type="primary"
             onClick={() => {
@@ -172,28 +183,28 @@ export function handleBucketError(e: AxiosError<{ err_code: number, detail: { bu
               document.dispatchEvent(new CustomEvent('open-bucket-manager', { detail: { path } }))
             }}
           >
-            立即添加
+            {i18n.t('renderer.addNow')}
           </Button>
-        </div>
+        </FooterContainer>
       ),
     })
   }
 
   if (errorCode === 40002) {
     Modal.warning({
-      title: '路径不存在或没有此路径访问权限',
+      title: i18n.t('renderer.pathNotExist'),
       content: (
         <div>
-          <p>如路径存在，可自行添加路径授权访问</p>
+          <p>{i18n.t('renderer.ifPathExists')}</p>
           <p>
-            Step1. 新增密钥：添加对目标路径有权限的S3密钥
+            {i18n.t('renderer.step1AddKey')}
           </p>
-          <p>Step2. 添加地址：使用此密钥添加地址授权访问</p>
+          <p>{i18n.t('renderer.step2AddPath')}</p>
         </div>
       ),
       footer: (
-        <div className="flex gap-2 items-center justify-end pt-4">
-          <Button onClick={() => Modal.destroyAll()}>我知道了</Button>
+        <FooterContainer>
+          <Button onClick={() => Modal.destroyAll()}>{i18n.t('renderer.iKnow')}</Button>
           <Button
             type="primary"
             onClick={() => {
@@ -201,9 +212,9 @@ export function handleBucketError(e: AxiosError<{ err_code: number, detail: { bu
               document.dispatchEvent(new CustomEvent('open-bucket-manager', { detail: { path } }))
             }}
           >
-            立即添加
+            {i18n.t('renderer.addNow')}
           </Button>
-        </div>
+        </FooterContainer>
       ),
     })
   }

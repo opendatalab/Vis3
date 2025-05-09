@@ -1,5 +1,5 @@
+import styled from '@emotion/styled'
 import { Card, Tooltip } from 'antd'
-import clsx from 'clsx'
 import type React from 'react'
 import type { ForwardedRef } from 'react'
 import { forwardRef } from 'react'
@@ -23,25 +23,42 @@ export interface RendererProps {
   titleExtra?: React.ReactNode
 }
 
+const StyledCard = styled(Card)`
+  display: flex;
+  flex-direction: column;
+`
+
+const TitleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`
+
+const FieldName = styled.span`
+  min-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`
+
 function InnerRenderCard({ className, name, title, titleExtra, extra, children, bodyStyle }: RenderCardProps, ref: ForwardedRef<HTMLDivElement>) {
   const { builtIns } = useRenderCardContext()
 
   return (
-    <Card
+    <StyledCard
       ref={ref}
       size="small"
       headStyle={{
         userSelect: 'none',
       }}
-      className={clsx(className, 'flex flex-col field-renderer')}
+      className={className}
       title={title ?? (
-        <div className="flex items-center gap-1">
+        <TitleContainer>
           <Tooltip title={name}>
-            <span className="field-name min-w-[48px] overflow-hidden text-ellipsis">{name}</span>
+            <FieldName>{name}</FieldName>
           </Tooltip>
           {builtIns}
           {titleExtra}
-        </div>
+        </TitleContainer>
       )}
       extra={extra}
       styles={{
@@ -58,7 +75,7 @@ function InnerRenderCard({ className, name, title, titleExtra, extra, children, 
       }}
     >
       {children}
-    </Card>
+    </StyledCard>
   )
 }
 

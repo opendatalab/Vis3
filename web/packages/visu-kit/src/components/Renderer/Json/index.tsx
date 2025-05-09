@@ -1,6 +1,7 @@
 import { CloseOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
+import { useTranslation } from '@visu/i18n'
 import { Button, Tooltip } from 'antd'
-import clsx from 'clsx'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import ReactGridLayout from 'react-grid-layout'
 
@@ -19,11 +20,46 @@ import usePreview from '../stateHooks/usePreview'
 import type { RenderType } from '../stateHooks/useRenderType'
 import useWrap from '../stateHooks/useWrap'
 
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
+
+const ErrorContainer = styled.div`
+  width: 100%;
+  background-color: #fee2e2;
+  padding: 0.5rem;
+`
+
+const ErrorMessage = styled.div`
+  color: #ef4444;
+`
+
+const GridContainer = styled.div<{ $preview: boolean }>`
+  display: ${props => props.$preview ? 'block' : 'none'};
+`
+
+const JsonViewerContainer = styled(JsonViewer)<{ $preview: boolean }>`
+  display: ${props => props.$preview ? 'none' : 'block'};
+`
+
+const GridItemContainer = styled.div`
+  position: relative;
+  background-color: #f8fafc;
+`
+
+const FullHeightWrapper = styled(FieldRendererWrapper)`
+  height: 100%;
+  overflow: auto;
+`
+
 export default function JsonCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const [stateValue, setStateValue] = useState(value)
   const parentCodeViewerContext = useCodeViewerContext()
   const { id: propsBlockId, basename } = usePreviewBlockContext()
   const [copyButton] = useCopy(stateValue)
+  const { t } = useTranslation()
   const [size, setSize] = useState({
     width: 0,
     height: 0,
@@ -178,27 +214,24 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
         ref={cardRef}
         titleExtra={titleExtra}
         extra={(
-          <div className="flex gap-2 items-center">
+          <ExtraContainer>
             {!preview && wrapButton}
             {copyButton}
             <FullScreenButton elementRef={cardRef as React.RefObject<HTMLElement>} />
             {extraTail}
-          </div>
+          </ExtraContainer>
         )}
       >
         <div ref={wrapperRef}>
           {
             jsonError && (
-              <div className="w-full bg-red-100 p-2">
-                <div className="text-red-500">{jsonError}</div>
-              </div>
+              <ErrorContainer>
+                <ErrorMessage>{jsonError}</ErrorMessage>
+              </ErrorContainer>
             )
           }
-          <div
-            className={clsx(className, {
-              hidden: !preview,
-              block: preview,
-            })}
+          <GridContainer
+            $preview={preview}
             style={{
               minHeight: size.height,
             }}
@@ -215,33 +248,27 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
             >
               {previewConfig.map((innerBlock) => {
                 return (
-                  <div key={innerBlock.id} className="relative bg-slate-50">
-                    <FieldRendererWrapper
+                  <GridItemContainer key={innerBlock.id}>
+                    <FullHeightWrapper
                       renderAs={innerBlock.renderAs as RenderType}
                       name={innerBlock.field}
-                      className="h-full overflow-auto"
                       value={innerBlock.field === '__whole__' ? parsedValue : parsedValue[innerBlock.field] ?? ''}
                       extraTail={
                         innerBlock.field !== '__whole__' && (
                           <>
-                            {/* <Divider type="vertical" className="mx-[4px]" /> */}
-                            <Tooltip title="关闭">
+                            <Tooltip title={t('renderer.close')}>
                               <Button size="small" type="text" icon={<CloseOutlined />} onClick={() => handleClose?.(innerBlock.id)} />
                             </Tooltip>
                           </>
                         )
                       }
                     />
-                  </div>
+                  </GridItemContainer>
                 )
               })}
             </ReactGridLayout>
-          </div>
-          <JsonViewer className={clsx({
-            hidden: preview,
-            block: !preview,
-          })}
-          />
+          </GridContainer>
+          <JsonViewerContainer $preview={preview} />
         </div>
       </RenderCard>
     </CodeViewerContext.Provider>

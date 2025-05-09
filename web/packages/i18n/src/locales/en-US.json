@@ -39,5 +39,70 @@
   "preview": "Preview",
   "exitPreview": "Exit preview",
   "copy": "Copy",
-  "copied": "Copied"
+  "copied": "Copied",
+
+  "renderer": {
+    "downloadZipFile": "Download ZIP File",
+    "close": "Close",
+    "fileInfo": "File Information",
+    "fileSize": "File Size",
+    "author": "Author",
+    "lastModified": "Last Modified",
+    "returnToParent": "Return to Parent Directory",
+    "prevPage": "Previous Page",
+    "nextPage": "Next Page",
+    "openInNewTab": "Open in New Tab",
+    "downloadFile": "Download",
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit Fullscreen",
+    "copyFullPath": "Copy Full Path",
+    "showDirInfo": "Show Directory Information",
+    "dirInfo": "Directory Information",
+    "copied": "Copied to Clipboard",
+    "iKnow": "I Understand",
+    "addNow": "Add Now",
+    "noPermission": "No View Permission",
+    "needPermission": "To get view permission, please select AK&SK and add this address",
+    "pathNotExist": "Path does not exist or you do not have access permission",
+    "ifPathExists": "If the path exists, you can add path authorization access yourself",
+    "step1AddKey": "Step 1: Add Secret Key - Add an S3 key with permission to the target path",
+    "step2AddPath": "Step 2: Add Address - Use this key to add address authorization access",
+    "arrayTypeRequired": "Array type required",
+    "confirm": "Confirm",
+    "clear": "Clear",
+    "baseUrlEffect": "Effect: /abc.css => https://example.com/abc.css",
+    "convertToFullUrl": "Convert Absolute Path to Full URL",
+    "cancelLineWrap": "Disable Line Wrap",
+    "lineWrap": "Enable Line Wrap",
+    "closePreview": "Close Preview",
+    "openPreview": "Preview",
+    "katexDesc": "Suitable for common markdown documents, faster rendering",
+    "mathjaxDesc": "Suitable for complex mathematical formulas, slower rendering"
+  },
+
+  "fullscreen": {
+    "exitFullscreenFailed": "Exit fullscreen failed",
+    "enterFullscreenFailed": "Enter fullscreen failed"
+  },
+
+  "bucket": {
+    "fileDirectory": "File Directory",
+    "prevPage": "Previous Page",
+    "nextPage": "Next Page",
+    "returnToParent": "Return to Parent Directory",
+    "searchPath": "Search Path",
+    "copyPath": "Copy Path",
+    "directory": "Directory",
+    "pathMustStartWithS3": "Path must start with s3://",
+    "searchPlaceholder": "Enter address to search"
+  },
+
+  "textPreviewer": {
+    "prevSection": "Previous Section",
+    "nextSection": "Next Section"
+  },
+
+  "codeViewer": {
+    "unparsableData": "Unparsable data type"
+  }
 }

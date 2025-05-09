@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import FullscreenIn from '../../assets/full-screen-in.svg?react'
 import FullscreenOut from '../../assets/full-screen-out.svg?react'
 
+import { useTranslation } from '@visu/i18n'
 import BinaryButton from '../BinaryButton'
 
 export interface FullScreenButtonProps {
@@ -11,6 +12,7 @@ export interface FullScreenButtonProps {
 
 export default function FullScreenButton({ elementRef }: FullScreenButtonProps) {
   const [fullscreen, setFullscreen] = useState(false)
+  const { t } = useTranslation()
 
   const handleFullscreenChange = useCallback(() => {
     setFullscreen(!fullscreen)
@@ -21,7 +23,7 @@ export default function FullScreenButton({ elementRef }: FullScreenButtonProps) 
         document.exitFullscreen()
       }
       catch (error) {
-        console.error('退出全屏失败:', error)
+        console.error(`${t('fullscreen.exitFullscreenFailed')}:`, error)
         // 即使退出全屏失败，也需要更新状态
         setFullscreen(false)
       }
@@ -31,15 +33,15 @@ export default function FullScreenButton({ elementRef }: FullScreenButtonProps) 
         requestFullScreen(elementRef.current as HTMLElement)
       }
       catch (error) {
-        console.error('进入全屏失败:', error)
+        console.error(`${t('fullscreen.enterFullscreenFailed')}:`, error)
         // 如果进入全屏失败，恢复状态
         setFullscreen(false)
       }
     }
-  }, [fullscreen, elementRef])
+  }, [fullscreen, elementRef, t])
 
   return (
-    <BinaryButton activated={fullscreen} onTitle="退出全屏" offTitle="全屏" onIcon={<FullscreenIn />} offIcon={<FullscreenOut />} onChange={handleFullscreenChange} />
+    <BinaryButton activated={fullscreen} onTitle={t('renderer.exitFullscreen')} offTitle={t('renderer.fullscreen')} onIcon={<FullscreenIn />} offIcon={<FullscreenOut />} onChange={handleFullscreenChange} />
   )
 }
 

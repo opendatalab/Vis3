@@ -2,6 +2,7 @@ import {
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons'
+import { useTranslation } from '@visu/i18n'
 import { Button, Space, Tooltip } from 'antd'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
@@ -21,6 +22,7 @@ export interface TextLikePreviewerProps extends Omit<RendererProps, 'value'> {
 export default function TextLikePreviewer({ name, type, className, extraTail, titleExtra }: TextLikePreviewerProps) {
   const { id, data, onNext, onPrev, prevable, nextable } = usePreviewBlockContext()
   const [stateContent, setStateContent] = useState('')
+  const { t } = useTranslation()
 
   useEffect(() => {
     setStateContent(data?.content ?? '')
@@ -29,10 +31,10 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
   const rowAction = ['jsonl', 'json', 'csv', 'txt'].includes(type)
     ? (
       <Space.Compact>
-        <Tooltip title="上一段">
+        <Tooltip title={t('textPreviewer.prevSection')}>
           <Button size="small" type="text" disabled={!prevable} onClick={onPrev} icon={<LeftOutlined />} />
         </Tooltip>
-        <Tooltip title="下一段">
+        <Tooltip title={t('textPreviewer.nextSection')}>
           <Button size="small" type="text" disabled={!nextable} onClick={onNext} icon={<RightOutlined />} />
         </Tooltip>
       </Space.Compact>

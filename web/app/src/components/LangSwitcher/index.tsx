@@ -1,8 +1,7 @@
 import LangIcon from '@/assets/i18n.svg?react';
 import { useTranslation } from "@visu/i18n";
+import { Button, Dropdown } from 'antd';
 import { useMemo } from "react";
-import Button from '../Button';
-import Menu from "../Menu";
 
 const langOptions = [
   {
@@ -34,23 +33,28 @@ export default function LangSwitcher() {
   };
 
   return (
-    <Menu
-      triggerMode="hover"
-      trigger={<Button variant='ghost' size='sm'  leftIcon={<LangIcon />}>{langLabel}</Button>}
-      items={[
-        {
-          label: '简体中文',
-          onClick: () => {
+    <Dropdown
+      menu={{
+        selectedKeys: [lang],
+        items: [
+          {
+            label: '简体中文',
+            key: 'zh-CN',
+            onClick: () => {
             changeLocale('zh-CN')
           }
         },
         {
           label: 'English',
+          key: 'en-US',
           onClick: () => {
             changeLocale('en-US')
           }
         }
       ]}
-    />
+    }
+    >
+      <Button type='text' icon={<LangIcon />}>{langLabel}</Button>
+    </Dropdown>
   )
 }

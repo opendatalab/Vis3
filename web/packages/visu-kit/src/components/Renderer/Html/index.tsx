@@ -1,3 +1,4 @@
+import styled from '@emotion/styled'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { TextViewer } from '../../../components/CodeViewer'
@@ -10,6 +11,18 @@ import useBase from '../stateHooks/useBase'
 import useCopy from '../stateHooks/useCopy'
 import usePreview from '../stateHooks/usePreview'
 import useWrap from '../stateHooks/useWrap'
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
+
+const StyledIframe = styled.iframe`
+  border: 0;
+  width: 100%;
+  flex: 1;
+`
 
 function isUrl(value: string) {
   try {
@@ -80,20 +93,19 @@ export default function HtmlCard({ className, name, value, extraTail }: Renderer
           flexDirection: 'column',
         }}
         extra={(
-          <div className="flex gap-2 items-center">
+          <ExtraContainer>
             {!preview && wrapButton as React.ReactNode}
             {previewButton as React.ReactNode}
             {baseurlButton as React.ReactNode}
             <FullScreenButton elementRef={ref as React.RefObject<HTMLElement>} />
             {!preview && copyButton}
             {extraTail}
-          </div>
+          </ExtraContainer>
         )}
       >
         {preview
           ? (
-            <iframe
-              className="border-0 w-full flex-1"
+            <StyledIframe
               sandbox="allow-same-origin"
               srcDoc={processedHtml}
             />

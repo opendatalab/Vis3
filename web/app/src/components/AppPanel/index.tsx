@@ -1,9 +1,8 @@
-import ArrowRightOutlined from '@/assets/arrow-right.svg?react';
 import ToolboxSvg from '@/assets/toolbox.svg?react';
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { useTranslation } from '@visu/i18n';
+import { Button, Popover } from 'antd';
 import { useMemo } from 'react';
-import Button from '../Button';
-import Popover from '../Popover';
 import styles from './index.module.css';
 import LabelLLM from './labelllm.svg?react';
 import MinerU from './mineru.svg?react';
@@ -58,11 +57,10 @@ export default function AppPanel() {
 
   return (
     <Popover
-      trigger={<Button size="sm" variant="ghost" leftIcon={<ToolboxSvg />}>{t('openSourceToolbox')}</Button>}
       placement="bottomRight"
-      triggerMode="hover"
-    >
-      <div className='p-4'>
+      trigger="hover"
+      content={(
+        <div>
         <div className={styles.title}>{t('toolboxWelcome')}</div>
         <div className={styles.panel}>
           {apps.map((app) => {
@@ -95,6 +93,9 @@ export default function AppPanel() {
           })}
         </div>
       </div>
-    </Popover>
+      )}
+    >
+      <Button type="text" icon={<ToolboxSvg />}>{t('openSourceToolbox')}</Button>
+    </Popover>  
   );
 }

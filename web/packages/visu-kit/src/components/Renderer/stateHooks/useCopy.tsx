@@ -1,9 +1,11 @@
 import { CopyOutlined } from '@ant-design/icons'
+import { useTranslation } from '@visu/i18n'
 import { Button, Tooltip } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 
 export default function useCopy(value: string): [React.ReactNode] {
-  const [title, setTitle] = useState('复制内容')
+  const { t } = useTranslation()
+  const [title, setTitle] = useState(t('copy'))
 
   const handleCopyRaw = useCallback(() => {
     try {
@@ -15,15 +17,15 @@ export default function useCopy(value: string): [React.ReactNode] {
         navigator.clipboard.writeText(value || '')
       }
 
-      setTitle('已复制')
+      setTitle(t('copied'))
     }
     catch (error) {
       console.error(error)
-      setTitle('复制失败')
+      setTitle(t('copy'))
     }
 
     setTimeout(() => {
-      setTitle('复制内容')
+      setTitle(t('copy'))
     }, 1000)
   }, [value])
 

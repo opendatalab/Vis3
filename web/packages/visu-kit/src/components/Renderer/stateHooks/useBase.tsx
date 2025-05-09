@@ -1,4 +1,6 @@
 import { LinkOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
+import { useTranslation } from '@visu/i18n'
 import type { FormInstance } from 'antd'
 import { Button, Form, Input, Popover } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -6,11 +8,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { BinaryButtonRef } from '../../../components/BinaryButton'
 import BinaryButton from '../../../components/BinaryButton'
 
+const StyledForm = styled(Form)`
+  width: 340px;
+`
+
+const ButtonContainer = styled.div`
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+`
+
+const FlexButton = styled(Button)`
+  flex: 1;
+`
+
 export default function useBase(baseUrl?: string): [React.ReactNode, { base: string, open: boolean }, (base: string) => void, FormInstance<any>] {
   const [base, setBase] = useState('')
   const [form] = Form.useForm()
   const [open, setOpen] = useState(false)
   const btnRef = useRef<BinaryButtonRef>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     form.setFieldsValue({
@@ -44,10 +61,10 @@ export default function useBase(baseUrl?: string): [React.ReactNode, { base: str
   const node = useMemo(() => (
     <Popover
       content={(
-        <Form className="w-[340px]" form={form} layout="vertical" onFinish={handleFinish}>
+        <StyledForm form={form} layout="vertical" onFinish={handleFinish}>
           <Form.Item
             label="Base URL"
-            extra="效果：/abc.css => https://example.com/abc.css"
+            extra={t('renderer.baseUrlEffect')}
             name="baseUrl"
             rules={[{
               type: 'url',
@@ -56,20 +73,20 @@ export default function useBase(baseUrl?: string): [React.ReactNode, { base: str
             <Input placeholder="https://example.com" />
           </Form.Item>
           <Form.Item noStyle>
-            <div className="flex w-full gap-2">
-              <Button className="flex-1" type="primary" htmlType="submit">确定</Button>
-              <Button className="flex-1" onClick={handleReset}>清空</Button>
-            </div>
+            <ButtonContainer>
+              <FlexButton type="primary" htmlType="submit">{t('renderer.confirm')}</FlexButton>
+              <FlexButton onClick={handleReset}>{t('renderer.clear')}</FlexButton>
+            </ButtonContainer>
           </Form.Item>
-        </Form>
+        </StyledForm>
       )}
       trigger="click"
       open={open}
       onOpenChange={setOpen}
     >
-      <BinaryButton btnRef={btnRef} activated={!!base} title="将绝对路径转换为完整URL" icon={<LinkOutlined />} onChange={handleOpenChange} />
+      <BinaryButton btnRef={btnRef} activated={!!base} title={t('renderer.convertToFullUrl')} icon={<LinkOutlined />} onChange={handleOpenChange} />
     </Popover>
-  ), [base, form, handleOpenChange, handleReset, open])
+  ), [base, form, handleOpenChange, handleReset, open, t])
 
   const state = useMemo(() => ({ open, base }), [open, base])
 

@@ -1,9 +1,10 @@
 import { ArrowUpOutlined, CloseOutlined, DownloadOutlined, ExportOutlined, InfoCircleOutlined, LeftOutlined, LoadingOutlined, RightOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from '@visu/i18n'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
 import type { AxiosError } from 'axios'
-import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { formatBucketList, useBucketContext } from '../../../components/BucketPreviewer/context'
@@ -21,6 +22,31 @@ import MediaCard from '../Media'
 
 export const PAGENATION_CHANGE_EVENT = 'visu-pagenation-change'
 export const PATH_CORRECTION_EVENT = 'visu-path-correction'
+
+const StyledSpin = styled(Spin)<{ $visible: boolean }>`
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(4px);
+  padding-top: 100px;
+  justify-content: center;
+  display: ${({ $visible }) => $visible ? 'flex' : 'none'};
+`
+
+const DescriptionsWrapper = styled(Descriptions)`
+  width: 320px;
+`
+
+const PageInput = styled(Input)`
+  width: 40px;
+  text-align: center;
+`
+
+const CursorHelp = styled(InfoCircleOutlined)`
+  cursor: help;
+`
+
 export interface BlockInfo {
   id: string
   path: string
@@ -76,6 +102,8 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
   const [pageNo, setPageNo] = useState(initialParams?.pageNo || 1)
   const basename = getBasename(path)
   const { onParamsChange, setTotal, bucketUrl, previewUrl, downloadUrl, mimeTypeUrl } = useBucketContext()
+  const { t } = useTranslation()
+  
   // 未知的文件类型，包括没有后缀名的文件，供用户选择渲染类型
   const unkonwnFileType = !/\.\w+$/.test(basename)
   const [renderAs, setRenderAs] = useState<string | undefined>()
@@ -150,10 +178,6 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
 
       if (pageSize) {
         setPageSize(pageSize)
-      }
-
-      if (id === 'origin') {
-        onParamsChange?.({ pageNo, pageSize })
       }
     }
 
@@ -268,24 +292,23 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
         {
           block.pathType !== 'folder' && !!path && (
             <Popover
-              title="文件信息"
+              title={t('renderer.fileInfo')}
               content={(
-                <Descriptions
-                  className="w-[320px]"
+                <DescriptionsWrapper
                   size="small"
                   items={[
                     {
-                      label: '文件大小',
+                      label: t('renderer.fileSize'),
                       span: 3,
                       children: <span>{formatter.format('fileSize', totalSize)}</span>,
                     },
                     {
-                      label: '作者',
+                      label: t('renderer.author'),
                       span: 3,
                       children: <span>{fileObject?.owner}</span>,
                     },
                     {
-                      label: '最后更新时间',
+                      label: t('renderer.lastModified'),
                       span: 3,
                       children: fileObject?.last_modified
                         ? formatter.format('dateTime', fileObject.last_modified, {
@@ -298,13 +321,13 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
 
               )}
             >
-              <InfoCircleOutlined className="cursor-help" />
+              <CursorHelp />
             </Popover>
           )
         }
         {
           id !== 'origin' && !!path && (
-            <Tooltip title="返回上级目录">
+            <Tooltip title={t('renderer.returnToParent')}>
               <Button size="small" type="text" icon={<ArrowUpOutlined />} onClick={handleGoParent} />
             </Tooltip>
           )
@@ -313,7 +336,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
           id !== 'origin' && block.pathType === 'folder' && !!path && (
             (
               <Space.Compact size="small">
-                <Tooltip title="上一页">
+                <Tooltip title={t('renderer.prevPage')}>
                   <Button
                     disabled={pageNo === 1}
                     onClick={() => {
@@ -322,8 +345,8 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
                     icon={<LeftOutlined />}
                   />
                 </Tooltip>
-                <Input className="w-[40px] text-center" min={1} readOnly value={pageNo} />
-                <Tooltip title="下一页">
+                <PageInput min={1} readOnly value={pageNo} />
+                <Tooltip title={t('renderer.nextPage')}>
                   <Button
                     disabled={isFetching || folders.length < Number(pageSize)}
                     onClick={() => {
@@ -338,14 +361,14 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
         }
       </>
     )
-  }, [block.pathType, path, totalSize, data, id, handleGoParent, pageNo, isFetching, folders.length, pageSize, handlePageNoChange])
+  }, [block.pathType, path, totalSize, fileObject, id, handleGoParent, pageNo, isFetching, folders.length, pageSize, handlePageNoChange, t])
 
   const extra = useMemo(() => {
     return (
       <>
         {
           id !== 'origin' && (
-            <Tooltip title="新标签页打开">
+            <Tooltip title={t('renderer.openInNewTab')}>
               <a href={`${bucketUrl}?path=${encodeURIComponent(path)}&page_size=${pageSize}&page_no=${pageNo}`} target="_blank" rel="noopener noreferrer">
                 <Button type="text" size="small" icon={<ExportOutlined />} />
               </a>
@@ -354,7 +377,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
         }
         {
           block.pathType !== 'folder' && (
-            <Tooltip title="下载完整文件">
+            <Tooltip title={t('renderer.downloadFile')}>
               <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => download(downloadUrl, pathWithoutQuery)} />
             </Tooltip>
           )
@@ -363,7 +386,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
           id !== 'origin' && (
             <>
               <Divider type="vertical" />
-              <Tooltip title="关闭">
+              <Tooltip title={t('renderer.close')}>
                 <Button size="small" type="text" icon={<CloseOutlined />} onClick={onClose} />
               </Tooltip>
             </>
@@ -371,7 +394,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
         }
       </>
     )
-  }, [block.pathType, id, onClose, pageNo, pageSize, path, pathWithoutQuery])
+  }, [block.pathType, bucketUrl, downloadUrl, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t])
 
   const content = useMemo(() => {
     if (pathWithoutQuery.endsWith('/') || !path) {
@@ -405,14 +428,10 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
   return (
     <PreviewBlockContext.Provider value={contextValue}>
       {content}
-      <Spin
+      <StyledSpin
         spinning={isFetching}
         indicator={<LoadingOutlined spin />}
-        rootClassName={clsx('absolute flex items-center justify-center inset-0 bg-white/50 backdrop-blur-sm', {
-          block: isFetching,
-          hidden: !isFetching,
-        })}
-        style={{ height: '100%' }}
+        $visible={isFetching}
       />
 
     </PreviewBlockContext.Provider>

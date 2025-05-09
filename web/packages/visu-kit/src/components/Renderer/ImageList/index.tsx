@@ -1,3 +1,5 @@
+import styled from '@emotion/styled'
+import { useTranslation } from '@visu/i18n'
 import { Image } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
@@ -20,6 +22,25 @@ export interface ImageListProps {
   data: string[] | ImageItem[]
   name: string
 }
+
+const ErrorContainer = styled.div`
+  background-color: #fee2e2;
+  padding: 0.5rem;
+  color: #ef4444;
+`
+
+const ImageListContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+`
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
 
 function WrappedImage({ url, data }: {
   url: string
@@ -52,7 +73,7 @@ function WrappedImage({ url, data }: {
     }
 
     return url
-  }, [data, isError, url])
+  }, [data, isError, url, previewUrl])
 
   return (
     <Image src={renderUrl} alt={renderUrl} onError={handleOnError} onLoadedData={handleOnLoaded} />
@@ -60,12 +81,14 @@ function WrappedImage({ url, data }: {
 }
 
 function ImageList({ name, data }: ImageListProps) {
+  const { t } = useTranslation()
+  
   if (!Array.isArray(data)) {
-    return <div className="bg-red-100 p-2 text-red-500">必须为数组类型</div>
+    return <ErrorContainer>{t('renderer.arrayTypeRequired')}</ErrorContainer>
   }
 
   return (
-    <div className="flex flex-col gap-2 p-2" title={name}>
+    <ImageListContainer title={name}>
       {
         data.map((item) => {
           if (typeof item === 'string') {
@@ -77,7 +100,7 @@ function ImageList({ name, data }: ImageListProps) {
           return <WrappedImage data={item} url={_item.url} key={_item.url} />
         })
       }
-    </div>
+    </ImageListContainer>
   )
 }
 
@@ -105,13 +128,13 @@ export default function ImageListCard({ className, name, value, extraTail }: Ren
         className={className}
         name={name}
         extra={(
-          <div className="flex gap-2 items-center">
+          <ExtraContainer>
             {previewButton as React.ReactNode}
             {!preview && wrapButton as React.ReactNode}
             <FullScreenButton elementRef={ref as React.RefObject<HTMLElement>} />
             {!preview && copyButton}
             {extraTail}
-          </div>
+          </ExtraContainer>
         )}
       >
         {preview

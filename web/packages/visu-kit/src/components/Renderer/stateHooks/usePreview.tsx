@@ -1,3 +1,4 @@
+import { useTranslation } from '@visu/i18n'
 import { useCallback, useMemo, useState } from 'react'
 
 import EyeCloseIcon from '../../../assets/eye-close.svg?react'
@@ -6,17 +7,18 @@ import BinaryButton from '../../../components/BinaryButton'
 
 export default function usePreview(initialPreview = true, onPreview?: (changedValue: boolean) => void): [React.ReactNode, { preview: boolean }, (preview: boolean) => void] {
   const [preview, setPreview] = useState(initialPreview)
+  const { t } = useTranslation()
 
   const handleOnChange = useCallback((changedValue: boolean) => {
     setPreview(changedValue)
     onPreview?.(changedValue)
   }, [onPreview])
 
-  const node = useMemo(() => (
-    <BinaryButton activated={preview} onTitle="关闭预览" offTitle="预览" onIcon={<EyeOpenIcon />} offIcon={<EyeCloseIcon />} onChange={handleOnChange} />
-  ), [preview, handleOnChange])
+  const previewButton = useMemo(() => (
+    <BinaryButton activated={preview} onTitle={t('renderer.closePreview')} offTitle={t('renderer.openPreview')} onIcon={<EyeOpenIcon />} offIcon={<EyeCloseIcon />} onChange={handleOnChange} />
+  ), [preview, handleOnChange, t])
 
   const state = useMemo(() => ({ preview }), [preview])
 
-  return [node, state, handleOnChange]
+  return [previewButton, state, handleOnChange]
 }

@@ -40,5 +40,70 @@
   "preview": "预览",
   "exitPreview": "退出预览",
   "copy": "复制",
-  "copied": "已复制"
+  "copied": "已复制",
+
+  "renderer": {
+    "downloadZipFile": "下载压缩文件",
+    "close": "关闭",
+    "fileInfo": "文件信息",
+    "fileSize": "文件大小",
+    "author": "作者",
+    "lastModified": "最后更新时间",
+    "returnToParent": "返回上级目录",
+    "fullscreen": "全屏",
+    "exitFullscreen": "退出全屏",
+    "prevPage": "上一页",
+    "nextPage": "下一页",
+    "openInNewTab": "新标签页打开",
+    "downloadFile": "下载完整文件",
+    "copyFullPath": "复制完整路径",
+    "showDirInfo": "显示目录信息",
+    "dirInfo": "目录信息",
+    "copied": "已复制到剪贴板",
+    "iKnow": "我知道了",
+    "addNow": "立即添加",
+    "noPermission": "暂无查看权限",
+    "needPermission": "如需获取查看权限，请选择AK&SK并添加此地址",
+    "pathNotExist": "路径不存在或没有此路径访问权限",
+    "ifPathExists": "如路径存在，可自行添加路径授权访问",
+    "step1AddKey": "Step1. 新增密钥：添加对目标路径有权限的S3密钥",
+    "step2AddPath": "Step2. 添加地址：使用此密钥添加地址授权访问",
+    "arrayTypeRequired": "必须为数组类型",
+    "confirm": "确定",
+    "clear": "清空",
+    "baseUrlEffect": "效果：/abc.css => https://example.com/abc.css",
+    "convertToFullUrl": "将绝对路径转换为完整URL",
+    "cancelLineWrap": "取消换行",
+    "lineWrap": "换行",
+    "closePreview": "关闭预览",
+    "openPreview": "预览",
+    "katexDesc": "适合常见md文档，渲染速度快",
+    "mathjaxDesc": "适合复杂数学公式，渲染速度慢"
+  },
+
+  "fullscreen": {
+    "exitFullscreenFailed": "退出全屏失败",
+    "enterFullscreenFailed": "进入全屏失败"
+  },
+
+  "bucket": {
+    "fileDirectory": "文件目录",
+    "prevPage": "上一页",
+    "nextPage": "下一页",
+    "returnToParent": "返回上级目录",
+    "searchPath": "检索路径",
+    "copyPath": "复制路径",
+    "directory": "目录",
+    "pathMustStartWithS3": "路径必须以s3://开头",
+    "searchPlaceholder": "输入地址检索"
+  },
+
+  "textPreviewer": {
+    "prevSection": "上一段",
+    "nextSection": "下一段"
+  },
+
+  "codeViewer": {
+    "unparsableData": "不可解析成字符串的数据的数据"
+  }
 }

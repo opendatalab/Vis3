@@ -19,6 +19,7 @@ import RenderCard from '../Card'
 import { RenderCardContext } from '../contexts/card.context'
 import { FieldContext } from '../contexts/field.context'
 import { usePreviewBlockContext } from '../contexts/preview.context'
+import useCopy from '../stateHooks/useCopy'
 import usePreview from '../stateHooks/usePreview'
 import type { RenderType } from '../stateHooks/useRenderType'
 import useRenderType from '../stateHooks/useRenderType'
@@ -147,6 +148,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
       return stateValue
     }
   }, [stateValue])
+  const [copyButton] = useCopy(parsedValue)
   const jsonKeys = useMemo(() => {
     return Object.keys(parsedValue)
   }, [parsedValue])
@@ -326,6 +328,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
               {!preview && wrapButton}
               {previewButton}
               <FullScreenButton elementRef={cardRef as React.RefObject<HTMLElement>} />
+              {copyButton}
               {extraTail}
             </div>
           )}

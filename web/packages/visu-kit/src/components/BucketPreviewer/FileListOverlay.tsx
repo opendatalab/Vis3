@@ -1,7 +1,10 @@
 import { LeftOutlined, RightOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from '@visu/i18n'
 import { Button, Drawer, Input, Space, Tooltip } from 'antd'
 import { useCallback, useEffect, useState } from 'react'
+import { useTheme } from '../../theme'
 
 import axios from 'axios'
 import { bucketKey } from '../../queries/bucket.key'
@@ -12,12 +15,19 @@ export interface FileListDrawerProps {
   path: string
 }
 
+const PageInput = styled(Input)`
+  width: 60px;
+  text-align: center;
+`
+
 export default function FileListDrawer({ path = '' }: FileListDrawerProps) {
+  const { tokens } = useTheme();
   const [openDrawer, setOpenDrawer] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const { pageSize, bucketUrl } = useBucketContext()
   const parentPath = path.split('/').slice(0, -1).join('/')
   const queryClient = useQueryClient()
+  const { t } = useTranslation()
   const [bucketList, setBucketList] = useState<BucketItemWrapper[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -38,7 +48,7 @@ export default function FileListDrawer({ path = '' }: FileListDrawerProps) {
     }).finally(() => {
       setIsLoading(false)
     })
-  }, [parentPath, queryClient])
+  }, [parentPath, queryClient, bucketUrl])
 
   useEffect(() => {
     const handleOpenDrawer = () => {
@@ -62,7 +72,7 @@ export default function FileListDrawer({ path = '' }: FileListDrawerProps) {
   return (
     <Drawer
       loading={isLoading}
-      title="文件目录"
+      title={t('bucket.fileDirectory')}
       width="50%"
       open={openDrawer}
       onClose={() => {
@@ -70,7 +80,7 @@ export default function FileListDrawer({ path = '' }: FileListDrawerProps) {
       }}
       extra={(
         <Space.Compact>
-          <Tooltip title="上一页">
+          <Tooltip title={t('bucket.previousPage')}>
             <Button
               disabled={currentPage === 1}
               onClick={() => {
@@ -80,8 +90,8 @@ export default function FileListDrawer({ path = '' }: FileListDrawerProps) {
               icon={<LeftOutlined />}
             />
           </Tooltip>
-          <Input className="w-[60px] text-center" min={1} readOnly value={currentPage} />
-          <Tooltip title="下一页">
+          <PageInput min={1} readOnly value={currentPage} />
+          <Tooltip title={t('bucket.nextPage')}>
             <Button
               disabled={isLoading || bucketList.length < Number(pageSize)}
               onClick={() => {

@@ -1,3 +1,4 @@
+import styled from '@emotion/styled'
 import { Table } from 'antd'
 import { useMemo, useRef } from 'react'
 
@@ -5,6 +6,12 @@ import FullScreenButton from '../../../components/FullscreenButton'
 import { parseCsv } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
 
 export default function CsvCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const ref = useRef<HTMLDivElement>(null)
@@ -20,10 +27,10 @@ export default function CsvCard({ className, name, value, extraTail, titleExtra 
       titleExtra={titleExtra}
       name={name}
       extra={(
-        <div className="flex gap-2 items-center">
+        <ExtraContainer>
           <FullScreenButton elementRef={ref} />
           {extraTail}
-        </div>
+        </ExtraContainer>
       )}
     >
       <Table

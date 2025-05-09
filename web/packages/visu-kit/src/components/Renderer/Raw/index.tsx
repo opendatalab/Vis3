@@ -1,3 +1,4 @@
+import styled from '@emotion/styled'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { TextViewer } from '../../../components/CodeViewer'
@@ -7,6 +8,12 @@ import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import useCopy from '../stateHooks/useCopy'
 import useWrap from '../stateHooks/useWrap'
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
 
 export default function RawCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const ref = useRef<HTMLDivElement>(null)
@@ -32,12 +39,12 @@ export default function RawCard({ className, name, value, extraTail, titleExtra 
         titleExtra={titleExtra}
         name={name}
         extra={(
-          <div className="flex gap-2 items-center">
+          <ExtraContainer>
             <FullScreenButton elementRef={ref as React.RefObject<HTMLElement>} />
             {wrapButton as React.ReactNode}
             {copyButton}
             {extraTail}
-          </div>
+          </ExtraContainer>
         )}
       >
         <TextViewer />

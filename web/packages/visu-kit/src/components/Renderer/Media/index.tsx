@@ -1,4 +1,6 @@
 import { DownloadOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
+import { useTranslation } from '@visu/i18n'
 import { Button, Image } from 'antd'
 import { useMemo, useRef } from 'react'
 
@@ -13,53 +15,91 @@ export interface MediaCardProps extends RendererProps {
   type: PathType
 }
 
+const StyledImage = styled(Image)`
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+`
+
+const StyledVideo = styled.video`
+  max-width: 100%;
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+  max-height: 100%;
+`
+
+const StyledAudio = styled.audio`
+  width: 100%;
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+`
+
+const StyledIframe = styled.iframe`
+  width: 100%;
+  height: calc(100vh - 9rem);
+  border: 0;
+`
+
+const PrimaryButton = styled(Button)`
+  .ant-btn-icon {
+    color: var(--ant-primary-color);
+  }
+`
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
+
 export default function MediaCard({ type, className, name, value, extraTail, titleExtra }: MediaCardProps) {
   const ref = useRef<HTMLDivElement>(null)
   const { downloadUrl } = useBucketContext()
+  const { t } = useTranslation()
 
   const content = useMemo(() => {
     if (type === 'image') {
-      return <Image className="max-h-full max-w-full object-contain" src={value} alt={value} />
+      return <StyledImage src={value} alt={value} />
     }
 
     if (type === 'video') {
       return (
-        <video className="max-w-full mx-6 max-h-full" src={value} controls />
+        <StyledVideo src={value} controls />
       )
     }
 
     if (type === 'audio') {
       return (
-        <audio className="w-full mx-6" src={value} controls />
+        <StyledAudio src={value} controls />
       )
     }
 
     if (type === 'pdf') {
       return (
-        <iframe src={value} className="w-full h-[calc(100vh-9rem)] border-0" title="pdf" />
+        <StyledIframe src={value} title="pdf" />
       )
     }
 
     if (type === 'mobi') {
       return (
-        <iframe src={value} className="w-full h-[calc(100vh-9rem)] border-0" title="mobi" />
+        <StyledIframe src={value} title="mobi" />
       )
     }
 
     if (type === 'epub') {
       return (
-        <iframe src={value} className="w-full h-[calc(100vh-9rem)] border-0" title="epub" />
+        <StyledIframe src={value} title="epub" />
       )
     }
 
     if (type === 'zip') {
       return (
-        <Button icon={<DownloadOutlined type="text" className="text-primary" />} onClick={() => download(downloadUrl, value)}>
-          下载压缩文件
-        </Button>
+        <PrimaryButton icon={<DownloadOutlined type="text" />} onClick={() => download(downloadUrl, value)}>
+          {t('renderer.downloadZipFile')}
+        </PrimaryButton>
       )
     }
-  }, [type, value])
+  }, [type, value, downloadUrl, t])
 
   return (
     <RenderCard
@@ -73,10 +113,10 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
         alignItems: 'center',
       }}
       extra={(
-        <div className="flex gap-2 items-center">
+        <ExtraContainer>
           <FullScreenButton elementRef={ref as React.RefObject<HTMLElement>} />
           {extraTail}
-        </div>
+        </ExtraContainer>
       )}
     >
       {content}

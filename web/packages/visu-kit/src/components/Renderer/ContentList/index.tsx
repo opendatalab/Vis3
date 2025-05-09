@@ -1,5 +1,5 @@
+import styled from '@emotion/styled'
 import { Image, Tooltip } from 'antd'
-import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useBucketContext } from '../../../components/BucketPreviewer/context'
@@ -66,6 +66,35 @@ export interface ContentListProps {
   data: ContentItem[]
 }
 
+const TextItem = styled.div`
+  padding: 0.5rem;
+`
+
+const ContentListContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+`
+
+const ContentItemContainer = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.25rem;
+`
+
+const ItemNumber = styled.span`
+  font-size: 0.875rem;
+  color: #9ca3af;
+`
+
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
+
 function ContentList({ name, data }: ContentListProps) {
   const { previewUrl } = useBucketContext()
   const renderItem = useCallback((item: ContentItem, index: number) => {
@@ -74,7 +103,7 @@ function ContentList({ name, data }: ContentListProps) {
     }
 
     if (item.type === 'text') {
-      return <div className="p-2" key={`${name}-${index}`}>{item?.md ?? item?.text ?? ''}</div>
+      return <TextItem key={`${name}-${index}`}>{item?.md ?? item?.text ?? ''}</TextItem>
     }
 
     if (item.type === 'image') {
@@ -94,22 +123,22 @@ function ContentList({ name, data }: ContentListProps) {
         return <Tooltip title={item.img_caption}><Image src={img_url} alt={item.img_alt} /></Tooltip>
       }
     }
-    return <div className="p-2" key={`${name}-${index}`}>{item.text ?? ''}</div>
-  }, [name])
+    return <TextItem key={`${name}-${index}`}>{item.text ?? ''}</TextItem>
+  }, [name, previewUrl])
 
   return (
-    <div className={clsx('flex flex-col gap-1 p-2', styles.contentList)} title={name}>
+    <ContentListContainer className={styles.contentList} title={name}>
       {
         data.map((item, index) => {
           return (
-            <div className="flex items-start gap-1 p-1">
-              <span className="text-sm text-gray-400">{index + 1}</span>
+            <ContentItemContainer key={index}>
+              <ItemNumber>{index + 1}</ItemNumber>
               {renderItem(item, index)}
-            </div>
+            </ContentItemContainer>
           )
         })
       }
-    </div>
+    </ContentListContainer>
   )
 }
 
@@ -136,12 +165,12 @@ export default function ContentListCard({ className, name, value, extraTail }: R
         className={className}
         name={name}
         extra={(
-          <div className="flex gap-2 items-center">
+          <ExtraContainer>
             {previewButton as React.ReactNode}
             {wrapButton as React.ReactNode}
             <FullScreenButton elementRef={ref} />
             {extraTail}
-          </div>
+          </ExtraContainer>
         )}
       >
         {preview

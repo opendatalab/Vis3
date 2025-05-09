@@ -5,21 +5,26 @@ import {
   LeftOutlined,
   RightOutlined,
   SearchOutlined
-} from '@ant-design/icons'
-import { useIsFetching } from '@tanstack/react-query'
-import type { FormInstance, InputRef, MenuProps } from 'antd'
-import { Button, Dropdown, Form, Input, message, Space, Tooltip } from 'antd'
-import type { FormProps } from 'antd/lib'
-import clsx from 'clsx'
-import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
+} from '@ant-design/icons';
+import styled from '@emotion/styled';
+import { useIsFetching } from '@tanstack/react-query';
+import type { MenuProps } from 'antd';
+import { Button, Dropdown, message, Tooltip } from 'antd';
+import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { bucketKey } from '../../queries/bucket.key'
-import queryClient from '../../queries/queryClient'
-import { PAGENATION_CHANGE_EVENT, PATH_CORRECTION_EVENT } from '../Renderer/Block'
-import { useBucketContext } from './context'
-import styles from './index.module.css'
+import { Theme } from '@emotion/react';
+import { useTranslation } from '@visu/i18n';
+import { bucketKey } from '../../queries/bucket.key';
+import queryClient from '../../queries/queryClient';
+import { useTheme } from '../../theme';
+import { PAGENATION_CHANGE_EVENT, PATH_CORRECTION_EVENT } from '../Renderer/Block';
+import { useBucketContext } from './context';
+import styles from './index.module.css';
 
-const rightIcon = <RightOutlined className="text-gray-300 text-[12px]" />
+const RightIcon = styled(RightOutlined)`
+  color: #d1d5db; /* gray-300 */
+  font-size: 12px;
+`
 
 export interface InputValues {
   path: string
@@ -32,6 +37,28 @@ interface PathFragmentProps {
   clickable?: boolean
   onClick?: (e: React.MouseEvent) => void
 }
+
+const FragmentContainer = styled.div`
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+`
+
+const FragmentItem = styled.div<{ $clickable?: boolean }>`
+  padding: 0.125rem 0.25rem;
+  ${props => props.$clickable && `
+    cursor: pointer;
+    transition-duration: 100ms;
+    &:hover {
+      background-color: rgb(239 246 255); /* blue-50 */
+      color: rgb(59 130 246); /* blue-500 */
+    }
+    border-radius: 0.25rem;
+  `}
+  ${props => !props.$clickable && `
+    cursor: text;
+  `}
+`
 
 function PathFragment({ fragment, hideArrow, clickable = true, onClick }: PathFragmentProps) {
   const { path = '', onParamsChange } = useBucketContext()
@@ -50,25 +77,22 @@ function PathFragment({ fragment, hideArrow, clickable = true, onClick }: PathFr
   }, [onParamsChange, path])
 
   return (
-    <div className="flex items-center whitespace-nowrap">
-      {!hideArrow && rightIcon}
-      <div
-        className={clsx({
-          'cursor-pointer duration-100 hover:bg-blue-50 hover:text-blue-500 rounded': clickable,
-          'cursor-text': !clickable,
-        }, 'px-1 py-0.5')}
+    <FragmentContainer>
+      {!hideArrow && <RightIcon />}
+      <FragmentItem
+        $clickable={clickable}
         onClick={clickable ? onClick ?? handleFragmentClick : undefined}
       >
         {fragment}
-      </div>
-
-    </div>
+      </FragmentItem>
+    </FragmentContainer>
   )
 }
 
 interface PathContainerRef {
   toggleFocus: (value: boolean) => void
-  form: FormInstance<InputValues>
+  getInputValue: () => string
+  submit: () => void
 }
 
 interface PathContainerProps {
@@ -79,6 +103,88 @@ interface PathFragmentState {
   fragment: string
   path: string
 }
+
+const PathInput = styled.input`
+  width: 100%;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none !important;
+  background-color: transparent;
+  outline: none;
+  padding: 0 0.5rem;
+`
+
+const PathContainerDiv = styled.div<{ $focused: boolean; $path: string }>`
+  ${props => !props.$focused ? `
+    visibility: visible;
+  ` : `
+    visibility: hidden;
+    position: absolute;
+    z-index: -1;
+  `}
+  ${props => !props.$path && `
+    visibility: hidden;
+    position: absolute;
+    z-index: -1;
+  `}
+  display: flex;
+  align-items: center;
+  flex: 1;
+  cursor: text;
+  overflow: auto;
+  width: 0;
+  margin-left: 0.25rem;
+`
+
+const FlexItems = styled.div`
+  display: flex;
+  align-items: center;
+`
+
+const ShortcutItem = styled.div`
+  &:hover {
+    background-color: rgb(239 246 255); /* blue-50 */
+    color: rgb(59 130 246); /* blue-500 */
+  }
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  transition-duration: 100ms;
+`
+
+const PathContainerShadow = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow: auto;
+  min-width: 0;
+  visibility: hidden;
+  z-index: -1;
+`
+
+const PathForm = styled.div<{ $focused: boolean; $path: string }>`
+  position: relative;
+  flex: 1;
+  ${props => props.$focused || !props.$path ? `
+    visibility: visible;
+  ` : `
+    visibility: hidden;
+    position: absolute;
+    z-index: -1;
+  `}
+`
+
+const ErrorMessage = styled.div<{ theme: Theme }>`
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  font-size: 14px;
+  color: ${props => props.theme.colors.danger[600]};
+`
 
 function extractPath(path: string) {
   const _fragments = path.replace(/^s3:\/\//, '').split('/')
@@ -92,15 +198,17 @@ function extractPath(path: string) {
 }
 
 function PathContainer({ containerRef }: PathContainerProps) {
+  const { tokens } = useTheme();
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const { path = '', onParamsChange } = useBucketContext()
-  const [form] = Form.useForm<InputValues>()
-  const inputRef = useRef<InputRef>(null)
+  const { path = '', onParamsChange, pageSize } = useBucketContext()
+  const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
-  const formInitialValues = useMemo(() => ({ path }), [path])
+  const [inputValue, setInputValue] = useState(path)
   const wrapperShadowRef = useRef<HTMLDivElement>(null)
   const [shortPathFragments, setShortPathFragments] = useState<PathFragmentState[]>([])
   const [fragments, setFragments] = useState<PathFragmentState[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     setFragments(extractPath(path))
@@ -110,13 +218,15 @@ function PathContainer({ containerRef }: PathContainerProps) {
     toggleFocus: (value: boolean) => {
       setFocused(value)
     },
-    form,
+    getInputValue: () => inputValue,
+    submit,
   }))
 
   useEffect(() => {
     const handleCorrectPath = (e: CustomEvent<{ detail: string }>) => {
       setTimeout(() => {
-        form.setFieldValue('path', e.detail)
+        setInputValue(e.detail as unknown as string)
+        // form.setFieldValue('path', e.detail)
         setFragments(extractPath(e.detail as unknown as string))
       })
     }
@@ -126,7 +236,7 @@ function PathContainer({ containerRef }: PathContainerProps) {
     return () => {
       document.removeEventListener(PATH_CORRECTION_EVENT, handleCorrectPath as EventListener)
     }
-  }, [form])
+  }, [])
 
   useLayoutEffect(() => {
     // 通过在dom中测量，计算出当前路径的宽度，如果宽度超过了容器宽度，则需要隐藏部分路径
@@ -173,12 +283,12 @@ function PathContainer({ containerRef }: PathContainerProps) {
   }, [fragments, focused])
 
   useEffect(() => {
-    form.setFieldValue('path', path ?? '')
-  }, [form, path])
+    setInputValue(path ?? '')
+  }, [path])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      form.submit()
+      submit()
     }
   }
 
@@ -193,11 +303,23 @@ function PathContainer({ containerRef }: PathContainerProps) {
     }, 100)
   }
 
-  const handleBlur = async () => {
-    const valid = await form.validateFields()
-    const _path = form.getFieldValue('path')
+  const handleValidate = async (value: string) => {
+    // 以s3://开头
+    if (value && !value.startsWith('s3://')) {
+      setError(t('bucket.pathMustStartWithS3'))
+      return false
+    }
 
-    if (valid && _path.split('?')[0] === path.split('?')[0]) {
+    setError('')
+    return true
+  }
+
+  const handleBlur = async () => {
+    const valid = await handleValidate(inputValue).catch(error => {
+      setError(error.message)
+    })
+
+    if (valid && inputValue.split('?')[0] === path.split('?')[0]) {
       setFocused(false)
     }
   }
@@ -222,8 +344,16 @@ function PathContainer({ containerRef }: PathContainerProps) {
     document.dispatchEvent(new CustomEvent(PAGENATION_CHANGE_EVENT, { detail: { pageNo: 1 } }))
   }, [onParamsChange])
 
-  const handleOnFinish = (values: InputValues) => {
-    const trimmedPath = values.path.trim()
+  const submit = useCallback(async () => {
+    const valid = await handleValidate(inputValue).catch(error => {
+      setError(error.message)
+    })
+
+    if (!valid) {
+      return
+    }
+
+    const trimmedPath = inputValue.trim()
     queryClient.removeQueries({
       queryKey: bucketKey.detail(trimmedPath),
     })
@@ -231,11 +361,11 @@ function PathContainer({ containerRef }: PathContainerProps) {
     setTimeout(() => {
       setFocused(false)
     }, 1000)
-  }
+  }, [onParamsChange, inputValue])
 
-  const handleValuesChange: FormProps['onValuesChange'] = (changedFields) => {
+  const handleValuesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // 去除开头和结尾的空格
-    form.setFieldValue('path', changedFields.path.trim())
+    setInputValue(e.target.value.trim())
   }
 
   const dropdownMenuProps: MenuProps = useMemo(() => {
@@ -252,119 +382,163 @@ function PathContainer({ containerRef }: PathContainerProps) {
 
   return (
     <>
-      <Form<InputValues>
-        layout="inline"
-        form={form}
-        className={clsx({
-          'w-full': focused || !path,
-          'visible': focused || !path,
-          'absolute': !focused && path,
-          'invisible': !focused && path,
-          'z-[-1]': !focused && path,
-        })}
-
-        onFinish={handleOnFinish}
-        initialValues={formInitialValues}
-        onValuesChange={handleValuesChange}
-      >
-        <Form.Item
-          label=""
-          name="path"
-          className="!flex-1 !m-0"
-          rules={[
-            {
-              pattern: /^s3:\/\//,
-              message: '路径必须以s3://开头',
-            },
-          ]}
-        >
-          <Input
-            className={clsx('w-full rounded-none border-0 !shadow-none')}
-            ref={inputRef}
-            allowClear
-            placeholder="输入地址检索"
-            onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
-          />
-        </Form.Item>
-      </Form>
-      <div
+      <PathForm className="relative" $focused={focused} $path={path}>
+        <PathInput
+          ref={inputRef}
+          type="text"
+          placeholder={t('bucket.searchPlaceholder')}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          value={inputValue}
+          theme={tokens}
+          onChange={handleValuesChange}
+        />
+        <ErrorMessage theme={tokens}>
+          {error}
+        </ErrorMessage>
+      </PathForm>
+      <PathContainerDiv
         id="path-container"
         ref={wrapperRef}
-        className={clsx({
-          'visible': !focused,
-          'invisible': focused || !path,
-          'z-[-1]': focused || !path,
-          'absolute': focused || !path,
-        }, 'flex items-center flex-1 cursor-text overflow-auto w-0 ml-1')}
+        $focused={focused}
+        $path={path}
         onClick={handleFocus}
       >
-        <div className="flex items-center">
+        <FlexItems>
           <PathFragment fragment="s3" path="" hideArrow onClick={handleGoHome} />
-          {rightIcon}
-        </div>
+          <RightIcon />
+        </FlexItems>
         {
           shortPathFragments.length > 0 && (
             <Dropdown
               rootClassName={styles.shortcutPathDropdown}
               menu={dropdownMenuProps}
             >
-              <div className="flex items-center">
-                <div className="hover:bg-blue-50 hover:text-blue-500 px-1 cursor-pointer rounded duration-100">
+              <FlexItems>
+                <ShortcutItem>
                   ...
-                </div>
-                {rightIcon}
-              </div>
+                </ShortcutItem>
+                <RightIcon />
+              </FlexItems>
             </Dropdown>
           )
         }
-        <div className="flex items-center">
+        <FlexItems>
           {fragments
             .slice(shortPathFragments.length)
             .map((fragment, index) => (
               <PathFragment key={index} hideArrow={index === 0} clickable={(index + shortPathFragments.length) !== (fragments.length - 1)} onClick={handleFragmentClick(fragment.path)} fragment={fragment.fragment} path={fragment.path} />
             ))}
-        </div>
-      </div>
-      <div id="path-contaner-shadow" className="absolute top-0 left-0 flex items-center flex-1 overflow-auto min-w-0 invisible z-[-1]" ref={wrapperShadowRef} />
+        </FlexItems>
+      </PathContainerDiv>
+      <PathContainerShadow id="path-contaner-shadow" ref={wrapperShadowRef} />
     </>
   )
 }
 
+// 最后的BucketHeader组件样式
+const HeaderContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  font-size: 14px;
+`
+
+const LeftContainer = styled.div`
+  display: flex;
+  flex: 1;
+  align-items: center;
+  border: 1px solid #e5e7eb; /* gray-200 */
+  border-radius: 0.25rem;
+  background-color: #fff;
+  height: 100%;
+`
+
+const GoParentButton = styled(Button)`
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid #e5e7eb; /* gray-200 */
+`
+
+const PathSection = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+`
+
+const InnerRightContainer = styled.div`
+  display: flex;
+  align-items: center;
+`
+
+const SearchButton = styled(Button)`
+  border-radius: 0;
+`
+
+const CopyButton = styled(Button)`
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+`
+
+const RightContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`
+
+const PageInput = styled.input`
+  width: 60px;
+  text-align: center;
+  border: 0;
+  box-shadow: none !important;
+  background-color: #fff;
+  outline: none;
+  padding: 0 0.5rem;
+`
+
+const Pagination = styled.div`
+  display: flex;
+  align-items: stretch;
+`
+
+const PrevPageButton = styled(Button)`
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+`
+
+const NextPageButton = styled(Button)`
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+`
+
 export default function BucketHeader() {
+  const { t } = useTranslation();
   const pathContainerRef = useRef<PathContainerRef>(null)
   const { pageNo, path = '', onParamsChange, total, pageSize } = useBucketContext()
   const isFetching = useIsFetching()
 
   const handleGoParent = () => {
-    let newPath = path
-    if (path.endsWith('/')) {
-      // s3://abc/ab/ => s3://abc/
-      newPath = path.replace(/[^/]+\/$/, '')
-    }
-    else {
-      // s3://abc/ab => s3://abc/
-      newPath = path.replace(/[^/]+$/, '')
+    const containerPath = pathContainerRef.current?.getInputValue()
+
+    if (!containerPath) {
+      return
     }
 
-    if (newPath === 's3://') {
-      newPath = ''
+    const paths = containerPath.split('/')
+    if (paths.length <= 3) {
+      return
     }
 
-    const params = {
-      path: newPath,
-    } as any
-
-    if (newPath === '') {
-      params.cluster = ''
-    }
-
-    onParamsChange?.(params)
+    const parent = paths.slice(0, -1).join('/')
+    onParamsChange?.({ path: `${parent}/`, pageNo: 1 })
+    document.dispatchEvent(new CustomEvent(PAGENATION_CHANGE_EVENT, { detail: { pageNo: 1 } }))
   }
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(pathContainerRef.current?.form.getFieldValue('path') ?? '')
-    message.success('已复制到剪贴板')
+    navigator.clipboard.writeText(path)
+    message.success(t('copied'))
   }
 
   const handlePageChange = (direction: 'prev' | 'next') => () => {
@@ -379,47 +553,49 @@ export default function BucketHeader() {
   }
 
   return (
-    <div className={clsx('flex gap-2 justify-between px-6 flex-nowrap', styles.header)}>
-      <div className="left flex flex-1 items-center border rounded-[4px] h-full">
-        {path && (
-          <Tooltip title="返回上级目录" placement="bottomLeft">
-            <Button type="text" className="rounded-tr-none rounded-br-none border-r-[1px] border-r-solid border-r-gray-200" icon={<ArrowUpOutlined />} onClick={handleGoParent} />
-          </Tooltip>
-        )}
-        <div className="path flex items-center justify-between flex-1">
+    <HeaderContainer className={styles.header}>
+      <LeftContainer>
+        <Tooltip title={t('bucket.returnToParent')} placement="bottomLeft">
+          <Button  type="text" disabled={!path || path === 's3://'} icon={<ArrowUpOutlined />} onClick={handleGoParent} />
+        </Tooltip>
+        <PathSection>
           <PathContainer containerRef={pathContainerRef} />
-          <div className="inner-right flex items-center">
-            <Tooltip title="检索路径">
-              <Button type="text" className="rounded-none" disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.form.submit()} />
+          <InnerRightContainer>
+            <Tooltip title={t('bucket.searchPath')}>
+              <Button type="text" disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
             </Tooltip>
-            <Tooltip title="复制路径">
-              <Button type="text" className="rounded-tl-none rounded-bl-none" icon={<CopyOutlined />} onClick={handleCopy} />
+            <Tooltip title={t('bucket.copyPath')}>
+              <Button type="text" disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />
             </Tooltip>
-          </div>
-        </div>
-      </div>
-      <div className="right flex items-center gap-2">
+          </InnerRightContainer>
+        </PathSection>
+      </LeftContainer>
+      <RightContainer>
         {path.endsWith('/') && (
-          <Space.Compact>
-            <Tooltip title="上一页">
-              <Button
+          <Pagination>
+            <Tooltip title={t('bucket.prevPage')}>
+              <PrevPageButton
                 disabled={!pageNo || pageNo === 1}
                 onClick={handlePageChange('prev')}
                 icon={<LeftOutlined />}
               />
             </Tooltip>
-            <Input className="w-[60px] text-center" min={1} readOnly value={pageNo ?? '1'} />
-            <Tooltip title="下一页">
-              <Button disabled={total < pageSize} onClick={handlePageChange('next')} icon={<RightOutlined />} />
+            <PageInput min={1} readOnly value={pageNo ?? '1'} />
+            <Tooltip title={t('bucket.nextPage')}>
+              <NextPageButton
+                disabled={total < pageSize}
+                onClick={handlePageChange('next')}
+                icon={<RightOutlined />}
+              />
             </Tooltip>
-          </Space.Compact>
+          </Pagination>
         )}
         {
           !path.endsWith('/') && path !== '' && path !== '/' && (
-            <Button icon={<FolderOutlined />} onClick={() => document.dispatchEvent(new CustomEvent('open-bucket-list'))}>目录</Button>
+            <Button icon={<FolderOutlined />} onClick={() => document.dispatchEvent(new CustomEvent('open-bucket-list'))}>{t('bucket.directory')}</Button>
           )
         }
-      </div>
-    </div>
+      </RightContainer>
+    </HeaderContainer>
   )
 }
