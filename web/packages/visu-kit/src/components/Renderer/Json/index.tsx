@@ -9,7 +9,7 @@ import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext, useCodeViewerContext } from '../../../components/CodeViewer/context'
 import type { CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
 import FullScreenButton from '../../../components/FullscreenButton'
-import { gid } from '../../../utils'
+import { get, gid } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { usePreviewBlockContext } from '../contexts/preview.context'
@@ -252,7 +252,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
                     <FullHeightWrapper
                       renderAs={innerBlock.renderAs as RenderType}
                       name={innerBlock.field}
-                      value={innerBlock.field === '__whole__' ? parsedValue : parsedValue[innerBlock.field] ?? ''}
+                      value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field) ?? ''}
                       extraTail={
                         innerBlock.field !== '__whole__' && (
                           <>

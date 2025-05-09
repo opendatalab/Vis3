@@ -382,7 +382,7 @@ function PathContainer({ containerRef }: PathContainerProps) {
 
   return (
     <>
-      <PathForm className="relative" $focused={focused} $path={path}>
+      <PathForm $focused={focused} $path={path}>
         <PathInput
           ref={inputRef}
           type="text"
@@ -556,16 +556,16 @@ export default function BucketHeader() {
     <HeaderContainer className={styles.header}>
       <LeftContainer>
         <Tooltip title={t('bucket.returnToParent')} placement="bottomLeft">
-          <Button  type="text" disabled={!path || path === 's3://'} icon={<ArrowUpOutlined />} onClick={handleGoParent} />
+          <GoParentButton type="text" disabled={!path || path === 's3://'} icon={<ArrowUpOutlined />} onClick={handleGoParent} />
         </Tooltip>
         <PathSection>
           <PathContainer containerRef={pathContainerRef} />
           <InnerRightContainer>
             <Tooltip title={t('bucket.searchPath')}>
-              <Button type="text" disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
+              <SearchButton type="text" disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
             </Tooltip>
             <Tooltip title={t('bucket.copyPath')}>
-              <Button type="text" disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />
+              <CopyButton type="text" disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />
             </Tooltip>
           </InnerRightContainer>
         </PathSection>

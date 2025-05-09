@@ -4,6 +4,7 @@ import type React from 'react'
 import type { ForwardedRef } from 'react'
 import { forwardRef } from 'react'
 
+import clsx from 'clsx'
 import { useRenderCardContext } from './contexts/card.context'
 
 export type RenderCardProps = React.PropsWithChildren<{
@@ -50,11 +51,11 @@ function InnerRenderCard({ className, name, title, titleExtra, extra, children, 
       headStyle={{
         userSelect: 'none',
       }}
-      className={className}
+      className={clsx(className, 'field-renderer')}
       title={title ?? (
         <TitleContainer>
           <Tooltip title={name}>
-            <FieldName>{name}</FieldName>
+            <FieldName className="field-name">{name}</FieldName>
           </Tooltip>
           {builtIns}
           {titleExtra}

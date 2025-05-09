@@ -1,15 +1,13 @@
-import Icon, { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
+import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
 import { useTranslation } from '@visu/i18n'
-import { Button, List, Popover, Tag, Tooltip, message } from 'antd'
+import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback } from 'react'
 
-import StatisticsSvg from '../../assets/statistics.svg?react'
 import { BucketItem } from '../../types'
 import { download } from '../../utils'
 import { BucketIcon, FolderIcon } from '../Icon'
-import { BucketInfo } from '../Renderer/Folder'
 import { getFullPath, getPathIcon } from '../Renderer/utils'
 import { useBucketContext } from './context'
 
@@ -116,25 +114,6 @@ export default function BucketList({ objects, highlightCurrent, pathWithoutQuery
                   onClick={() => download(downloadUrl, item.fullPath!)}
                   icon={<DownloadOutlined type="text" style={{ color: 'var(--ant-primary-color)' }} />}
                 />
-              )}
-              {item.type === 'directory' && (
-                <Tooltip title={t('renderer.showDirInfo')}>
-                  <Popover
-                    title={t('renderer.dirInfo')}
-                    trigger="click"
-                    destroyTooltipOnHide
-                    content={
-                      <BucketInfo path={item.fullPath!} />
-                    }
-                  >
-                    <Button
-                      style={{ flexShrink: 0 }}
-                      size="small"
-                      type="text"
-                      icon={<Icon component={StatisticsSvg} />}
-                    />
-                  </Popover>
-                </Tooltip>
               )}
             </ItemContent>
             <TagsContainer $hidden={hideRight}>

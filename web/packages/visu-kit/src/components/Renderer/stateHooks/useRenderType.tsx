@@ -1,7 +1,7 @@
 import { DownOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
 import { Divider, Dropdown, type MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
-
 export type RenderType = 'raw' | 'image' | 'html' | 'json' | 'markdown' | 'content_list' | 'img_list'
 
 const renderOptions = [
@@ -46,6 +46,14 @@ const renderOptions = [
   },
 ]
 
+const StyledRenderTrigger = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  
+`
+
 export default function useRenderType(initialRenderType: RenderType = 'raw'): [React.ReactNode, { renderType: RenderType | undefined }] {
   const [renderType, setRenderType] = useState<RenderType | undefined>(initialRenderType)
 
@@ -62,10 +70,10 @@ export default function useRenderType(initialRenderType: RenderType = 'raw'): [R
       <>
         <Divider type="vertical" />
         <Dropdown menu={dropdownMenu}>
-          <div className="flex items-center gap-1 font-normal cursor-pointer">
+          <StyledRenderTrigger>
             {renderOptions.find(item => item.value === renderType)?.label}
             <DownOutlined />
-          </div>
+          </StyledRenderTrigger>
         </Dropdown>
       </>
     )

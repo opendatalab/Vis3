@@ -1,12 +1,10 @@
-import Icon, { CopyOutlined, DownloadOutlined, LoadingOutlined } from '@ant-design/icons'
+import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from '@visu/i18n'
-import { Button, List, Popover, Tag, Tooltip, message } from 'antd'
+import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback, useMemo, useRef } from 'react'
 
-import StatisticsSvg from '../../../assets/statistics.svg?react'
 import { BucketItemWrapper } from '../../../components/BucketPreviewer/BucketList'
 import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
@@ -24,47 +22,6 @@ export interface FolderRendererProps extends Omit<RendererProps, 'value'> {
   showHeader?: boolean
   onPathChange?: (path: string) => void
   path: string
-}
-
-interface BucketInfoProps {
-  path: string
-}
-
-const FlexContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`
-
-const TextBase = styled.div`
-  font-size: 1rem;
-`
-
-export function BucketInfo({ path }: BucketInfoProps) {
-  const { data, ...sizeQuery } = useQuery({
-    queryKey: ['bucket-size', path],
-    queryFn: () => Promise.resolve('TODO'),
-  })
-  const { t } = useTranslation()
-
-  if (sizeQuery.isLoading) {
-    return <LoadingOutlined spin />
-  }
-
-  if (!data) {
-    return null
-  }
-
-  const size = data?.data
-  const totalSize = formatter.format('fileSize', size)
-
-  return (
-    <FlexContainer>
-      <TextBase>
-        {t('renderer.fileSize')} {totalSize}
-      </TextBase>
-    </FlexContainer>
-  )
 }
 
 const StyledListItem = styled(List.Item)<{ isHighlighted?: boolean, isNotCurrent?: boolean }>`
@@ -198,26 +155,8 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
                   size="small"
                   type="text"
                   onClick={() => download(downloadUrl,item.fullPath!)}
-                  icon={<DownloadOutlined type="text" className="text-primary" />}
+                  icon={<DownloadOutlined type="text" />}
                 />
-              )}
-              {item.type === 'directory' && (
-                <Tooltip title={t('renderer.showDirInfo')}>
-                  <Popover
-                    title={t('renderer.dirInfo')}
-                    trigger="click"
-                    destroyTooltipOnHide
-                    content={
-                      <BucketInfo path={item.fullPath!} />
-                    }
-                  >
-                    <ShrinkButton
-                      size="small"
-                      type="text"
-                      icon={<Icon component={StatisticsSvg} />}
-                    />
-                  </Popover>
-                </Tooltip>
               )}
             </FlexRow>
             <TagInfo isHidden={id !== 'origin'}>

@@ -47,6 +47,10 @@ const CursorHelp = styled(InfoCircleOutlined)`
   cursor: help;
 `
 
+const StyledMediaCard = styled(MediaCard)`
+  height: 100%;
+`
+
 export interface BlockInfo {
   id: string
   path: string
@@ -422,7 +426,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams }: Rend
       mediaUrl = path
     }
 
-    return <MediaCard className="h-full" name={basename} value={mediaUrl} type={s3PathType as PathType} extraTail={extra} titleExtra={extraTitle} />
+    return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType as PathType} extraTail={extra} titleExtra={extraTitle} />
   }, [basename, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType])
 
   return (

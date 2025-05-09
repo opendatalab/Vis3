@@ -1,6 +1,7 @@
 import { CloseOutlined } from '@ant-design/icons'
+import styled from '@emotion/styled'
+import { useTranslation } from '@visu/i18n'
 import { Button, Tooltip } from 'antd'
-import clsx from 'clsx'
 import { Draft07 } from 'json-schema-library'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import ReactGridLayout from 'react-grid-layout'
@@ -13,7 +14,7 @@ import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext } from '../../../components/CodeViewer/context'
 import type { CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
 import FullScreenButton from '../../../components/FullscreenButton'
-import { gid } from '../../../utils'
+import { get, gid } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { RenderCardContext } from '../contexts/card.context'
@@ -55,6 +56,11 @@ const htmlValidFields = ['html', 'main_html', 'body_bytes']
 const richValidFields = ['content_list']
 const fileValidFields = ['path', 'track_loc']
 const otherValidFields = ['content', 'img_list']
+
+const StyledWrapper = styled(FieldRendererWrapper)`
+  height: 100%;
+  overflow: auto;
+`
 
 export function FieldRendererWrapper({ renderAs, ...props }: FieldRendererWrapperProps) {
   const [renderTypeNode, { renderType }] = useRenderType(renderAs)
@@ -128,6 +134,40 @@ export class FieldChain {
   }
 }
 
+const ExtraContainer = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+`
+
+const WrapperDiv = styled.div`
+  min-height: ${({ height }: { height: number }) => `${height}px`};
+`
+
+const ErrorContainer = styled.div`
+  width: 100%;
+  background-color: #fee2e2;
+  padding: 0.5rem;
+`
+
+const ErrorText = styled.div`
+  color: #ef4444;
+`
+
+const JsonViewerStyled = styled(JsonViewer)<{ visible: boolean }>`
+  display: ${({ visible }) => (visible ? 'block' : 'none')};
+`
+
+const PreviewContainer = styled.div<{ visible: boolean }>`
+  display: ${({ visible }) => (visible ? 'block' : 'none')};
+`
+
+const StyledGridItem = styled.div`
+  background-color: #f0f0f0;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+`
+
 export default function JsonlCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const { id: propsBlockId, basename, path } = usePreviewBlockContext()
   const [stateValue, setStateValue] = useState(value)
@@ -136,6 +176,8 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
   const [jsonError, setJsonError] = useState('')
   const cardRef = useRef<HTMLDivElement>(null)
   const [previewConfig, setPreviewConfig] = useState<FieldBlock[]>([])
+  const { t } = useTranslation()
+  
   const parsedValue = useMemo(() => {
     try {
       setJsonError('')
@@ -186,7 +228,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
           return {
             id: gid(),
             field: _item,
-            value: parsedValue[_item] ?? parsedValue,
+            value: get(parsedValue, _item) ?? parsedValue,
             renderAs: defaultRenderAs[_item as keyof typeof defaultRenderAs] ?? 'raw' as RenderType,
           }
         })
@@ -269,7 +311,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
     if (wrapperRef.current) {
       const wrapRect = wrapperRef.current.getBoundingClientRect()
       const bucketContainer = document.getElementById('bucketContainer')
-      const bucketContainerStyle = window.getComputedStyle(bucketContainer!)
+      const bucketContainerStyle = window.getComputedStyle(bucketContainer?.parentElement!)
 
       setSize({
         width: wrapRect.width,
@@ -319,76 +361,64 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
     <FieldContext.Provider value={fieldContextValue}>
       <CodeViewerContext.Provider value={codeViewerContextValue}>
         <RenderCard
-          className={clsx(className)}
+          className={className}
           name={name}
           ref={cardRef}
           titleExtra={titleExtra}
           extra={(
-            <div className="flex gap-2 items-center">
+            <ExtraContainer>
               {!preview && wrapButton}
               {previewButton}
               <FullScreenButton elementRef={cardRef as React.RefObject<HTMLElement>} />
               {copyButton}
               {extraTail}
-            </div>
+            </ExtraContainer>
           )}
         >
           <div ref={wrapperRef}>
             {
               jsonError && (
-                <div className="w-full bg-red-100 p-2">
-                  <div className="text-red-500">{jsonError}</div>
-                </div>
+                <ErrorContainer>
+                  <ErrorText>{jsonError}</ErrorText>
+                </ErrorContainer>
               )
             }
-            <div
-              className={clsx(className, {
-                hidden: !preview,
-                block: preview,
-              })}
-              style={{
-                minHeight: size.height,
-              }}
-            >
-              <ReactGridLayout
-                layout={layout}
-                cols={96}
-                rowHeight={4}
-                draggableHandle=".field-name"
-                width={size.width}
-                margin={[0, 0]}
-                className="draggable-layout"
-                resizeHandles={['nw', 'se', 'ne', 'sw']}
-              >
-                {previewConfig.map((innerBlock) => {
-                  return (
-                    <div key={innerBlock.id} className="relative bg-slate-50">
-                      <FieldRendererWrapper
-                        renderAs={innerBlock.renderAs as RenderType}
-                        name={innerBlock.field}
-                        className="h-full overflow-auto"
-                        value={innerBlock.field === '__whole__' ? parsedValue : parsedValue[innerBlock.field] ?? ''}
-                        extraTail={
-                          innerBlock.field !== '__whole__' && (
-                            <>
-                              {/* <Divider type="vertical" className="mx-[4px]" /> */}
-                              <Tooltip title="关闭">
-                                <Button size="small" type="text" icon={<CloseOutlined />} onClick={() => handleClose?.(innerBlock.id)} />
-                              </Tooltip>
-                            </>
-                          )
-                        }
-                      />
-                    </div>
-                  )
-                })}
-              </ReactGridLayout>
-            </div>
-            <JsonViewer className={clsx({
-              hidden: preview,
-              block: !preview,
-            })}
-            />
+            <PreviewContainer visible={preview}>
+              <WrapperDiv height={size.height}>
+                <ReactGridLayout
+                  layout={layout}
+                  cols={96}
+                  rowHeight={4}
+                  draggableHandle=".field-name"
+                  width={size.width}
+                  margin={[0, 0]}
+                  className="draggable-layout"
+                  resizeHandles={['nw', 'se', 'ne', 'sw']}
+                >
+                  {previewConfig.map((innerBlock) => {
+                    return (
+                      <StyledGridItem key={innerBlock.id}>
+                        <StyledWrapper
+                          renderAs={innerBlock.renderAs as RenderType}
+                          name={innerBlock.field}
+                          value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field) ?? ''}
+                          extraTail={
+                            innerBlock.field !== '__whole__' && (
+                              <>
+                                <Tooltip title={t('renderer.close')}>
+                                  <Button size="small" type="text" icon={<CloseOutlined />} onClick={() => handleClose?.(innerBlock.id)} />
+                                </Tooltip>
+                              </>
+                            )
+                          }
+                        />
+                      </StyledGridItem>
+                    )
+                  })}
+                </ReactGridLayout>
+              </WrapperDiv>
+            </PreviewContainer>
+            <JsonViewerStyled visible={!preview} />
           </div>
         </RenderCard>
       </CodeViewerContext.Provider>

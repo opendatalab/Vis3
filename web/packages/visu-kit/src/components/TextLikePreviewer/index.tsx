@@ -11,7 +11,7 @@ import { usePreviewBlockContext } from '../../components/Renderer/contexts/previ
 import renders from '../../components/Renderer/index'
 import type { PathType } from '../../components/Renderer/utils'
 import type { RendererProps } from '../Renderer/Card'
-import './index.module.css'
+import styles from './index.module.css'
 
 export interface TextLikePreviewerProps extends Omit<RendererProps, 'value'> {
   className?: string
@@ -46,7 +46,7 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
   return (
     <Render
       name={name}
-      className={clsx(className, 'text-like-previewer flex flex-col h-full', {
+      className={clsx(className, styles.textLikePreviewer, {
         'original-previewer': id === 'origin',
       })}
       value={stateContent}

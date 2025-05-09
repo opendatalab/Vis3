@@ -1,3 +1,4 @@
+import { css, Global } from '@emotion/react'
 import styled from '@emotion/styled'
 import 'github-markdown-css/github-markdown.css'
 import { useMemo } from 'react'
@@ -19,6 +20,12 @@ const MarkdownContainer = styled.div<{ $inline?: boolean }>`
   `}
   
   /* github-markdown-css内容将通过className应用 */
+`
+
+const globalStyle = css`
+  .markdown-body svg {
+    display: inline-block;
+  }
 `
 
 export default function MarkdownPreview({ value, inline}: MarkdownPreviewProps) {
@@ -46,6 +53,7 @@ export default function MarkdownPreview({ value, inline}: MarkdownPreviewProps) 
 
   return (
     <MarkdownContainer $inline={inline} className="markdown-body">
+      <Global styles={globalStyle} />
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeMathjax, rehypeRaw]}
