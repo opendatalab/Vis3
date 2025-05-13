@@ -1,0 +1,45 @@
+from typing import Optional
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
+from visu.internal.api.v1.schema.request.user import UserCreate
+from visu.internal.crud.base import BaseCrud
+from visu.internal.models.user import User
+from visu.internal.utils.security import get_password_hash, verify_password
+
+
+class UserCRUD(BaseCrud[User, UserCreate, UserCreate]):
+    async def get_by_username(self, db: AsyncSession, username: str) -> Optional[User]:
+        """
+        通过用户名获取用户
+        """
+        result = await db.execute(select(User).filter(User.username == username))
+        return result.scalars().first()
+
+    async def create(self, db: AsyncSession, *, obj_in: UserCreate) -> User:
+        """
+        创建新用户，对密码进行哈希处理
+        """
+        db_obj = User(
+            username=obj_in.username,
+            hashed_password=get_password_hash(obj_in.password),
+        )
+        db.add(db_obj)
+        await db.commit()
+        await db.refresh(db_obj)
+        return db_obj
+
+    async def authenticate(self, db: AsyncSession, *, username: str, password: str) -> Optional[User]:
+        """
+        验证用户凭据
+        """
+        user = await self.get_by_username(db, username=username)
+        if not user:
+            return None
+        if not verify_password(password, user.hashed_password):
+            return None
+        return user
+
+
+user_crud = UserCRUD(User) 
