@@ -3,6 +3,8 @@ import type { EditorState } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
 
+export const JSON_KEY_CLICK_EVENT = 'json-key-click'
+
 export type KeyPath = (string | number)[]
 
 export interface CustomEventJsonNodeDetail {
@@ -233,7 +235,7 @@ function handleClick(elem: HTMLElement) {
   const parentField = elem.closest('.field-renderer')?.querySelector('.field-name')?.textContent
   const field = elem.getAttribute('data-key-path')
 
-  document.dispatchEvent(new CustomEvent('json-key-click', {
+  document.dispatchEvent(new CustomEvent(JSON_KEY_CLICK_EVENT, {
     detail: {
       field,
       blockId,

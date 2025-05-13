@@ -2,19 +2,19 @@ import { CloseOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import { useTranslation } from '@visu/i18n'
 import { Button, Tooltip } from 'antd'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactGridLayout from 'react-grid-layout'
 
 import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext, useCodeViewerContext } from '../../../components/CodeViewer/context'
-import type { CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
+import { JSON_KEY_CLICK_EVENT, type CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
 import FullScreenButton from '../../../components/FullscreenButton'
 import { get, gid } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { usePreviewBlockContext } from '../contexts/preview.context'
 import type { FieldBlock } from '../Jsonl'
-import { FieldChain, FieldRendererWrapper, inferDefaultRenderAs } from '../Jsonl'
+import { FieldChain, FieldRendererWrapper, inferDefaultRenderAs, useContainerSize } from '../Jsonl'
 import useCopy from '../stateHooks/useCopy'
 import usePreview from '../stateHooks/usePreview'
 import type { RenderType } from '../stateHooks/useRenderType'
@@ -60,16 +60,13 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   const { id: propsBlockId, basename } = usePreviewBlockContext()
   const [copyButton] = useCopy(stateValue)
   const { t } = useTranslation()
-  const [size, setSize] = useState({
-    width: 0,
-    height: 0,
-  })
   const cardRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [jsonError, setJsonError] = useState('')
   const subOpendKeys = useRef<Record<string, FieldChain>>({
     'origin-__whole__': new FieldChain(''),
   })
+  const size = useContainerSize(wrapperRef.current)
   const parsedValue = useMemo(() => {
     try {
       setJsonError('')
@@ -109,19 +106,6 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
     setPreviewConfig([])
   }, [basename])
 
-  useLayoutEffect(() => {
-    if (wrapperRef.current) {
-      const wrapRect = wrapperRef.current.getBoundingClientRect()
-      const bucketContainer = document.getElementById('bucketContainer')
-      const bucketContainerStyle = window.getComputedStyle(bucketContainer!)
-
-      setSize({
-        width: wrapRect.width,
-        height: window.innerHeight - wrapRect.top - Number.parseInt(bucketContainerStyle.paddingBottom) - 1,
-      })
-    }
-  }, [])
-
   useEffect(() => {
     const handleJsonKeyOnClick = (e: CustomEvent<CustomEventJsonNodeDetail>) => {
       // __whole__内再点击字段，不再内部打开预览区块，防止套娃
@@ -130,7 +114,6 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
       }
 
       const objectField = e.detail.field
-      const propValueType = e.detail.valueType
       const blockId = e.detail.blockId
       const parentField = e.detail.parentField ?? '__whole__'
       const indexKey = `${blockId}-${objectField}`
@@ -138,7 +121,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
 
       const parentFieldChain = subOpendKeys.current[parentIndexKey]
       const fieldChain = new FieldChain(objectField, parentFieldChain)
-      const renderAs = inferDefaultRenderAs(objectField, propValueType, e.detail.value)
+      const renderAs = inferDefaultRenderAs(objectField, e.detail.value)
 
       subOpendKeys.current[indexKey] = fieldChain
 
@@ -165,10 +148,10 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
       setPreview(true)
     }
     // 监听json-key-click事件
-    document.addEventListener('json-key-click', handleJsonKeyOnClick as EventListener)
+    document.addEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
 
     return () => {
-      document.removeEventListener('json-key-click', handleJsonKeyOnClick as EventListener)
+      document.removeEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
     }
   }, [propsBlockId, previewConfig, parsedValue, setPreview, name])
 
@@ -252,7 +235,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
                     <FullHeightWrapper
                       renderAs={innerBlock.renderAs as RenderType}
                       name={innerBlock.field}
-                      value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field) ?? ''}
+                      value={innerBlock.field === '__whole__' ? stateValue : get(parsedValue, innerBlock.field) ?? ''}
                       extraTail={
                         innerBlock.field !== '__whole__' && (
                           <>

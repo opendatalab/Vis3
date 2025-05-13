@@ -42,8 +42,8 @@
   "copied": "Copied",
 
   "upload": {
-    "drag": "Click or drag file to this area to upload",
-    "recommend": "Recommend format: json, jsonl, jsonl.gz compressed file, warc, warc.gz, epub"
+    "drag": "Click or drag file to this area to upload to browser",
+    "recommend": "Support format: json, jsonl, jsonl.gz, html"
   },
 
   "renderer": {

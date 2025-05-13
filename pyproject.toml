@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "VisU"
+version = "0.1.0"
+description = "Visualize s3 data"
+authors = [
+    "shenguanlin <shenguanlin@pjlab.org.cn>",
+]
+repository = "https://github.com/OpenDataLab/VisU"
+readme = "README.md"
+license = "Apache 2.0"
+
+packages = [{include = "visu"}]
+
+[tool.poetry.dependencies]
+python = "==3.11.*"
+fastapi = "^0.115.12"
+loguru = "^0.6.0"
+sqlalchemy = "^2.0.40"
+alembic = "^1.15.2"
+pydantic = "^2.11.4"
+pydantic-settings = "^2.9.1"
+boto3 = "^1.38.14"
+python-magic = "^0.4.27"
+ebooklib = "^0.19"
+mobi = "^0.3.3"
+fastwarc = "^0.15.2"
+beautifulsoup4 = "^4.13.4"
+uvicorn = "^0.34.2"
+appdirs = "^1.4.4"
+cryptography = "^44.0.3"
+orjson = "^3.10.18"
+httpx = "^0.28.1"
+warcio = "^1.7.5"
+cchardet = "2.2.0a2"
+python-jose = "^3.4.0"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-multipart = "^0.0.20"
+
+[tool.poetry.scripts]
+visu = "visu.main:cli"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

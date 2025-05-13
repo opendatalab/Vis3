@@ -10,6 +10,7 @@
 }
 
 .fileList {
+  height: calc(100vh - 88px);
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
   
@@ -19,5 +20,11 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     max-width: 180px;
+  }
+
+  & > :global(.ant-spin-nested-loading) {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
   }
 }

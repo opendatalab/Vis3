@@ -441,8 +441,12 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
       mediaUrl = path
     }
 
+    if (dataSource) {
+      mediaUrl = dataSource.content!
+    }
+
     return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType as PathType} extraTail={extra} titleExtra={extraTitle} />
-  }, [basename, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType])
+  }, [basename, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType, dataSource])
 
   return (
     <PreviewBlockContext.Provider value={contextValue}>

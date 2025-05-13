@@ -43,8 +43,8 @@
   "copied": "已复制",
 
   "upload": {
-    "drag": "点击或拖拽文件到此区域上传",
-    "recommend": "推荐格式: json, jsonl, jsonl.gz压缩文件, warc, warc.gz, epub"
+    "drag": "点击或拖拽文件到此区域上传到浏览器",
+    "recommend": "支持格式: json, jsonl, jsonl.gz, html"
   },
 
   "renderer": {

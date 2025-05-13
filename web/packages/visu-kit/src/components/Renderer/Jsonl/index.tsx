@@ -12,7 +12,7 @@ import './index.css'
 
 import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext } from '../../../components/CodeViewer/context'
-import type { CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
+import { JSON_KEY_CLICK_EVENT, type CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
 import FullScreenButton from '../../../components/FullscreenButton'
 import { get, gid } from '../../../utils'
 import type { RendererProps } from '../Card'
@@ -78,17 +78,44 @@ export function FieldRendererWrapper({ renderAs, ...props }: FieldRendererWrappe
   )
 }
 
-export function inferDefaultRenderAs(field: string, valueType: string, value: any) {
-  if (['object', 'array'].includes(valueType)) {
-    return 'json'
-  }
+export function useContainerSize(wrapper: HTMLDivElement | null) {
+  const [size, setSize] = useState({
+    width: 0,
+    height: 0,
+  })
+  
+  useLayoutEffect(() => {
+    const bucketContainer = document.getElementById('bucketContainer')
+    if (wrapper) {
+      const wrapRect = wrapper.getBoundingClientRect()
+      let height = window.innerHeight - wrapRect.top - 1
+  
+      if (bucketContainer) {
+        const bucketContainerStyle = window.getComputedStyle(bucketContainer?.parentElement!)
+  
+        height -= Number.parseInt(bucketContainerStyle.paddingBottom)
+      } else {
+        height = wrapper.parentElement!.clientHeight
+      }
+  
+      setSize({
+        width: wrapRect.width,
+        height,
+      })
+    }
+  }, [wrapper])
+    
 
+  return size
+}
+
+export function inferDefaultRenderAs(field: string, value: any) {
   if (field === 'content') {
     return 'markdown'
   }
 
   // 去除换行 \n \r
-  if (valueType === 'string' && value.replace(/\r|\n/g, '').startsWith('<!DOCTYPE html>')) {
+  if (typeof value === 'string' && value.replace(/\r|\n/g, '').startsWith('<!DOCTYPE html>')) {
     return 'html'
   }
 
@@ -164,7 +191,6 @@ const PreviewContainer = styled.div<{ visible: boolean }>`
 
 const StyledGridItem = styled.div`
   background-color: #f0f0f0;
-  padding: 0.5rem;
   border-radius: 0.25rem;
 `
 
@@ -247,10 +273,6 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
   const subOpendKeys = useRef<Record<string, FieldChain>>({
     'origin-__whole__': new FieldChain(''),
   })
-  const [size, setSize] = useState({
-    width: 0,
-    height: 0,
-  })
 
   useEffect(() => {
     setStateValue(value)
@@ -265,7 +287,6 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
   useEffect(() => {
     const handleJsonKeyOnClick = (e: CustomEvent<CustomEventJsonNodeDetail>) => {
       const objectField = e.detail.field
-      const propValueType = e.detail.valueType
       const blockId = e.detail.blockId
       const parentField = e.detail.parentField ?? '__whole__'
       const indexKey = `${blockId}-${objectField}`
@@ -273,7 +294,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
 
       const parentFieldChain = subOpendKeys.current[parentIndexKey]
       const fieldChain = new FieldChain(objectField, parentFieldChain)
-      const renderAs = inferDefaultRenderAs(objectField, propValueType, e.detail.value)
+      const renderAs = inferDefaultRenderAs(objectField, e.detail.value)
 
       subOpendKeys.current[indexKey] = fieldChain
 
@@ -300,25 +321,14 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
       setPreview(true)
     }
     // 监听json-key-click事件
-    document.addEventListener('json-key-click', handleJsonKeyOnClick as EventListener)
+    document.addEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
 
     return () => {
-      document.removeEventListener('json-key-click', handleJsonKeyOnClick as EventListener)
+      document.removeEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
     }
   }, [propsBlockId, previewConfig, parsedValue, setPreview])
 
-  useLayoutEffect(() => {
-    if (wrapperRef.current) {
-      const wrapRect = wrapperRef.current.getBoundingClientRect()
-      const bucketContainer = document.getElementById('bucketContainer')
-      const bucketContainerStyle = window.getComputedStyle(bucketContainer?.parentElement!)
-
-      setSize({
-        width: wrapRect.width,
-        height: window.innerHeight - wrapRect.top - Number.parseInt(bucketContainerStyle.paddingBottom) - 1,
-      })
-    }
-  }, [])
+  const size = useContainerSize(wrapperRef.current)
 
   const codeViewerContextValue = useMemo(() => ({
     wrap: wrap ?? false,
