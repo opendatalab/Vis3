@@ -10,6 +10,7 @@ from visu.internal.common.db import get_db
 from visu.internal.config import settings
 from visu.internal.crud.user import user_crud
 from visu.internal.models.user import User
+from visu.internal.schema.state import AuthState
 from visu.internal.schema.user import Token
 from visu.internal.utils.security import create_access_token
 
@@ -42,15 +43,23 @@ async def login(
     """
     用户登录，获取访问令牌
     """
-    user = await user_crud.authenticate(
+    result = await user_crud.authenticate(
         db, username=user_in.username, password=user_in.password
     )
-    if not user:
+    if result == AuthState.USERNAME_ERROR:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户名或密码不正确",
+            detail="用户名不正确",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    elif result == AuthState.PASSWORD_ERROR:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="密码不正确",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    else:
+        user = result
     
     access_token = create_access_token(subject=user.id)
 
@@ -61,7 +70,7 @@ async def login(
         httponly=True, 
         secure=settings.SCHEME == "https", 
         samesite="lax",
-        expires=datetime.now(timezone.utc) + timedelta(days=30),
+        expires=datetime.now(timezone.utc) + timedelta(minutes=settings.TOKEN_ACCESS_EXPIRE_MINUTES),
     )
     
     return {"access_token": access_token, "token_type": settings.TOKEN_TYPE}

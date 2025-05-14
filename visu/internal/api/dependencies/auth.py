@@ -1,8 +1,7 @@
-from typing import Optional
-
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from visu.internal.common.db import get_db
@@ -12,10 +11,10 @@ from visu.internal.models.user import User
 from visu.internal.schema.user import TokenPayload
 
 # 设置token_url，但不自动抛出错误
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/v1/auth/login", auto_error=False)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login", auto_error=False)
 
 
-async def get_token_from_request(request: Request, token: Optional[str] = Depends(oauth2_scheme)) -> Optional[str]:
+async def get_token_from_request(request: Request, token: str | None = Depends(oauth2_scheme)) -> str | None:
     """
     从请求中获取token，优先从Authorization头中获取，其次从cookie中获取
     """
@@ -29,7 +28,7 @@ async def get_token_from_request(request: Request, token: Optional[str] = Depend
 async def get_current_user(
     request: Request,
     db: Session = Depends(get_db), 
-    token: Optional[str] = Depends(get_token_from_request)
+    token: str | None = Depends(get_token_from_request)
 ) -> User:
     """
     获取当前用户
@@ -41,6 +40,7 @@ async def get_current_user(
     )
     
     if not token:
+        logger.warning("未提供认证令牌")
         raise credentials_exception
         
     try:
@@ -49,13 +49,16 @@ async def get_current_user(
         )
         user_id: str = payload.get("sub")
         if user_id is None:
+            logger.warning("Token中未包含用户ID")
             raise credentials_exception
         token_data = TokenPayload(sub=user_id)
-    except JWTError:
+    except JWTError as e:
+        logger.error(f"JWT解码错误: {str(e)}")
         raise credentials_exception
     
     user = await user_crud.get(db, id=int(token_data.sub))
     if user is None:
+        logger.warning(f"找不到ID为 {token_data.sub} 的用户")
         raise credentials_exception
     return user
 
@@ -63,8 +66,8 @@ async def get_current_user(
 async def get_current_user_when_available(
     request: Request,
     db: Session = Depends(get_db), 
-    token: Optional[str] = Depends(get_token_from_request)
-) -> Optional[User]:
+    token: str | None = Depends(get_token_from_request)
+) -> User | None:
     """
     尝试获取当前用户，但不强制要求
     """
@@ -77,8 +80,8 @@ async def get_current_user_when_available(
 async def get_optional_current_user(
     request: Request,
     db: Session = Depends(get_db), 
-    token: Optional[str] = Depends(get_token_from_request)
-) -> Optional[User]:
+    token: str | None = Depends(get_token_from_request)
+) -> User | None:
     """
     根据配置决定是否需要验证用户
     
@@ -100,8 +103,8 @@ async def get_optional_current_user(
 async def get_auth_user_or_error(
     request: Request,
     db: Session = Depends(get_db), 
-    token: Optional[str] = Depends(get_token_from_request)
-) -> User:
+    token: str | None = Depends(get_token_from_request)
+) -> User | None:
     """
     根据配置决定是否需要验证用户
     

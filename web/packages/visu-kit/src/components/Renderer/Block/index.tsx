@@ -1,7 +1,6 @@
 import { ArrowUpOutlined, CloseOutlined, DownloadOutlined, ExportOutlined, InfoCircleOutlined, LeftOutlined, LoadingOutlined, RightOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
-import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from '@visu/i18n'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
 import type { AxiosError } from 'axios'
@@ -15,7 +14,6 @@ import { useBuckets } from '../../../queries/bucket.query'
 import type { BucketItem, BucketParams } from '../../../types'
 import { download, getBasename, getBytes, getNextUrl } from '../../../utils'
 
-import axios from 'axios'
 import { PreviewBlockContext } from '../contexts/preview.context'
 import FolderRenderer from '../Folder'
 import MediaCard from '../Media'
@@ -107,26 +105,15 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
   const [pageSize, setPageSize] = useState(initialParams?.pageSize || 50)
   const [pageNo, setPageNo] = useState(initialParams?.pageNo || 1)
   const basename = getBasename(path)
-  const { onParamsChange, setTotal, bucketUrl, previewUrl, downloadUrl, mimeTypeUrl } = useBucketContext()
+  const { onParamsChange, setTotal, previewUrl, downloadUrl, bucketQueryOptions } = useBucketContext()
   const { t } = useTranslation()
   
   // 未知的文件类型，包括没有后缀名的文件，供用户选择渲染类型
   const unkonwnFileType = !/\.\w+$/.test(basename)
   const [renderAs, setRenderAs] = useState<string | undefined>()
   const pathWithoutQuery = path.split('?')[0]
-  // TODO: 去除mimetype接口调用
-  const { data: mimeTypeResult } = useQuery({
-    queryKey: ['mimetype', path],
-    enabled: !!path && !path.endsWith('/') && enableFetch,
-    queryFn: () => axios.get(mimeTypeUrl, { params: { path } }),
-  })
-  const params = useMemo(() => ({
-    path,
-    pageNo,
-    pageSize,
-  }), [path, pageNo, pageSize])
 
-  const { data, error, isFetching } = useBuckets(bucketUrl, enableFetch, params)
+  const { data, error, isFetching } = useBuckets(bucketQueryOptions)
 
   const finalData = useMemo(() => {
     if (dataSource) {
@@ -144,6 +131,8 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
     return []
   }, [finalData, pathWithoutQuery])
 
+  console.log('folders', data)
+
   useEffect(() => {
     setTotal(folders.length)
   }, [folders, setTotal])
@@ -153,11 +142,11 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
   }, [error, path])
 
   useEffect(() => {
-    const mimeType = mimeTypeResult?.data
+    const mimeType = (finalData as BucketItem)?.mimetype
     if (mimeType && unkonwnFileType) {
       setRenderAs(extractRenderAs(mimeType))
     }
-  }, [mimeTypeResult, unkonwnFileType])
+  }, [finalData, unkonwnFileType])
 
   const [prevBytes, setPrevBytes] = useState<number[]>([])
   const hasPrev = prevBytes.length > 0
@@ -388,7 +377,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
         {
           id !== 'origin' && !dataSource && (
             <Tooltip title={t('renderer.openInNewTab')}>
-              <a href={`${bucketUrl}?path=${encodeURIComponent(path)}&page_size=${pageSize}&page_no=${pageNo}`} target="_blank" rel="noopener noreferrer">
+              <a href={`${location.origin}${location.pathname}?path=${encodeURIComponent(path)}&pageSize=${pageSize}&pageNo=${pageNo}`} target="_blank" rel="noopener noreferrer">
                 <Button type="text" size="small" icon={<ExportOutlined />} />
               </a>
             </Tooltip>
@@ -413,7 +402,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
         }
       </>
     )
-  }, [block.pathType, bucketUrl, downloadUrl, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t])
+  }, [block.pathType, downloadUrl, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t])
 
   const content = useMemo(() => {
     if (pathWithoutQuery.endsWith('/') || !path) {

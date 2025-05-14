@@ -1,8 +1,9 @@
 import { createFileRoute, useLocation, useNavigate } from '@tanstack/react-router'
-import BucketPreviewer, { BucketParams } from '@visu/kit'
+import BucketPreviewer, { BucketItem, BucketParams, BucketQueryOptions } from '@visu/kit'
 import '@visu/kit/dist/index.css'
 import { Button } from 'antd'
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
+import { digBucket } from '../api/bucket'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -68,6 +69,17 @@ function RouteComponent() {
     })
   }, [navigate, search])
 
+  const bucketQueryOptions = useMemo(() => ({
+    staleTime: 10000,
+    queryKey: ['bucket', {
+      path,
+      pageSize,
+      pageNo,
+    }],
+    queryFn: digBucket,
+    select: (data: any) => data.data as BucketItem[]
+  }), [path, pageSize, pageNo])
+
   return (
     <div className="p-4 flex flex-1 flex-col" ref={bodyRef}>
       <BucketPreviewer
@@ -75,10 +87,9 @@ function RouteComponent() {
         onParamsChange={onParamsChange}
         pageSize={pageSize}
         pageNo={pageNo}
-        bucketUrl="/api/s3/v1/bucket"
-        downloadUrl="/api/s3/v1/bucket/download"
-        previewUrl="/api/s3/v1/bucket/file_preview"
-        mimeTypeUrl="/api/s3/v1/bucket/mimetype"
+        bucketQueryOptions={bucketQueryOptions as BucketQueryOptions}
+        downloadUrl="/api/v1/bucket/download"
+        previewUrl="/api/v1/bucket/file_preview"
         offsetTop={88}
       />
     </div>

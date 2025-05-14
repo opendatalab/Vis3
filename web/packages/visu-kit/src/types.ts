@@ -7,6 +7,7 @@ export interface BucketItem {
   size: number | null
   last_modified: string | null
   owner: string | null
+  mimetype: string | null
 }
 
 export interface BucketParams {

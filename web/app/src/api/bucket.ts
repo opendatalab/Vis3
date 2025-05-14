@@ -14,10 +14,7 @@ export interface BucketData {
   name: string
   id?: number
   type: 'directory' | 'file' | 'bucket'
-  privilege: 'internal' | 'public' | 'personal'
   path: string
-
-  cluster?: string
 
   fullPath?: string
   content: string | null
@@ -30,23 +27,18 @@ export interface BucketResponse {
   data: BucketData[]
 }
 
-export async function digBucket({ pageNo, pageSize, path, cluster }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
+export async function digBucket({ pageNo, pageSize, path }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
   const params = {
     path: path || '',
   } as {
     path: string
     page_no?: number
     page_size?: number
-    cluster?: string
   }
 
   if (path && path.endsWith('/')) {
     params.page_no = pageNo || 1
     params.page_size = pageSize || 50
-  }
-
-  if (path !== '') {
-    params.cluster = cluster
   }
 
   return request('/v1/bucket', {

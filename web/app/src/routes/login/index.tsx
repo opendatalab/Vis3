@@ -32,7 +32,6 @@ function RouteComponent() {
   const handleSubmit = async (values: LoginPayload) => {
     try {
       await loginMutation.mutateAsync(values)
-      message.success('登录成功')
       navigate({ to: '/' })
     } catch (error) {
       console.error('登录失败:', error)

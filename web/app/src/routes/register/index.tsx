@@ -28,6 +28,7 @@ function RouteComponent() {
 
     try {
       await registerMutation.mutateAsync(values)
+      message.success('注册成功，请登录')
       navigate({ to: '/login' })
     } catch (error: any) {
       console.error('注册失败:', error)

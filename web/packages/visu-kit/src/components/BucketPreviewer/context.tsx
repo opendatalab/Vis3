@@ -1,6 +1,8 @@
+import { useQuery } from '@tanstack/react-query'
 import { createContext, useContext } from 'react'
 import { BucketItem, BucketParams } from '../../types'
 
+export type BucketQueryOptions = Parameters<typeof useQuery>[0]
 
 export const BucketContext = createContext<{
   pageSize: number
@@ -9,10 +11,10 @@ export const BucketContext = createContext<{
   onParamsChange: (params: BucketParams) => void
   total: number
   setTotal: (value: number) => void
-  bucketUrl: string
   downloadUrl: string
   previewUrl: string
-  mimeTypeUrl: string
+  // useQuery options
+  bucketQueryOptions: BucketQueryOptions,
 }>({
   pageSize: 50,
   pageNo: 1,
@@ -24,10 +26,14 @@ export const BucketContext = createContext<{
   setTotal: () => {
     console.warn('no implement')
   },
-  bucketUrl: '',
   downloadUrl: '',
   previewUrl: '',
-  mimeTypeUrl: '',
+  bucketQueryOptions: {
+    queryKey: ['bucket'],
+    queryFn: () => {
+      return []
+    },
+  },
 })
 
 export function formatBucketList(bucketList: BucketItem[], parentPath: string) {

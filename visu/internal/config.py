@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from loguru import logger
@@ -26,7 +27,7 @@ class Settings(BaseSettings):
     )
 
     TOKEN_GENERATE_ALGORITHM: str = "HS256"
-    TOKEN_ACCESS_EXPIRE_MINUTES: int = 30
+    TOKEN_ACCESS_EXPIRE_MINUTES: int = 43200  # 30天 (30*24*60=43200分钟)
     TOKEN_TYPE: str = "Bearer"
 
     def model_post_init(self, __context: Any) -> None:

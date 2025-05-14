@@ -5,8 +5,8 @@ import { useTheme } from '../../theme'
 import { QueryProvider } from '../../queries/queryClient'
 import { BucketParams } from '../../types'
 import FilePreviewer from '../FilePreviewer'
-import { BucketContext } from './context'
-import FileListOverlay from './FileListOverlay'
+import { BucketContext, BucketQueryOptions } from './context'
+// import FileListOverlay from './FileListOverlay'
 import BucketHeader from './Header'
 
 export interface BucketPreviewerProps {
@@ -15,10 +15,9 @@ export interface BucketPreviewerProps {
   onParamsChange: (params: BucketParams) => void
   pageSize: number
   pageNo: number
-  bucketUrl: string
+  bucketQueryOptions: BucketQueryOptions
   downloadUrl: string
   previewUrl: string
-  mimeTypeUrl: string
   offsetTop?: number
 }
 
@@ -41,7 +40,7 @@ const ContentContainer = styled.div<{ $offsetTop?: number }>`
   height: 100vh;
 `
 
-export default function BucketPreviewer({ url, onParamsChange, pageSize: propsPageSize, pageNo: propsPageNo, bucketUrl, downloadUrl, previewUrl, mimeTypeUrl, offsetTop }: BucketPreviewerProps) {
+export default function BucketPreviewer({ url, onParamsChange, pageSize: propsPageSize, pageNo: propsPageNo, bucketQueryOptions, downloadUrl, previewUrl, offsetTop }: BucketPreviewerProps) {
   const { tokens } = useTheme();
   const [total, setTotal] = useState(0)
   const [pageNo, setPageNo] = useState(propsPageNo || 1)
@@ -83,14 +82,10 @@ export default function BucketPreviewer({ url, onParamsChange, pageSize: propsPa
     pageNo,
     onParamsChange: handleOnParamsChange,
     setTotal,
-    bucketUrl,
+    bucketQueryOptions,
     downloadUrl,
-    previewUrl,
-    mimeTypeUrl,  
-  }), [currentPath, url, total, pageSize, pageNo, handleOnParamsChange, bucketUrl, downloadUrl, previewUrl, mimeTypeUrl])
-
-  console.log('contextValue', contextValue)
-  console.log('url', url)
+    previewUrl,  
+  }), [currentPath, url, total, pageSize, pageNo, handleOnParamsChange, bucketQueryOptions, downloadUrl, previewUrl])
 
   return (
     <QueryProvider>
@@ -99,7 +94,6 @@ export default function BucketPreviewer({ url, onParamsChange, pageSize: propsPa
           <BucketHeader />
           <ContentContainer>
             <FilePreviewer />
-            <FileListOverlay path={url} />
           </ContentContainer>
         </BucketContainer>
       </BucketContext.Provider>

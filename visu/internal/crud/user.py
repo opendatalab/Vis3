@@ -1,16 +1,15 @@
-from typing import Optional
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from visu.internal.api.v1.schema.request.user import UserCreate
 from visu.internal.crud.base import BaseCrud
 from visu.internal.models.user import User
+from visu.internal.schema.state import AuthState
 from visu.internal.utils.security import get_password_hash, verify_password
 
 
 class UserCRUD(BaseCrud[User, UserCreate, UserCreate]):
-    async def get_by_username(self, db: AsyncSession, username: str) -> Optional[User]:
+    async def get_by_username(self, db: AsyncSession, username: str) -> User | None:
         """
         通过用户名获取用户
         """
@@ -30,15 +29,15 @@ class UserCRUD(BaseCrud[User, UserCreate, UserCreate]):
         db.refresh(db_obj)
         return db_obj
 
-    async def authenticate(self, db: AsyncSession, *, username: str, password: str) -> Optional[User]:
+    async def authenticate(self, db: AsyncSession, *, username: str, password: str) -> User | AuthState:
         """
         验证用户凭据
         """
         user = await self.get_by_username(db, username=username)
         if not user:
-            return None
+            return AuthState.USERNAME_ERROR
         if not verify_password(password, user.hashed_password):
-            return None
+            return AuthState.PASSWORD_ERROR
         return user
 
 
