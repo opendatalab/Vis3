@@ -7,7 +7,7 @@ class BucketCreateBody(BaseModel):
     name: str
     path: str
     endpoint: str
-    key_chain_id: int
+    keychain_id: int
 
 
 class BucketCreatePayload(BucketCreateBody):
@@ -19,7 +19,7 @@ class BucketUpdateBody(BaseModel):
     name: str | None = None
     path: str | None = None
     endpoint: str | None = None
-    key_chain_id: int | None = None
+    keychain_id: int | None = None
     state: State | None = None
 
 class BucketUpdatePayload(BucketUpdateBody):

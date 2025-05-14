@@ -9,10 +9,10 @@ export function successHandler(response: AxiosResponse<any>) {
   return response.data
 }
 
-const ignoredErrorCodes = [40001, 40002, 30007]
-
 function errorHandler(error: AxiosError) {
-  // TODO
+  if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+    window.location.href = '/login'
+  }
 
   return Promise.reject(error)
 }

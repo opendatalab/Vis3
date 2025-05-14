@@ -8,7 +8,7 @@ from visu.internal.common.io import get_data_dir
 
 class Settings(BaseSettings):
     SCHEME: str = "http"
-    HOST: str = "localhost"
+    HOST: str = "0.0.0.0"
     PORT: str = "8001"
     API_V1_STR: str = "/api/v1"
 
@@ -30,8 +30,14 @@ class Settings(BaseSettings):
     TOKEN_TYPE: str = "Bearer"
 
     def model_post_init(self, __context: Any) -> None:
+        db_name = "visu.public.sqlite"
+
+        if self.ENABLE_AUTH:
+            db_name = "visu.sqlite"
+
         if not self.DATABASE_URL:
-            self.DATABASE_URL = f"sqlite:///{self.BASE_DATA_DIR}/visu.internalsqlite"
+            self.DATABASE_URL = f"sqlite:///{self.BASE_DATA_DIR}/{db_name}"
+        
 
         logger.info(f"DATABASE_URL: {self.DATABASE_URL}")
 

@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import StrEnum
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -12,9 +11,12 @@ class PathType(StrEnum):
 
 
 class BucketResponse(BaseModel):
+    id: int | None = None
+    name: str
     endpoint: str | None = None
     path: str
-    content: Optional[str] = None
-    size: Optional[int] = None
-    owner: Optional[str] = None
-    last_modified: Optional[datetime] = None
+    content: str | None = None
+    size: int | None = None
+    mimetype: str | None = None
+    owner: str | None = None
+    last_modified: datetime | None = None

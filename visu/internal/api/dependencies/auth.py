@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from visu.internal.common.db import get_db
 from visu.internal.config import settings
@@ -28,7 +28,7 @@ async def get_token_from_request(request: Request, token: Optional[str] = Depend
 
 async def get_current_user(
     request: Request,
-    db: AsyncSession = Depends(get_db), 
+    db: Session = Depends(get_db), 
     token: Optional[str] = Depends(get_token_from_request)
 ) -> User:
     """
@@ -62,7 +62,7 @@ async def get_current_user(
 
 async def get_current_user_when_available(
     request: Request,
-    db: AsyncSession = Depends(get_db), 
+    db: Session = Depends(get_db), 
     token: Optional[str] = Depends(get_token_from_request)
 ) -> Optional[User]:
     """
@@ -76,7 +76,7 @@ async def get_current_user_when_available(
 
 async def get_optional_current_user(
     request: Request,
-    db: AsyncSession = Depends(get_db), 
+    db: Session = Depends(get_db), 
     token: Optional[str] = Depends(get_token_from_request)
 ) -> Optional[User]:
     """
@@ -99,7 +99,7 @@ async def get_optional_current_user(
 
 async def get_auth_user_or_error(
     request: Request,
-    db: AsyncSession = Depends(get_db), 
+    db: Session = Depends(get_db), 
     token: Optional[str] = Depends(get_token_from_request)
 ) -> User:
     """

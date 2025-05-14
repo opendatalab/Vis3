@@ -6,7 +6,6 @@ import { BucketContext, BucketParams, getBytes, getPathType, RenderBlock } from 
 import { Button, List, message, Tooltip, Upload, UploadProps } from 'antd';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { QueryProvider } from '../../api/queriClient';
 import styles from './index.module.css';
 
 import SiderArrowLeft from '@/assets/sider-arrow-left.svg?react';
@@ -481,77 +480,75 @@ function RouteComponent() {
   }
   
   return (
-    <QueryProvider>
-      <BucketContext.Provider value={bucketContextValue}>
-        <div className='flex-1 flex flex-row py-4 gap-4'>
-          <div className={clsx('bg-white rounded-r-lg shrink-0 left-sider transition-all', {
-            'w-[260px]': !siderCollapsed,
-            'w-0 overflow-hidden': siderCollapsed,
-          })}>
-            <List
-              loading={loading}
-              size="small"
-              className={clsx("w-[260px] flex flex-col", styles.fileList)}
-              header={
-                <div className="flex justify-between px-4">
-                  <span className='font-bold'>文件列表</span>
-                  <div className='flex flex-row items-center gap-2'>
-                    <Upload {...props}>
-                      <Button type='text' size='small' icon={<UploadOutlined />} />
-                    </Upload>
-                    <Button type='text' size='small' icon={<ClearOutlined />} danger onClick={() => handleDeleteAll()} />
-                  </div>
+    <BucketContext.Provider value={bucketContextValue}>
+      <div className='flex-1 flex flex-row py-4 gap-4'>
+        <div className={clsx('bg-white rounded-r-lg shrink-0 left-sider transition-all', {
+          'w-[260px]': !siderCollapsed,
+          'w-0 overflow-hidden': siderCollapsed,
+        })}>
+          <List
+            loading={loading}
+            size="small"
+            className={clsx("w-[260px] flex flex-col", styles.fileList)}
+            header={
+              <div className="flex justify-between px-4">
+                <span className='font-bold'>文件列表</span>
+                <div className='flex flex-row items-center gap-2'>
+                  <Upload {...props}>
+                    <Button type='text' size='small' icon={<UploadOutlined />} />
+                  </Upload>
+                  <Button type='text' size='small' icon={<ClearOutlined />} danger onClick={() => handleDeleteAll()} />
                 </div>
-              }
-              dataSource={fileList}
-              renderItem={(item) => (
-                <List.Item className={clsx('flex flex-row items-center justify-between !px-4 cursor-pointer hover:bg-gray-100 transition-colors', {
-                  'bg-blue-100': selectedFile?.id === item.id,
-                })} onClick={() => setSelectedFile(item)}>
-                  <List.Item.Meta
-                    title={<Tooltip placement='topLeft' title={item.name}>{item.name}</Tooltip>}
-                    description={new Date(item.lastModified).toLocaleString()}
-                  />
-                  <Button type='text' size='small' key="delete" icon={<CloseOutlined />} danger onClick={() => handleDelete(item.id)} />
-                </List.Item>
-              )}
-            />
-          </div>
-          
-          {/* <div className="flex flex-col"> */}
-            <div
-              onClick={() => setSiderCollapsed(!siderCollapsed)}
-              className="fixed left-[242px] top-1/2 transform -translate-y-1/2 z-10 text-gray-300 h-8 w-4 flex items-center justify-center rounded-r-md cursor-pointer hover:text-gray-400 transition-colors"
-              style={{ 
-                left: siderCollapsed ? '0' : '242px',
-                transition: 'left 0.1s'
-              }}
-            >
-              {siderCollapsed ? <SiderArrowRight /> : <SiderArrowLeft />}
-            </div>
-          {/* </div> */}
-          
-          <div className={clsx('flex-1 body-content transition-all', {
-            'flex flex-col items-center justify-center': !selectedFile,
-            'max-w-[calc(100vw-32px)]': siderCollapsed,
-            'max-w-[calc(100vw-292px)]': !siderCollapsed,
-          })} data-block-id="origin">
-            {
-              selectedFile ? (
-                <RenderBlock 
-                  dataSource={dataSource}
-                  block={{
-                    id: 'origin',
-                    path: fakePath,
-                    pathType: dataSource?.type,
-                  }}
-                  updateBlock={() => {}}
-                />
-              ) : uploader
+              </div>
             }
-          </div>
+            dataSource={fileList}
+            renderItem={(item) => (
+              <List.Item className={clsx('flex flex-row items-center justify-between !px-4 cursor-pointer hover:bg-gray-100 transition-colors', {
+                'bg-blue-100': selectedFile?.id === item.id,
+              })} onClick={() => setSelectedFile(item)}>
+                <List.Item.Meta
+                  title={<Tooltip placement='topLeft' title={item.name}>{item.name}</Tooltip>}
+                  description={new Date(item.lastModified).toLocaleString()}
+                />
+                <Button type='text' size='small' key="delete" icon={<CloseOutlined />} danger onClick={() => handleDelete(item.id)} />
+              </List.Item>
+            )}
+          />
         </div>
-      </BucketContext.Provider>
-    </QueryProvider>
+        
+        {/* <div className="flex flex-col"> */}
+          <div
+            onClick={() => setSiderCollapsed(!siderCollapsed)}
+            className="fixed left-[242px] top-1/2 transform -translate-y-1/2 z-10 text-gray-300 h-8 w-4 flex items-center justify-center rounded-r-md cursor-pointer hover:text-gray-400 transition-colors"
+            style={{ 
+              left: siderCollapsed ? '0' : '242px',
+              transition: 'left 0.1s'
+            }}
+          >
+            {siderCollapsed ? <SiderArrowRight /> : <SiderArrowLeft />}
+          </div>
+        {/* </div> */}
+        
+        <div className={clsx('flex-1 body-content transition-all', {
+          'flex flex-col items-center justify-center': !selectedFile,
+          'max-w-[calc(100vw-32px)]': siderCollapsed,
+          'max-w-[calc(100vw-292px)]': !siderCollapsed,
+        })} data-block-id="origin">
+          {
+            selectedFile ? (
+              <RenderBlock 
+                dataSource={dataSource}
+                block={{
+                  id: 'origin',
+                  path: fakePath,
+                  pathType: dataSource?.type,
+                }}
+                updateBlock={() => {}}
+              />
+            ) : uploader
+          }
+        </div>
+      </div>
+    </BucketContext.Provider>
   )
 }

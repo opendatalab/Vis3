@@ -1,6 +1,8 @@
+import base64
 from datetime import datetime, timedelta
 from typing import Any, Optional, Union
 
+from cryptography.fernet import Fernet
 from jose import jwt
 from passlib.context import CryptContext
 
@@ -40,3 +42,13 @@ def get_password_hash(password: str) -> str:
     获取密码哈希
     """
     return pwd_context.hash(password) 
+
+fernet = Fernet(settings.ENCRYPT_KEY)
+
+def encrypt_secret_key(secret_key: str) -> str:
+    encrypted_bytes = fernet.encrypt(secret_key.encode())
+    return base64.urlsafe_b64encode(encrypted_bytes).decode()
+
+def decrypt_secret_key(encrypted_secret_key: str) -> str:
+    encrypted_bytes = base64.urlsafe_b64decode(encrypted_secret_key.encode())
+    return fernet.decrypt(encrypted_bytes).decode()

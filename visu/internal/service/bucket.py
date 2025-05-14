@@ -1,19 +1,42 @@
+from typing import Tuple
 from urllib.parse import parse_qsl, quote, urlparse
 
 from fastapi import status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from loguru import logger
+from sqlalchemy.orm import Session
 
 from visu.internal.api.v1.schema.response import ItemResponse, ListResponse
 from visu.internal.api.v1.schema.response.bucket import BucketResponse, PathType
 from visu.internal.client.s3_reader import S3Reader
 from visu.internal.common.exceptions import AppEx, ErrorCode
+from visu.internal.crud.bucket import bucket_crud
+from visu.internal.models.bucket import Bucket
 from visu.internal.utils import (
     convert_epub_stream_to_html,
     convert_mobi_stream_to_html,
     should_not_read_as_raw,
     timer,
 )
+from visu.internal.utils.path import split_s3_path
+
+
+async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Bucket, S3Reader]:
+    if id:
+        bucket = await bucket_crud.get(db, id=id)
+    else:
+        bucket_name, key = split_s3_path(path)
+        bucket = await bucket_crud.get_by_name(db, name=bucket_name)
+    
+    s3_reader = S3Reader(
+        bucket=bucket.name,
+        key=key,
+        endpoint=bucket.endpoint,
+        access_key_id=bucket.keychain.access_key_id,
+        secret_key_id=bucket.keychain.decrypted_secret_key_id,
+    )
+
+    return bucket, s3_reader
 
 
 async def get_s3_directories(
@@ -75,6 +98,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 type=PathType.File,
                 owner=await s3_reader.get_object_owner(),
                 size=size,
+                mimetype=mimetype,
                 path=s3_reader.key,
                 last_modified=file_header_info.get("LastModified"),
             )
@@ -93,6 +117,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 type=PathType.File,
                 owner=owner,
                 size=size,
+                mimetype=mimetype,
                 content="",
                 path=s3_reader.key,
                 last_modified=file_header_info.get("LastModified"),
@@ -116,6 +141,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 type=PathType.File,
                 owner=owner,
                 size=size,
+                mimetype=mimetype,
                 last_modified=file_header_info.get("LastModified"),
                 content=row.value,
                 path=row.loc,
@@ -133,6 +159,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 type=PathType.File,
                 owner=owner,
                 size=size,
+                mimetype=mimetype,
                 last_modified=file_header_info.get("LastModified"),
                 content=row.value,
                 path=row.loc,
@@ -163,6 +190,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
             type=PathType.File,
             owner=owner,
             size=size,
+            mimetype=mimetype,
             last_modified=file_header_info.get("LastModified"),
             content=content,
             path=f"{s3_reader.key_without_query}?bytes={byte_range}",
@@ -173,29 +201,34 @@ async def get_buckets_or_objects(
     path: str,
     page_no: int,
     page_size: int,
-    s3_reader: S3Reader | None = None,
+    db: Session,
+    id: int | None = None,
 ):
     """获取bucket或目录或文件
     """
     result = None
     # 获取所有bucket列表
     if path is None or path == "" or path == "/":
-        buckets_dict = s3_reader.buckets_dict
+        buckets = await bucket_crud.get_multi(db)
         result = [
             BucketResponse(
+                id=bucket.id,
+                name=bucket.name,
                 type=PathType.Bucket
-                if buckets_dict.get(bucket_path).get("path", "").endswith("/")
+                if bucket.path.endswith("/")
                 else PathType.File,
-                path=buckets_dict.get(bucket_path).get("path"),
-                owner=None,
-                endpoint=buckets_dict.get(bucket_path).get("endpoint"),
+                path=bucket.path,
+                owner=bucket.user.username,
+                endpoint=bucket.endpoint,
                 last_modified=None,
                 size=None,
             )
-            for bucket_path in buckets_dict
+            for bucket in buckets
         ]
 
         return ListResponse[BucketResponse](data=result, total=len(result))
+    
+    _, s3_reader = await get_bucket(path, db, id)
 
     s3_path = quote(s3_reader.key_without_query, safe=":/")
     parsed_url = urlparse(s3_path)
@@ -228,22 +261,11 @@ async def get_buckets_or_objects(
     return ItemResponse[BucketResponse](data=result)
 
 
-async def get_file_mimetype(s3_reader: S3Reader):
-    if not s3_reader.bucket and not s3_reader.internal_permission:
-        return None
-
-    file_header_info = await s3_reader.head_object()
-    size = file_header_info.get("ContentLength", 0) if file_header_info else 0
-
-    if size == 0:
-        return None
-
-    return await s3_reader.mime_type()
-
-
 async def preview_file(
+    path: str,
+    db: Session,
     mimetype: str = None,
-    s3_reader: S3Reader | None = None,
+    id: int | None = None,
 ):
     """
     预览文件内容，支持多种文件格式。
@@ -259,6 +281,7 @@ async def preview_file(
     Raises:
         AppEx: 当文件不存在或大小超出限制时
     """
+    _, s3_reader = await get_bucket(path, db, id)
     # 获取文件信息
     file_header_info = await s3_reader.head_object()
     if file_header_info is None:

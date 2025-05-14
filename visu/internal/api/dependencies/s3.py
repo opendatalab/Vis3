@@ -79,7 +79,6 @@ async def get_s3_info(
 ) -> UserCredentials:
     path = request.query_params.get("path")
     bucket_name, key = split_s3_path(path)
-    buckets_dict = {}
     
     # 处理请求中的用户信息
     if settings.ENABLE_AUTH:
@@ -94,7 +93,6 @@ async def get_s3_info(
         def create_credentials(bucket_info: dict | None) -> UserCredentials:
             return UserCredentials(
                 key=key,
-                buckets_dict=buckets_dict,
                 bucket_name=bucket_name,
                 aws_access_key_id=bucket_info.get("ak") if bucket_info else None,
                 aws_secret_access_key=bucket_info.get("sk") if bucket_info else None,
@@ -121,7 +119,6 @@ async def get_s3_reader(
     return S3Reader(
         bucket=s3_info.bucket_name,
         key=s3_info.key,
-        buckets_dict=s3_info.buckets_dict if s3_info.buckets_dict else {},
         aws_access_key_id=s3_info.aws_access_key_id if s3_info.aws_access_key_id else None,
         aws_secret_access_key=s3_info.aws_secret_access_key if s3_info.aws_secret_access_key else None,
         region_name=s3_info.region_name if s3_info.region_name else None,

@@ -17,6 +17,8 @@ class Bucket(Base):
     updated_at = Column(DateTime(timezone=True), default=datetime.now, comment="Last time a user was updated")
     created_by = Column(Integer, ForeignKey(column="user.id"), index=True, nullable=True)
     state = Column(String(255), default=State.ENABLED)
+    keychain_id = Column(Integer, ForeignKey(column="keychain.id"), index=True)
 
     # relation
-    key_chain = relationship("KeyChain", back_populates="buckets")
+    keychain = relationship("KeyChain", foreign_keys=[keychain_id])
+    user = relationship("User", foreign_keys=[created_by])

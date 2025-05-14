@@ -19,7 +19,7 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
         """
         获取单个对象
         """
-        result = await db.execute(select(self.model).filter(self.model.id == id))
+        result = db.execute(select(self.model).filter(self.model.id == id))
         return result.scalars().first()
 
     async def get_multi(
@@ -29,7 +29,7 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
         获取多个对象
         """
         query = select(self.model).offset(skip).limit(limit)
-        result = await db.execute(query)
+        result = db.execute(query)
         return result.scalars().all()
 
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType, auto_commit: bool = True) -> T:
@@ -46,8 +46,8 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
         
         db.add(db_obj)
         if auto_commit:
-            await db.commit()
-            await db.refresh(db_obj)
+            db.commit()
+            db.refresh(db_obj)
         
         return db_obj
 
@@ -78,8 +78,8 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
 
         db.add(db_obj)
         if auto_commit:
-            await db.commit()
-            await db.refresh(db_obj)
+            db.commit()
+            db.refresh(db_obj)
         
         return db_obj
 
@@ -103,7 +103,7 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
             setattr(db_obj, "state", State.DISABLED)
             db.add(db_obj)
             if auto_commit:
-                await db.commit()
-                await db.refresh(db_obj)
+                db.commit()
+                db.refresh(db_obj)
         
         return db_obj

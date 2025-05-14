@@ -17,17 +17,16 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     proxy: {
-      '/api': {
-        target: 'https://data-workbench-dev.dc.shlab.tech',
+      // '/api': {
+      //   target: 'https://data-workbench-dev.dc.shlab.tech',
+      //   changeOrigin: true,
+      //   secure: false,
+      // },
+      '/api/': {
+        target: 'http://127.0.0.1:8001',
         changeOrigin: true,
         secure: false,
       },
-      // '/api/s3': {
-      //   target: 'http://127.0.0.1:8909',
-      //   changeOrigin: true,
-      //   secure: false,
-      //   rewrite: (path) => path.replace(/^\/api\/s3/, '/api'),
-      // },
     },
   },
 

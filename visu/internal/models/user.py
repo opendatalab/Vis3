@@ -20,5 +20,5 @@ class User(Base):
     )
 
     # relation
-    key_chains = relationship("KeyChain", back_populates="created_by")
-    buckets = relationship("Bucket", back_populates="created_by")
+    keychains = relationship("KeyChain", back_populates="user")
+    buckets = relationship("Bucket", back_populates="user")

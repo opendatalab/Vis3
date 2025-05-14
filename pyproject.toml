@@ -33,9 +33,9 @@ httpx = "^0.28.1"
 warcio = "^1.7.5"
 cchardet = "2.2.0a2"
 python-jose = "^3.4.0"
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-multipart = "^0.0.20"
 typer = {extras = ["all"], version = "^0.15.3"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 [tool.poetry.scripts]
 visu = "visu.main:cli"

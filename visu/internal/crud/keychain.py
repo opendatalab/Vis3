@@ -9,18 +9,27 @@ from visu.internal.api.v1.schema.request.keychain import (
 )
 from visu.internal.crud.base import BaseCrud
 from visu.internal.models.keychain import KeyChain
+from visu.internal.schema.state import State
+from visu.internal.utils.security import encrypt_secret_key
 
 
 class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
+    async def get(self, db: AsyncSession, *, id: int) -> KeyChain:
+        """
+        获取钥匙串
+        """
+        result = db.execute(select(KeyChain).filter(KeyChain.id == id, KeyChain.state == State.ENABLED))
+        return result.scalars().first()
+
     async def get_multi_by_user(
         self, db: AsyncSession, *, user_id: int, skip: int = 0, limit: int = 100
     ) -> List[KeyChain]:
         """
         获取用户的所有钥匙串
         """
-        result = await db.execute(
+        result = db.execute(
             select(KeyChain)
-            .filter(KeyChain.created_by == user_id)
+            .filter(KeyChain.created_by == user_id, KeyChain.state == State.ENABLED)
             .offset(skip)
             .limit(limit)
         )
@@ -35,12 +44,13 @@ class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
         db_obj = KeyChain(
             name=obj_in.name,
             access_key_id=obj_in.access_key_id,
-            secret_key_id=obj_in.secret_key_id,
+            # 加密 sk
+            secret_key_id=encrypt_secret_key(obj_in.secret_key_id),
             created_by=user_id,
         )
         db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
+        db.commit()
+        db.refresh(db_obj)
         return db_obj
         
     async def create(self, db: AsyncSession, *, obj_in: KeychainCreateBody) -> KeyChain:
@@ -50,11 +60,12 @@ class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
         db_obj = KeyChain(
             name=obj_in.name,
             access_key_id=obj_in.access_key_id,
-            secret_key_id=obj_in.secret_key_id,
+            # 加密 sk
+            secret_key_id=encrypt_secret_key(obj_in.secret_key_id),
         )
         db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
+        db.commit()
+        db.refresh(db_obj)
         return db_obj
 
 

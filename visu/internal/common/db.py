@@ -1,5 +1,6 @@
 from typing import Generator
 
+from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -17,7 +18,7 @@ engine = create_engine(
     echo=True,
 )
 
-SessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
@@ -25,10 +26,18 @@ Base = declarative_base()
 def init_tables() -> None:
     Base.metadata.create_all(bind=engine)
 
-
 def get_db() -> Generator:
+    db = None
     try:
         db = SessionLocal()
         yield db
+        db.commit()
+    except Exception as e:
+        logger.error(e)
+        if db:
+            db.rollback()
+
+        raise e
     finally:
-        db.close()
+        if db:
+            db.close()

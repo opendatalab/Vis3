@@ -1,4 +1,4 @@
-import { Link, useLocation } from "@tanstack/react-router"
+import { Link, useLocation, useNavigate } from "@tanstack/react-router"
 import { useTranslation } from "@visu/i18n"
 
 import AppPanel from '../AppPanel'
@@ -9,11 +9,15 @@ import HelpSvg from '@/assets/help.svg?react'
 import LocalSvg from '@/assets/local.svg?react'
 import { Button, Dropdown } from "antd"
 import clsx from "clsx"
+import { useLogout, useMe } from "../../api/user.query"
 import LangSwitcher from "../LangSwitcher"
 
 export default function Header() {
   const location = useLocation()
   const { t } = useTranslation()
+  const { data: me } = useMe()
+  const navigate = useNavigate()
+  const { mutateAsync: logoutAsync } = useLogout()
 
   const links = [
     {
@@ -71,12 +75,14 @@ export default function Header() {
                     label: '退出登录',
                     key: 'logout',
                     onClick: () => {
-                      console.log('退出登录')
+                      logoutAsync().then(() => {
+                        navigate({ to: '/login' })
+                      })
                     },
                   },
               ]}}
             >
-              <Avatar className='cursor-pointer' alt="用户头像" size="sm" />
+              <Avatar className='cursor-pointer' alt={me?.username} size="sm" />
             </Dropdown>
           </div>
         </div>

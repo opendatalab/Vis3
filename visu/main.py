@@ -9,6 +9,7 @@ from loguru import logger
 from typer import Typer
 
 from visu.internal.api import initial_routers
+from visu.internal.common.db import init_tables
 from visu.internal.config import settings
 
 app = FastAPI(
@@ -48,6 +49,7 @@ class NoCacheStaticFiles(StaticFiles):
 
 
 initial_routers(app)
+init_tables()
 
 # 直接使用目录路径挂载静态文件
 BASE_DIR = Path(__file__).resolve().parent

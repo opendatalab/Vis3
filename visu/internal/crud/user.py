@@ -14,7 +14,7 @@ class UserCRUD(BaseCrud[User, UserCreate, UserCreate]):
         """
         通过用户名获取用户
         """
-        result = await db.execute(select(User).filter(User.username == username))
+        result = db.execute(select(User).filter(User.username == username))
         return result.scalars().first()
 
     async def create(self, db: AsyncSession, *, obj_in: UserCreate) -> User:
@@ -26,8 +26,8 @@ class UserCRUD(BaseCrud[User, UserCreate, UserCreate]):
             hashed_password=get_password_hash(obj_in.password),
         )
         db.add(db_obj)
-        await db.commit()
-        await db.refresh(db_obj)
+        db.commit()
+        db.refresh(db_obj)
         return db_obj
 
     async def authenticate(self, db: AsyncSession, *, username: str, password: str) -> Optional[User]:

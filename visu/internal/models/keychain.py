@@ -5,10 +5,11 @@ from sqlalchemy.orm import relationship
 
 from visu.internal.common.db import Base
 from visu.internal.schema.state import State
+from visu.internal.utils.security import decrypt_secret_key
 
 
 class KeyChain(Base):
-    __tablename__ = "key_chain"
+    __tablename__ = "keychain"
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     name = Column(String(255))
     access_key_id = Column(String(255))
@@ -19,4 +20,10 @@ class KeyChain(Base):
     state = Column(String(255), default=State.ENABLED)
 
     # relation
-    buckets = relationship("Bucket", back_populates="key_chain")
+    buckets = relationship("Bucket", back_populates="keychain")
+    user = relationship("User", foreign_keys=[created_by])
+
+    # 获取解密后的 secret_key_id
+    @property
+    def decrypted_secret_key_id(self):
+        return decrypt_secret_key(self.secret_key_id)

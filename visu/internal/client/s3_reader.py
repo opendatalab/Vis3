@@ -909,9 +909,8 @@ class S3Reader:
             # 表示获取s3目录大小异常
             return -1
         
-    async def validate_path_accessibility(self, path: str, endpoint: str, ak_sk: str):
+    async def validate_path_accessibility(self, path: str, endpoint: str, ak: str, sk: str):
         is_endpoint_valid = ping_host(endpoint)
-        [ak, sk] = ak_sk.split("/")
         sk = decrypt_secret_key(sk)
 
         if not is_endpoint_valid:

@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session
 
 from visu.internal.api.dependencies.auth import get_auth_user_or_error
 from visu.internal.api.v1.schema.request.keychain import (
@@ -21,7 +21,7 @@ router = APIRouter(prefix="/keychains", tags=["S3钥匙串"])
 async def get_keychains(
     skip: int = 0,
     limit: int = 100,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_auth_user_or_error),
 ) -> List[KeyChainResponse]:
     """
@@ -42,7 +42,7 @@ async def get_keychains(
 @router.post("/", response_model=KeyChainResponse, status_code=status.HTTP_201_CREATED)
 async def create_keychain(
     keychain_in: KeychainCreateBody,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_auth_user_or_error),
 ) -> KeyChainResponse:
     """
@@ -63,7 +63,7 @@ async def create_keychain(
 @router.get("/{keychain_id}", response_model=KeyChainResponse)
 async def get_keychain(
     keychain_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_auth_user_or_error),
 ) -> KeyChainResponse:
     """
@@ -83,14 +83,24 @@ async def get_keychain(
             detail="无权访问此钥匙串",
         )
     
-    return keychain
+    
+
+    return KeyChainResponse(
+        id=keychain.id,
+        name=keychain.name,
+        access_key_id=keychain.access_key_id,
+        secret_key_id=keychain.secret_key_id,
+        created_at=keychain.created_at,
+        created_by=keychain.user.username,
+        updated_at=keychain.updated_at,
+    )
 
 
 @router.put("/{keychain_id}", response_model=KeyChainResponse)
 async def update_keychain(
     keychain_id: int,
     keychain_in: KeychainUpdateBody,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_auth_user_or_error),
 ) -> KeyChainResponse:
     """
@@ -117,7 +127,7 @@ async def update_keychain(
 @router.delete("/{keychain_id}", response_model=KeyChainResponse)
 async def delete_keychain(
     keychain_id: int,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_auth_user_or_error),
 ) -> KeyChainResponse:
     """

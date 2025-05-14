@@ -3,6 +3,7 @@
 *.local
 *.log*
 __pycache__
+*.sqlite
 
 # Dist
 node_modules

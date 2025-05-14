@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime, timedelta, timezone
 
-from visu.internal.api.v1.schema.request.user import UserCreate
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+
+from visu.internal.api.dependencies.auth import get_auth_user_or_error
+from visu.internal.api.v1.schema.request.user import UserCreate, UserLogin
 from visu.internal.api.v1.schema.response.user import UserResponse
 from visu.internal.common.db import get_db
 from visu.internal.config import settings
 from visu.internal.crud.user import user_crud
+from visu.internal.models.user import User
 from visu.internal.schema.user import Token
 from visu.internal.utils.security import create_access_token
 
@@ -15,7 +18,7 @@ router = APIRouter(prefix="/auth", tags=["认证"])
 
 @router.post("/register", response_model=UserResponse)
 async def register(
-    user_in: UserCreate, db: AsyncSession = Depends(get_db)
+    user_in: UserCreate, db: Session = Depends(get_db)
 ) -> UserResponse:
     """
     用户注册
@@ -33,14 +36,14 @@ async def register(
 @router.post("/login", response_model=Token)
 async def login(
     response: Response,
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: AsyncSession = Depends(get_db),
+    user_in: UserLogin,
+    db: Session = Depends(get_db),
 ):
     """
     用户登录，获取访问令牌
     """
     user = await user_crud.authenticate(
-        db, username=form_data.username, password=form_data.password
+        db, username=user_in.username, password=user_in.password
     )
     if not user:
         raise HTTPException(
@@ -57,13 +60,26 @@ async def login(
         value=access_token, 
         httponly=True, 
         secure=settings.SCHEME == "https", 
-        samesite="lax"
+        samesite="lax",
+        expires=datetime.now(timezone.utc) + timedelta(days=30),
     )
     
     return {"access_token": access_token, "token_type": settings.TOKEN_TYPE}
 
+@router.get("/me", response_model=UserResponse)
+async def get_current_user(
+    current_user: User = Depends(get_auth_user_or_error),
+    db: Session = Depends(get_db),
+):
+    """
+    获取当前用户
+    """
+    return UserResponse(
+        id=current_user.id,
+        username=current_user.username,
+    )
 
-@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+@router.get("/logout", status_code=status.HTTP_204_NO_CONTENT)
 async def logout(response: Response):
     """
     用户登出，删除cookie
