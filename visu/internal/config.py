@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Any
 
@@ -5,6 +6,7 @@ from loguru import logger
 from pydantic_settings import BaseSettings
 
 from visu.internal.common.io import get_data_dir
+from visu.version import version
 
 
 class Settings(BaseSettings):
@@ -41,6 +43,12 @@ class Settings(BaseSettings):
         
 
         logger.info(f"DATABASE_URL: {self.DATABASE_URL}")
+
+        # 生成一个sys-config.js文件到static/public/sys-config.js，内容只有 ENABLE_AUTH
+        frontend_public = os.path.join(self.BASE_DATA_DIR, "static", "public")
+        os.makedirs(frontend_public, exist_ok=True)
+        with open(os.path.join(frontend_public, "sys-config.js"), "w") as f:
+            f.write(f"(function() {{ window.__CONFIG__ = {{ ENABLE_AUTH: {json.dumps(self.ENABLE_AUTH)}, VERSION: '{version}' }}; }})();")
 
     class Config:
         env_prefix = ""

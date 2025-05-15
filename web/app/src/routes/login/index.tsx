@@ -8,6 +8,10 @@ import { useLogin } from '../../api/user.query'
 export const Route = createFileRoute('/login/')({
   component: RouteComponent,
   loader: async () => {
+    if (!window.__CONFIG__?.ENABLE_AUTH) {
+      return redirect({ to: '/' })
+    }
+    
     try {
       const response = await getUserInfo()
   

@@ -908,30 +908,3 @@ class S3Reader:
             print(e)
             # 表示获取s3目录大小异常
             return -1
-        
-    async def validate_path_accessibility(self, path: str, endpoint: str, ak: str, sk: str):
-        is_endpoint_valid = ping_host(endpoint)
-        sk = decrypt_secret_key(sk)
-
-        if not is_endpoint_valid:
-            return False
-
-        client = await self.get_client(
-            ak=ak,
-            sk=sk,
-            endpoint=endpoint,
-            region_name=self.region_name,
-        )
-        bucket_name, prefix = split_s3_path(path)
-
-        def _list_objects():
-            return client.list_objects(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
-
-        try:
-            res = await self._run_in_executor(_list_objects)
-            contents = res.get("Contents", [])
-            logger.info(contents)
-        except ClientError:
-            return False
-
-        return True

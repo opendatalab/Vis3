@@ -1,6 +1,5 @@
-import type { AxiosError, AxiosResponse } from 'axios'
-import axios from 'axios'
-
+import type { AxiosError, AxiosResponse } from 'axios';
+import axios from 'axios';
 /**
  * @param response
  * @returns
@@ -10,7 +9,7 @@ export function successHandler(response: AxiosResponse<any>) {
 }
 
 function errorHandler(error: AxiosError) {
-  if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+  if (error.response?.status === 401 && !window.location.pathname.includes('/login') && window.__CONFIG__.ENABLE_AUTH) {
     window.location.href = '/login'
   }
 
@@ -19,7 +18,7 @@ function errorHandler(error: AxiosError) {
 
 const requestConfig = {
   timeout: 10 * 60 * 1000,
-  baseURL: '/api',
+  baseURL: '/api/v1',
 }
 
 const request = axios.create(requestConfig)

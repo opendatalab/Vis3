@@ -1,6 +1,7 @@
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -15,22 +16,61 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[T]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: Any) -> Optional[T]:
+    async def get(self, db: AsyncSession, id: int) -> Optional[T]:
         """
         获取单个对象
         """
         result = db.execute(select(self.model).filter(self.model.id == id))
         return result.scalars().first()
+    
+    async def get_all(self, db: AsyncSession) -> List[T]:
+        """
+        获取所有对象
+        """
+        query = select(self.model).filter(self.model.state == State.ENABLED)
+        if hasattr(self.model, "created_at"):
+            query = query.order_by(self.model.created_at.desc())
+        result = db.execute(query)
+        return result.scalars().all()
+    
+    async def get_all_by_user(self, db: AsyncSession, user_id: int) -> List[T]:
+        """
+        获取所有对象
+        """
+        query = select(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED)
+        if hasattr(self.model, "created_at"):
+            query = query.order_by(self.model.created_at.desc())
+        result = db.execute(query)
+        return result.scalars().all()
 
     async def get_multi(
         self, db: AsyncSession, *, skip: int = 0, limit: int = 100
-    ) -> List[T]:
+    ) -> Tuple[List[T], int]:
         """
         获取多个对象
         """
-        query = select(self.model).offset(skip).limit(limit)
-        result = db.execute(query)
-        return result.scalars().all()
+        query = select(self.model).filter(self.model.state == State.ENABLED).offset(skip).limit(limit)
+        count_query = select(func.count()).select_from(self.model).filter(self.model.state == State.ENABLED)
+        if hasattr(self.model, "created_at"):
+            query = query.order_by(self.model.created_at.desc())
+        result = db.execute(query).scalars().all()
+        total = db.scalar(count_query)
+        return result, total
+    
+
+    async def get_multi_by_user(
+        self, db: AsyncSession, *, user_id: int, skip: int = 0, limit: int = 100
+    ) -> Tuple[List[T], int]:
+        """
+        获取多个对象
+        """
+        query = select(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED).offset(skip).limit(limit)
+        count_query = select(func.count()).select_from(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED)
+        if hasattr(self.model, "created_at"):
+            query = query.order_by(self.model.created_at.desc())
+        result = db.execute(query).scalars().all()
+        total = db.scalar(count_query)
+        return result, total
 
     async def create(self, db: AsyncSession, *, obj_in: CreateSchemaType, auto_commit: bool = True) -> T:
         """
@@ -52,8 +92,8 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     async def update(
-        self, db: AsyncSession, *, id: Any, obj_in: Union[UpdateSchemaType, Dict[str, Any]], 
-        auto_commit: bool = True
+        self, db: AsyncSession, *, id: int, obj_in: Union[UpdateSchemaType, Dict[str, Any]], 
+        auto_commit: bool | None = True
     ) -> Optional[T]:
         """
         更新对象
@@ -64,7 +104,7 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
             obj_in: 更新对象的输入模型或字典
             auto_commit: 是否自动提交事务，默认为True。设置为False时可以在外部管理事务。
         """
-        db_obj = await self.get(db, id)
+        db_obj = await self.get(db=db, id=id)
         if db_obj is None:
             return None
 
@@ -94,7 +134,7 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
             id: 对象ID
             auto_commit: 是否自动提交事务，默认为True。设置为False时可以在外部管理事务。
         """
-        db_obj = await self.get(db, id)
+        db_obj = await self.get(db=db, id=id)
         if db_obj is None:
             return None
 

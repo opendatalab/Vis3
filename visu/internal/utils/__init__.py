@@ -10,6 +10,7 @@ from contextlib import contextmanager
 
 import httpx
 import orjson
+from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from cryptography.fernet import Fernet
 from fastapi import status
@@ -17,6 +18,7 @@ from loguru import logger
 
 from visu.internal.common.exceptions import AppEx, ErrorCode
 from visu.internal.config import settings
+from visu.internal.utils.path import split_s3_path
 
 fernet = Fernet(settings.ENCRYPT_KEY)
 
@@ -74,6 +76,33 @@ def ping_host(url: str) -> bool:
             code=ErrorCode.PING_50000_ERROR,
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+    
+async def validate_path_accessibility(self, path: str, endpoint: str, ak: str, sk: str):
+    is_endpoint_valid = ping_host(endpoint)
+    sk = decrypt_secret_key(sk)
+
+    if not is_endpoint_valid:
+        return False
+
+    client = await self.get_client(
+        ak=ak,
+        sk=sk,
+        endpoint=endpoint,
+        region_name=self.region_name,
+    )
+    bucket_name, prefix = split_s3_path(path)
+
+    def _list_objects():
+        return client.list_objects(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
+
+    try:
+        res = await self._run_in_executor(_list_objects)
+        contents = res.get("Contents", [])
+        logger.info(contents)
+    except ClientError:
+        return False
+
+    return True
 
 
 def decrypt_secret_key(encrypted_secret_key: str) -> str:

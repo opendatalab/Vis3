@@ -1,0 +1,7 @@
+.bucketDrawer :global(.ant-steps-item-container[role='button']:hover .ant-steps-item-description) {
+  color: var(--color-text-tertiary) !important;
+}
+
+.bucketDrawer :global(.ant-steps-item-container[role='button'] .ant-steps-item-description) {
+  color: var(--color-text-tertiary) !important;
+}

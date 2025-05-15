@@ -17,7 +17,7 @@ from visu.internal.service.bucket import (
     get_buckets_or_objects,
     preview_file,
 )
-from visu.internal.utils import ping_host
+from visu.internal.utils import ping_host, validate_path_accessibility
 from visu.internal.utils.path import is_s3_path
 
 router = APIRouter(tags=["buckets"])
@@ -46,6 +46,7 @@ async def read_bucket_request(
         page_no=page_no,
         page_size=page_size,
         db=db,
+        user_id=current_user.id if current_user else None,
     )
 
     return result
@@ -118,15 +119,13 @@ async def validate_path_accessibility_request(
     path: str,
     endpoint: str,
     keychain_id: int,
-    id: int | None = None,
     db: Session = Depends(get_db),
 ):
     """
     验证路径是否可访问
     """
-    _, s3_reader = await get_bucket(path, db, id)
     keychain = await keychain_crud.get(db, id=keychain_id)
-    result = await s3_reader.validate_path_accessibility(path, endpoint, keychain.access_key_id, keychain.decrypted_secret_key_id)
+    result = await validate_path_accessibility(path, endpoint, keychain.access_key_id, keychain.decrypted_secret_key_id)
 
     return OkResponse(data=result)
 

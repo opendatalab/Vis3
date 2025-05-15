@@ -11,15 +11,15 @@ export interface UserResponse {
 }
 
 export async function login(payload: LoginPayload): Promise<UserResponse> {
-  return await request.post('/v1/auth/login', payload);
+  return await request.post('/auth/login', payload);
 }
 
 export async function getUserInfo(): Promise<UserResponse> {
-  return await request.get('/v1/auth/me');
+  return await request.get('/auth/me');
 }
 
 export async function logout(): Promise<void> {
-  return await request.get('/v1/auth/logout');
+  return await request.get('/auth/logout');
 }
 
 export interface RegisterPayload {
@@ -28,5 +28,5 @@ export interface RegisterPayload {
 }
 
 export async function register(params: RegisterPayload): Promise<void> {
-  return await request.post('/v1/auth/register', params);
+  return await request.post('/auth/register', params);
 }

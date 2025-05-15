@@ -1,11 +1,28 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Button, Form, Input, message } from 'antd'
-import { RegisterPayload } from '../../api/user'
+import { getUserInfo, RegisterPayload } from '../../api/user'
 import { useRegister } from '../../api/user.query'
 
 export const Route = createFileRoute('/register/')({
   component: RouteComponent,
+  loader: async () => {
+    if (!window.__CONFIG__?.ENABLE_AUTH) {
+      return redirect({ to: '/' })
+    }
+
+    try {
+      const response = await getUserInfo()
+  
+      if (response) {
+        return redirect({ to: '/' })
+      }
+    } catch (error) {
+      console.error('get user info error', error)
+    }
+
+    return null
+  }
 })
 
 interface RegisterFormValues extends RegisterPayload {

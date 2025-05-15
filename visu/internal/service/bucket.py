@@ -203,13 +203,14 @@ async def get_buckets_or_objects(
     page_size: int,
     db: Session,
     id: int | None = None,
+    user_id: int | None = None,
 ):
     """获取bucket或目录或文件
     """
     result = None
     # 获取所有bucket列表
     if path is None or path == "" or path == "/":
-        buckets = await bucket_crud.get_multi(db)
+        buckets = await bucket_crud.get_by_user_id(db, user_id=user_id) if user_id else await bucket_crud.get_multi(db)
         result = [
             BucketResponse(
                 id=bucket.id,

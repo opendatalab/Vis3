@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,9 @@ from visu.internal.models.bucket import Bucket
 class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
     async def get_by_name(self, db: Session, *, name: str) -> Bucket:
         return db.query(self.model).filter(self.model.name == name).first()
+    
+    async def get_by_user_id(self, db: Session, *, user_id: int) -> List[Bucket]:
+        return db.query(self.model).filter(self.model.created_by == user_id).all()
     
     async def create(self, db: Session, *, obj_in: BucketCreateBody, created_by: int | None = None) -> Bucket:
         keychain = await keychain_crud.get(db, id=obj_in.keychain_id)

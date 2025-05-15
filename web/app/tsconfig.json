@@ -13,6 +13,9 @@
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    
+    /* 确保正确识别全局声明文件 */
+    "typeRoots": ["./src/env.d.ts", "./node_modules/@types"],
 
     /* type checking */
     "strict": true,

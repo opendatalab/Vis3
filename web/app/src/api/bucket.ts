@@ -25,6 +25,7 @@ export interface BucketData {
 
 export interface BucketResponse {
   data: BucketData[]
+  total: number
 }
 
 export async function digBucket({ pageNo, pageSize, path }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
@@ -41,7 +42,7 @@ export async function digBucket({ pageNo, pageSize, path }: BucketParams = {}, o
     params.page_size = pageSize || 50
   }
 
-  return request('/v1/bucket', {
+  return request('/bucket', {
     params,
     ...options,
   } as any)
@@ -56,23 +57,23 @@ export interface DownloadParams {
 export interface HeaderParams {
   endpoint: string
   path: string
-  ak_sk: string
+  keychain_id: number
 }
 
 export async function getDownloadUrl(params: DownloadParams): Promise<string> {
-  return request('/v1/bucket/download', {
+  return request('/bucket/download', {
     params,
   })
 }
 
 export async function isBucketAccessible(params: HeaderParams): Promise<string> {
-  return request('/v1/bucket/accessible', {
+  return request('/bucket/accessible', {
     params,
   })
 }
 
 export async function ping(url: string): Promise<string> {
-  return request('/v1/bucket/ping', {
+  return request('/bucket/ping', {
     params: {
       url,
     },
@@ -80,7 +81,7 @@ export async function ping(url: string): Promise<string> {
 }
 
 export async function getFileMimetype(path: string): Promise<string> {
-  return request('/v1/bucket/mimetype', {
+  return request('/bucket/mimetype', {
     params: {
       path,
     },
@@ -88,7 +89,7 @@ export async function getFileMimetype(path: string): Promise<string> {
 }
 
 export async function getPathSize(path: string, cluster?: string | null): Promise<string> {
-  return request('/v1/bucket/size', {
+  return request('/bucket/size', {
     params: {
       path,
       cluster,

@@ -72,6 +72,13 @@ export default function Header() {
               menu={{
                 items: [
                   {
+                    label: 'AK/SK 管理',
+                    key: 'keychain',
+                    onClick: () => {
+                      navigate({ to: '/keychain' })
+                    },
+                  },
+                  {
                     label: '退出登录',
                     key: 'logout',
                     onClick: () => {
