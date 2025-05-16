@@ -445,12 +445,13 @@ function RouteComponent() {
     }
 
     const bytes = getBytes(fakePath)
+    const type = getPathType(selectedFile.name) || selectedFile.type.split('/')[0] as any
 
     return {
       id: selectedFile.id!,
-      mimetype: selectedFile.type,
+      mimetype: type,
       name: selectedFile.name,
-      type: getPathType(selectedFile.name) || selectedFile.type.split('/')[0] as any,
+      type,
       content,
       last_modified: selectedFile.lastModified.toString(),
       size: selectedFile.content.length,
