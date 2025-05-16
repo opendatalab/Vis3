@@ -1,39 +1,19 @@
-import styled from '@emotion/styled'
-import { message } from 'antd'
+import type { BlockInfo } from '@visu/kit'
+import { ROOT_BLOCK_ID, RenderBlock, getBasename, getPathType } from '@visu/kit'
+import clsx from 'clsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { BucketItem } from '../../types'
 import { gid } from '../../utils'
-import { useBucketContext } from '../BucketPreviewer/context'
-import type { BlockInfo } from '../Renderer/Block'
-import { RenderBlock } from '../Renderer/Block'
-import { getBasename, getPathType } from '../Renderer/utils'
-
-export interface FilePreviewerProps {
-  data: BucketItem
+export interface BlockPreviewerProps {
+  className?: string
+  path: string
 }
 
-const StyledFilePreviewer = styled.div`
-  display: flex;
-  align-items: start;
-  gap: 16px;
-  overflow-x: auto;
-  height: 100%;
-`
-
-const StyledBlockWrapper = styled.div`
-  height: 100%;
-  position: relative;
-  min-width: calc(100% / 5);
-`
-
-export default function FilePreviewer() {
-  const { path = '', pageSize, pageNo } = useBucketContext()
+export default function BlockPreviewer({ className, path }: BlockPreviewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [messageApi, contextHolder] = message.useMessage()
   const basename = getBasename(path)
   const pathType = getPathType(basename) || 'txt'
   const [blocks, setBlocks] = useState<BlockInfo[]>([{
-    id: 'origin',
+    id: ROOT_BLOCK_ID,
     path,
     pathType,
   }])
@@ -100,7 +80,7 @@ export default function FilePreviewer() {
     return () => {
       document.removeEventListener('s3-path-click', handleS3PathClick)
     }
-  }, [messageApi])
+  }, [])
 
   const handleBlockClose = useCallback((id: string) => {
     setBlocks(pre => pre.filter(block => block.id !== id))
@@ -109,22 +89,20 @@ export default function FilePreviewer() {
   // s3://llm-users-phdd2/jinzhenj2/demo_data_output/part-675bf9ba2e22-000000.jsonl
 
   return (
-    <StyledFilePreviewer ref={containerRef}>
-      {contextHolder}
+    <div ref={containerRef} className={clsx(className, 'block-previewer', 'flex', 'items-start', 'gap-4', 'overflow-x-auto', 'h-full')}>
       {
         blocks.map(block => {
           return (
-            <StyledBlockWrapper data-block-id={block.id} key={block.id} style={{ width: `calc(100% / ${blocks.length})` }}>
-              <RenderBlock
-                block={block}
-                updateBlock={updateBlock}
-                onClose={() => handleBlockClose(block.id)}
-                initialParams={block.id === 'origin' ? { pageSize, pageNo } : undefined}
-              />
-            </StyledBlockWrapper>
+            <RenderBlock
+              key={block.id}
+              block={block}
+              updateBlock={updateBlock}
+              onClose={() => handleBlockClose(block.id)}
+              style={{ width: `calc(100% / ${blocks.length})` }}
+            />
           )
         })
       }
-    </StyledFilePreviewer>
+    </div>
   )
 }

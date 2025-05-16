@@ -18,6 +18,7 @@ export interface PopPanelProps {
     /** 与底部的距离，默认0px */
     bottom?: number
   }
+  footer?: React.ReactNode
 }
   
 export default function PopPanel({ 
@@ -26,7 +27,8 @@ export default function PopPanel({
   children, 
   title, 
   width = 400,
-  offset = { right: 24, top: 0, bottom: 0 }
+  offset = { right: 24, top: 0, bottom: 0 },
+  footer,
 }: PopPanelProps) {
   const [isVisible, setIsVisible] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
@@ -69,7 +71,7 @@ export default function PopPanel({
         style={{ opacity: isAnimating ? 1 : 0 }}
       />
       <div 
-        className="absolute right-0 bg-white shadow-lg rounded-lg"
+        className="absolute right-0 bg-white shadow-lg rounded-lg flex flex-col"
         style={{ 
           width: typeof width === 'number' ? `${width}px` : width,
           transform: isAnimating ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.9)',
@@ -94,9 +96,14 @@ export default function PopPanel({
             icon={<CloseOutlined />}
           />
         </div>
-        <div className="p-6">
+        <div className="p-6 flex-1 min-h-0 overflow-y-auto">
           {children}
         </div>
+        {footer && (
+          <div className="p-4 border-t border-gray-200">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   )

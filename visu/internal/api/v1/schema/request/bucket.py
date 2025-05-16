@@ -4,7 +4,7 @@ from visu.internal.schema.state import State
 
 
 class BucketCreateBody(BaseModel):
-    name: str
+    name: str | None = None
     path: str
     endpoint: str
     keychain_id: int

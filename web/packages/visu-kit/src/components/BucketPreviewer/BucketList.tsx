@@ -106,7 +106,7 @@ export default function BucketList({ objects, highlightCurrent, pathWithoutQuery
                   icon={<CopyOutlined />}
                 />
               </Tooltip>
-              {item.owner && (
+              {item.created_by && (
                 <Button
                   style={{ flexShrink: 0 }}
                   size="small"
@@ -118,7 +118,7 @@ export default function BucketList({ objects, highlightCurrent, pathWithoutQuery
             </ItemContent>
             <TagsContainer $hidden={hideRight}>
               {item.size !== null && <Tag>{formatter.format('fileSize', item.size)}</Tag>}
-              {item.owner && <Tag>{item.owner}</Tag>}
+              {item.created_by && <Tag>{item.created_by}</Tag>}
 
               {item.last_modified && (
                 <Tag style={{ margin: 0 }}>

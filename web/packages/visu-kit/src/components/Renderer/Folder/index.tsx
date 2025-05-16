@@ -10,6 +10,7 @@ import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
 import { BucketIcon, FolderIcon } from '../../../components/Icon'
 import { getFullPath, getPathIcon } from '../../../components/Renderer/utils'
+import { ROOT_BLOCK_ID } from '../../../constant'
 import { download } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
@@ -95,7 +96,7 @@ const ExtraContainer = styled.div`
 export default function FolderRenderer({ path, onPathChange, name, extraTail, titleExtra, value, highlightCurrent, pathWithoutQuery, showHeader = true }: FolderRendererProps) {
   const ref = useRef<HTMLDivElement>(null)
   const { id } = usePreviewBlockContext()
-  const { downloadUrl } = useBucketContext()
+  const { downloadUrl, renderBucketItem } = useBucketContext()
   const { t } = useTranslation()
   const handleDig = useCallback((item: BucketItemWrapper) => () => {
     const fullPath = highlightCurrent ? item.fullPath : getFullPath(item, path)
@@ -118,6 +119,10 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
         backgroundColor: '#fff',
       }}
       renderItem={(item) => {
+        if (typeof renderBucketItem === 'function' && !pathWithoutQuery) {
+          return renderBucketItem(item)
+        }
+
         let icon = null
 
         if (item.type === 'bucket') {
@@ -150,7 +155,7 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
                   icon={<CopyOutlined />}
                 />
               </Tooltip>
-              {item.owner && (
+              {item.created_by && (
                 <ShrinkButton
                   size="small"
                   type="text"
@@ -159,9 +164,9 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
                 />
               )}
             </FlexRow>
-            <TagInfo isHidden={id !== 'origin'}>
+            <TagInfo isHidden={id !== ROOT_BLOCK_ID}>
               {item.size !== null && <Tag>{formatter.format('fileSize', item.size)}</Tag>}
-              {item.owner && <Tag>{item.owner}</Tag>}
+              {item.created_by && <Tag>{item.created_by}</Tag>}
 
               {item.last_modified && (
                 <TagWithoutMargin>

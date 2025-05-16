@@ -1,12 +1,14 @@
 import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
-import { Alert, Button, Divider, Form, Input, message, Select, Steps, Tooltip } from 'antd'
+import { Alert, Button, Divider, Form, Input, message, Select, Tooltip } from 'antd'
 import type { FormProps } from 'antd/lib'
 import _ from 'lodash'
 import type { MutableRefObject } from 'react'
 import { useEffect, useImperativeHandle, useMemo, useState } from 'react'
 
 import DeleteSvg from '@/assets/delete.svg?react'
+import { useQueryClient } from '@tanstack/react-query'
 import { isBucketAccessible, ping } from '../../api/bucket'
+import { useBatchCreateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import PopPanel from '../PopPanel'
 
@@ -52,7 +54,8 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
   const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
-
+  const { mutateAsync: batchCreateBucketMutation, isPending } = useBatchCreateBucket()
+  const queryClient = useQueryClient()
   console.log('keyChain', keyChain)
 
   useEffect(() => {
@@ -94,27 +97,15 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
     setOpen(false)
   }
 
-  const [current, setCurrent] = useState(0)
-
-  const onChange = (value: number) => {
-    setCurrent(value)
-  }
-
   const onFinish: FormProps['onFinish'] = async (values) => {
     if (_.size(values?.buckets) === 0) {
       message.error('请至少添加一个地址')
       return
     }
-    // await bucketConfigCreateMutation.mutateAsync({
-    //   items: _.map(values.buckets, (item) => {
-    //     return {
-    //       key_chain_id: values.key_chain_id,
-    //       endpoint: item.endpoint,
-    //       path: item.path,
-    //       name: `bucket-${gid()}`,
-    //     }
-    //   }),
-    // })
+    await batchCreateBucketMutation(values.buckets)
+    message.success('添加成功')
+    onClose()
+    queryClient.invalidateQueries({ queryKey: ['bucket'] })
   }
 
   const handleSave = () => {
@@ -126,8 +117,7 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
       return {
         label: item.name,
         value: item.id,
-        ak_sk: `${item.access_key}/${item.secret_key}`,
-        accessKey: item.access_key,
+        access_key_id: item.access_key_id,
       }
     })
   }, [keyChain])
@@ -135,8 +125,9 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
   const pathValidator = async (_meta: any, value: string) => {
     const values = form.getFieldsValue()
     const endpoint = _.get(values, _meta.field.replace('path', 'endpoint'))
+    const keychain_id = _.get(values, _meta.field.replace('path', 'keychain_id'))
 
-    if (!values.key_chain_id) {
+    if (!keychain_id) {
       return Promise.reject(new Error('请选择AK&SK'))
     }
 
@@ -153,7 +144,7 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
     }
 
     try {
-      const correctKey = _.find(keyOptions, _item => _item.value === values.key_chain_id)
+      const correctKey = _.find(keyOptions, _item => _item.value === keychain_id)
 
       if (!correctKey) {
         return Promise.reject(new Error('没有对应的AK&SK'))
@@ -190,148 +181,115 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
           top: 72,
           bottom: 16
         }}
-      >
-      {/* <Drawer
-        width={800}
-        title="添加地址"
-        onClose={onClose}
-        className={styles.bucketDrawer}
-        destroyOnClose
-        open={open}
-        footer={(
-          <div className="flex items-center gap-2">
-            <Button type="primary" onClick={handleSave}>保存</Button>
-            <Button type="text" onClick={onClose}>取消</Button>
+        footer={
+          <div className="flex gap-2">
+            <Button type="primary" loading={isPending} onClick={handleSave}>保存</Button>
+            <Button type="default" onClick={onClose}>取消</Button>
           </div>
-        )}
-      > */}
+        }
+      >
         <div className="">
           <Form form={form} layout="vertical" onFinish={onFinish}>
-            <Steps
-              className="w-full"
-              current={current}
-              onChange={onChange}
-              direction="vertical"
-              items={[
-                {
-                  title: '选择AK&SK',
-                  description: (
-                    <div className="flex flex-col">
-                      <Alert
-                        className="!mb-4"
-                        type="info"
-                        showIcon
-                        message={(
-                          <div>
-                            请选择或添加对目标路径有访问权限的AK/SK（前往
-                              <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">AK&SK 管理</Button>
-                              添加）
-                          </div>
-                        )}
-                      />
+            <Alert
+              className="!mb-4"
+              type="info"
+              showIcon
+              message={(
+                <div>
+                  请选择或添加对目标路径有访问权限的AK/SK（前往
+                    <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">AK&SK 管理</Button>
+                    添加）
+                </div>
+              )}
+            />
+            <Form.List name="buckets">
+              {(fields, { add, remove }) => (
+                <>
+                  {
+                    fields.map((field, index) => (
+                      <div key={field.key} className="flex flex-col gap-4">
+                        <div className="flex justify-between items-center mb-4">
 
-                      <Form.Item
-                        label={(
-                          <div className="flex items-center gap-2">
-                            AK&SK
-                            <Tooltip title="刷新密钥">
-                              <Button type="text" size="small" icon={<ReloadOutlined />} loading={keyChainQuery.isFetching} onClick={() => keyChainQuery.refetch()} />
-                            </Tooltip>
-                          </div>
-                        )}
-                        required
-                        name="key_chain_id"
-                        rules={[{ required: true, message: '请选择AK&SK' }]}
-                      >
-                        <Select
-                          className="w-full"
-                          loading={isLoading}
-                          options={keyOptions}
-                          optionRender={item => (
-                            <div className="flex flex-col gap-1">
-                              {item.label}
-                              <span className="text-gray-400">
-                                {item.data.accessKey}
-                              </span>
+                          <span className="font-bold text-black">
+                            地址 &nbsp;
+                            {index + 1}
+                          </span>
+                          <Tooltip title="移除地址">
+                            <Button size="small" type="text" danger icon={<Icon component={DeleteSvg} />} onClick={() => remove(index)} />
+                          </Tooltip>
+                        </div>
+                        <Form.Item
+                          className="!mb-0"
+                          label={(
+                            <div className="flex items-center gap-2">
+                              AK&SK
+                              <Tooltip title="刷新">
+                                <Button type="text" size="small" icon={<ReloadOutlined />} loading={keyChainQuery.isFetching} onClick={() => keyChainQuery.refetch()} />
+                              </Tooltip>
                             </div>
                           )}
-                        />
-                      </Form.Item>
-                    </div>
-                  ),
-                },
-                {
-                  title: <span className="text-black">填写地址</span>,
-                  description: (
-                    <div className="">
-                      <div className="mb-8">
-                        填写需要可视化查看的 Bucket /对象地址
+                          required
+                          name={[index, 'keychain_id']}
+                          rules={[{ required: true, message: '请选择AK&SK' }]}
+                        >
+                          <Select
+                            className="w-full"
+                            loading={isLoading}
+                            options={keyOptions}
+                            placeholder="请选择AK&SK"
+                            optionRender={item => (
+                              <div className="flex flex-col gap-1">
+                                {item.label}
+                                <span className="text-gray-400">
+                                  {item.data.access_key_id}
+                                </span>
+                              </div>
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          label="Endpoint"
+                          required
+                          hasFeedback
+                          className="!mb-0"
+                          name={[index, 'endpoint']}
+                          validateDebounce={1000}
+                          rules={
+                            [
+                              { type: 'url', message: '请填写正确的url格式' },
+                              { type: 'string', validator: endpointAccessibleValidator },
+                            ]
+                          }
+                        >
+                          <Input placeholder="请填写有效的Endpoint" />
+                        </Form.Item>
+                        <Form.Item
+                          label="S3存储地址"
+                          tooltip="检查可访问的时限为30秒，若超时则判定为不可访问"
+                          required
+                          hasFeedback
+                          className="!mb-0"
+                          name={[index, 'path']}
+                          validateDebounce={1000}
+                          rules={
+                            [
+                              { type: 'string', validator: pathValidator },
+                            ]
+                          }
+                        >
+                          <Input placeholder="请填写S3存储地址，以s3://开头" />
+                        </Form.Item>
+                        {fields.length > 1 && index < fields.length - 1 && <Divider />}
                       </div>
-                      <Form.List name="buckets">
-                        {(fields, { add, remove }) => (
-                          <>
-                            {
-                              fields.map((field, index) => (
-                                <div key={field.key} className="flex flex-col gap-4">
-                                  <div className="flex justify-between items-center mb-4">
-
-                                    <span className="font-bold text-black">
-                                      地址 &nbsp;
-                                      {index + 1}
-                                    </span>
-                                    <Tooltip title="移除地址">
-                                      <Button size="small" type="text" danger icon={<Icon component={DeleteSvg} />} onClick={() => remove(index)} />
-                                    </Tooltip>
-                                  </div>
-                                  <Form.Item
-                                    label="Endpoint"
-                                    required
-                                    hasFeedback
-                                    className="!mb-0"
-                                    name={[index, 'endpoint']}
-                                    validateDebounce={1000}
-                                    rules={
-                                      [
-                                        { type: 'url', message: '请填写正确的url格式' },
-                                        { type: 'string', validator: endpointAccessibleValidator },
-                                      ]
-                                    }
-                                  >
-                                    <Input />
-                                  </Form.Item>
-                                  <Form.Item
-                                    label="S3存储地址"
-                                    tooltip="检查可访问的时限为30秒，若超时则判定为不可访问"
-                                    required
-                                    hasFeedback
-                                    className="!mb-0"
-                                    name={[index, 'path']}
-                                    validateDebounce={1000}
-                                    rules={
-                                      [
-                                        { type: 'string', validator: pathValidator },
-                                      ]
-                                    }
-                                  >
-                                    <Input />
-                                  </Form.Item>
-                                  {fields.length > 1 && index < fields.length - 1 && <Divider />}
-                                </div>
-                              ))
-                            }
-                            <Button className="mt-6" block icon={<PlusOutlined />} onClick={() => add()}>增加地址</Button>
-                          </>
-                        )}
-                      </Form.List>
-                    </div>
-                  ),
-                },
-              ]}
-            />
+                    ))
+                  }
+                  <Button className="mt-6" block icon={<PlusOutlined />} onClick={() => add()}>增加地址</Button>
+                </>
+              )}
+            </Form.List>
           </Form>
         </div>
-        </PopPanel>
-      {/* </Drawer> */}
+      </PopPanel>
     </>
   )
 }

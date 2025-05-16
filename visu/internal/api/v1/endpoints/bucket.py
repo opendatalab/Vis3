@@ -1,14 +1,18 @@
-from typing import Union
+from typing import List, Union
 
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from visu.internal.api.dependencies.auth import get_auth_user_or_error
-from visu.internal.api.v1.schema.request.bucket import BucketCreateBody
+from visu.internal.api.v1.schema.request.bucket import (
+    BucketCreateBody,
+    BucketUpdateBody,
+)
 from visu.internal.api.v1.schema.response import ItemResponse, ListResponse, OkResponse
-from visu.internal.api.v1.schema.response.bucket import BucketResponse
+from visu.internal.api.v1.schema.response.bucket import BucketResponse, PathType
 from visu.internal.common.db import get_db
 from visu.internal.common.exceptions import AppEx, ErrorCode
+from visu.internal.config import settings
 from visu.internal.crud.bucket import bucket_crud
 from visu.internal.crud.keychain import keychain_crud
 from visu.internal.models.user import User
@@ -66,10 +70,51 @@ async def create_bucket_request(
         name=result.name,
         path=result.path,
         endpoint=result.endpoint,
-        owner=result.user.username,
+        created_by=current_user.username if current_user else None,
+        type=PathType.Bucket,
     )
 
-@router.get("/bucket/file_preview", summary="预览文件")
+@router.post("/bucket/batch", summary="批量创建bucket")
+async def create_batch_bucket_request(
+    bucket_in: List[BucketCreateBody],
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_auth_user_or_error),
+):
+    """
+    批量创建bucket
+    """
+    result = await bucket_crud.create_batch(db, obj_in=bucket_in, created_by=current_user.id if current_user else None)
+    return [BucketResponse(
+        id=bucket.id,
+        name=bucket.name,
+        path=bucket.path,
+        endpoint=bucket.endpoint,
+        created_by=current_user.username if current_user else None,
+        type=PathType.Bucket,
+    ) for bucket in result]
+
+@router.patch("/bucket/{id}", summary="更新bucket")
+async def update_bucket_request(
+    id: int,
+    bucket_in: BucketUpdateBody,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_auth_user_or_error),
+):
+    """
+    更新bucket
+    """
+    result = await bucket_crud.update(db, id=id, obj_in=bucket_in, updated_by=current_user.id if current_user else None)
+    return BucketResponse(
+        id=result.id,
+        name=result.name,
+        path=result.path,
+        endpoint=result.endpoint,
+        created_by=current_user.username if current_user else None,
+        type=PathType.Bucket,
+    )
+
+
+@router.get("/bucket/preview", summary="预览文件")
 async def file_preview_request(
     path: str,
     mimetype: str = None,
@@ -131,7 +176,7 @@ async def validate_path_accessibility_request(
 
 
 @router.get("/bucket/ping", summary="验证endpoint是否可用")
-async def make_pint_request(url: str):
+async def make_ping_request(url: str):
     """
     验证endpoint是否可用
     """
@@ -139,6 +184,45 @@ async def make_pint_request(url: str):
     result = ping_host(url)
 
     return OkResponse(data=result)
+
+
+@router.get("/bucket/{id}", summary="获取bucket详情")
+async def get_bucket_request(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_auth_user_or_error),
+):
+    """
+    获取bucket详情
+    """
+    result = None
+
+    if not settings.ENABLE_AUTH:
+        result = await bucket_crud.get(db, id=id)
+    else:
+        result = await bucket_crud.get_by_user_id(db, user_id=current_user.id)
+
+    return BucketResponse(
+        id=result.id,
+        name=result.name,
+        path=result.path,
+        endpoint=result.endpoint,
+        created_by=current_user.username if current_user else None,
+        type=PathType.Bucket,
+    )
+
+@router.delete("/bucket/{id}", summary="删除bucket")
+async def delete_bucket_request(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_auth_user_or_error),
+):
+    """
+    删除bucket
+    """
+    await bucket_crud.delete(db, id=id)
+    return OkResponse()
+
 
 
 # TODO: 删除此接口

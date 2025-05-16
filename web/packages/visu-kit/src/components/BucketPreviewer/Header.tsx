@@ -1,8 +1,6 @@
 import {
   ArrowUpOutlined,
   CopyOutlined,
-  FolderOutlined,
-  LeftOutlined,
   RightOutlined,
   SearchOutlined
 } from '@ant-design/icons';
@@ -200,7 +198,7 @@ function extractPath(path: string) {
 function PathContainer({ containerRef }: PathContainerProps) {
   const { tokens } = useTheme();
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const { path = '', onParamsChange, pageSize } = useBucketContext()
+  const { path = '', onParamsChange } = useBucketContext()
   const inputRef = useRef<HTMLInputElement>(null)
   const [focused, setFocused] = useState(false)
   const [inputValue, setInputValue] = useState(path)
@@ -341,7 +339,6 @@ function PathContainer({ containerRef }: PathContainerProps) {
     })
 
     onParamsChange?.({ path: fullPath, pageNo: 1 })
-    document.dispatchEvent(new CustomEvent(PAGENATION_CHANGE_EVENT, { detail: { pageNo: 1 } }))
   }, [onParamsChange])
 
   const submit = useCallback(async () => {
@@ -436,23 +433,12 @@ function PathContainer({ containerRef }: PathContainerProps) {
   )
 }
 
-// 最后的BucketHeader组件样式
-const HeaderContainer = styled.div`
+const PathOuter = styled.div`
   display: flex;
-  gap: 0.5rem;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-  font-size: 14px;
-`
-
-const LeftContainer = styled.div`
-  display: flex;
-  flex: 1;
   align-items: center;
   border: 1px solid #e5e7eb; /* gray-200 */
   border-radius: 0.25rem;
   background-color: #fff;
-  height: 100%;
 `
 
 const GoParentButton = styled(Button)`
@@ -466,6 +452,7 @@ const PathSection = styled.div`
   align-items: center;
   justify-content: space-between;
   flex: 1;
+  font-size: 14px;
 `
 
 const InnerRightContainer = styled.div`
@@ -482,58 +469,32 @@ const CopyButton = styled(Button)`
   border-bottom-left-radius: 0;
 `
 
-const RightContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`
-
-const PageInput = styled.input`
-  width: 60px;
-  text-align: center;
-  border: 0;
-  box-shadow: none !important;
-  background-color: #fff;
-  outline: none;
-  padding: 0 0.5rem;
-`
-
-const Pagination = styled.div`
-  display: flex;
-  align-items: stretch;
-`
-
-const PrevPageButton = styled(Button)`
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-`
-
-const NextPageButton = styled(Button)`
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-`
-
-export default function BucketHeader() {
+export default function BucketHeader({ className }: { className?: string }) {
   const { t } = useTranslation();
   const pathContainerRef = useRef<PathContainerRef>(null)
-  const { pageNo, path = '', onParamsChange, total, pageSize } = useBucketContext()
+  const { path = '', onParamsChange } = useBucketContext()
   const isFetching = useIsFetching()
 
   const handleGoParent = () => {
-    const containerPath = pathContainerRef.current?.getInputValue()
-
-    if (!containerPath) {
-      return
+    let newPath = path
+    if (path.endsWith('/')) {
+      // s3://abc/ab/ => s3://abc/
+      newPath = path.replace(/[^/]+\/$/, '')
+    }
+    else {
+      // s3://abc/ab => s3://abc/
+      newPath = path.replace(/[^/]+$/, '')
     }
 
-    const paths = containerPath.split('/')
-    if (paths.length <= 3) {
-      return
+    if (newPath === 's3://') {
+      newPath = ''
     }
 
-    const parent = paths.slice(0, -1).join('/')
-    onParamsChange?.({ path: `${parent}/`, pageNo: 1 })
-    document.dispatchEvent(new CustomEvent(PAGENATION_CHANGE_EVENT, { detail: { pageNo: 1 } }))
+    const params = {
+      path: newPath,
+    } as any
+
+    onParamsChange?.(params)
   }
 
   const handleCopy = () => {
@@ -541,61 +502,22 @@ export default function BucketHeader() {
     message.success(t('copied'))
   }
 
-  const handlePageChange = (direction: 'prev' | 'next') => () => {
-    const newPage = direction === 'prev' ? pageNo - 1 : pageNo + 1
-
-    queryClient.removeQueries({
-      queryKey: bucketKey.detail(path),
-    })
-
-    document.dispatchEvent(new CustomEvent(PAGENATION_CHANGE_EVENT, { detail: { pageNo: newPage } }))
-    onParamsChange?.({ pageNo: newPage })
-  }
-
   return (
-    <HeaderContainer className={styles.header}>
-      <LeftContainer>
-        <Tooltip title={t('bucket.returnToParent')} placement="bottomLeft">
-          <GoParentButton type="text" disabled={!path || path === 's3://'} icon={<ArrowUpOutlined />} onClick={handleGoParent} />
-        </Tooltip>
-        <PathSection>
-          <PathContainer containerRef={pathContainerRef} />
-          <InnerRightContainer>
-            <Tooltip title={t('bucket.searchPath')}>
-              <SearchButton type="text" disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
-            </Tooltip>
-            <Tooltip title={t('bucket.copyPath')}>
-              <CopyButton type="text" disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />
-            </Tooltip>
-          </InnerRightContainer>
-        </PathSection>
-      </LeftContainer>
-      <RightContainer>
-        {path.endsWith('/') && (
-          <Pagination>
-            <Tooltip title={t('bucket.prevPage')}>
-              <PrevPageButton
-                disabled={!pageNo || pageNo === 1}
-                onClick={handlePageChange('prev')}
-                icon={<LeftOutlined />}
-              />
-            </Tooltip>
-            <PageInput min={1} readOnly value={pageNo ?? '1'} />
-            <Tooltip title={t('bucket.nextPage')}>
-              <NextPageButton
-                disabled={total < pageSize}
-                onClick={handlePageChange('next')}
-                icon={<RightOutlined />}
-              />
-            </Tooltip>
-          </Pagination>
-        )}
-        {
-          !path.endsWith('/') && path !== '' && path !== '/' && (
-            <Button icon={<FolderOutlined />} onClick={() => document.dispatchEvent(new CustomEvent('open-bucket-list'))}>{t('bucket.directory')}</Button>
-          )
-        }
-      </RightContainer>
-    </HeaderContainer>
+    <PathOuter className={className}>
+      <Tooltip title={t('bucket.returnToParent')} placement="bottomLeft">
+        <GoParentButton type="text" disabled={!path || path === 's3://'} icon={<ArrowUpOutlined />} onClick={handleGoParent} />
+      </Tooltip>
+      <PathSection>
+        <PathContainer containerRef={pathContainerRef} />
+        <InnerRightContainer>
+          <Tooltip title={t('bucket.searchPath')}>
+            <SearchButton type="text" disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
+          </Tooltip>
+          <Tooltip title={t('bucket.copyPath')}>
+            <CopyButton type="text" disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />
+          </Tooltip>
+        </InnerRightContainer>
+      </PathSection>
+    </PathOuter>
   )
 }

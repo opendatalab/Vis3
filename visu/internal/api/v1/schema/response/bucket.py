@@ -11,12 +11,16 @@ class PathType(StrEnum):
 
 
 class BucketResponse(BaseModel):
-    id: int | None = None
-    name: str
-    endpoint: str | None = None
+    # common
+    id: int
     path: str
-    content: str | None = None
-    size: int | None = None
+    type: PathType
+    # bucket only
+    name: str | None = None
+    endpoint: str | None = None
+    created_by: str | None = None
+    # file only
     mimetype: str | None = None
-    owner: str | None = None
+    size: int | None = None
+    content: str | None = None
     last_modified: datetime | None = None

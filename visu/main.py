@@ -10,6 +10,7 @@ from typer import Typer
 
 from visu.internal.api import initial_routers
 from visu.internal.common.db import init_tables
+from visu.internal.common.exceptions import add_exception_handler
 from visu.internal.config import settings
 
 app = FastAPI(
@@ -49,6 +50,9 @@ class NoCacheStaticFiles(StaticFiles):
 
 
 initial_routers(app)
+
+add_exception_handler(app)
+
 init_tables()
 
 # 直接使用目录路径挂载静态文件

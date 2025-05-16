@@ -18,22 +18,30 @@ from visu.internal.utils import (
     should_not_read_as_raw,
     timer,
 )
-from visu.internal.utils.path import split_s3_path
+from visu.internal.utils.path import is_s3_path, split_s3_path
 
 
 async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Bucket, S3Reader]:
+    bucket_name, key = split_s3_path(path)
+    
     if id:
         bucket = await bucket_crud.get(db, id=id)
     else:
-        bucket_name, key = split_s3_path(path)
-        bucket = await bucket_crud.get_by_name(db, name=bucket_name)
+        bucket = await bucket_crud.get_by_path(db, path=path)
+
+    if not bucket:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30001_OBJECT_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
     
     s3_reader = S3Reader(
-        bucket=bucket.name,
+        bucket=bucket,
+        bucket_name=bucket_name,
         key=key,
-        endpoint=bucket.endpoint,
+        endpoint_url=bucket.endpoint,
         access_key_id=bucket.keychain.access_key_id,
-        secret_key_id=bucket.keychain.decrypted_secret_key_id,
+        secret_access_key=bucket.keychain.decrypted_secret_key_id,
     )
 
     return bucket, s3_reader
@@ -69,6 +77,7 @@ async def get_s3_directories(
                 owner=f"{display_name}/{owner_id}" if owner else None,
                 last_modified=last_modified,
                 size=size,
+                id=s3_reader.bucket.id,
             )
         )
 
@@ -83,6 +92,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
         if size == 0:
             return BucketResponse(
                 type=PathType.File,
+                id=s3_reader.bucket.id,
                 owner=await s3_reader.get_object_owner(),
                 size=size,
                 path=s3_reader.key,
@@ -96,6 +106,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
         if mimetype and should_not_read_as_raw(mimetype):
             return BucketResponse(
                 type=PathType.File,
+                id=s3_reader.bucket.id,
                 owner=await s3_reader.get_object_owner(),
                 size=size,
                 mimetype=mimetype,
@@ -115,6 +126,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
         if not chunk_size:
             return BucketResponse(
                 type=PathType.File,
+                id=s3_reader.bucket.id,
                 owner=owner,
                 size=size,
                 mimetype=mimetype,
@@ -139,6 +151,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
 
             return BucketResponse(
                 type=PathType.File,
+                id=s3_reader.bucket.id,
                 owner=owner,
                 size=size,
                 mimetype=mimetype,
@@ -157,6 +170,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
 
             return BucketResponse(
                 type=PathType.File,
+                id=s3_reader.bucket.id,
                 owner=owner,
                 size=size,
                 mimetype=mimetype,
@@ -188,6 +202,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
 
         return BucketResponse(
             type=PathType.File,
+            id=s3_reader.bucket.id,
             owner=owner,
             size=size,
             mimetype=mimetype,
@@ -231,12 +246,12 @@ async def get_buckets_or_objects(
     
     _, s3_reader = await get_bucket(path, db, id)
 
-    s3_path = quote(s3_reader.key_without_query, safe=":/")
+    s3_path = quote(path, safe=":/")
     parsed_url = urlparse(s3_path)
     parsed_path = parsed_url.path
     _, _, query = path.partition("?")
 
-    if not path.startswith("s3://"):
+    if not is_s3_path(path):
         raise AppEx(
             code=ErrorCode.BUCKET_30003_INVALID_PATH,
             status_code=status.HTTP_400_BAD_REQUEST,

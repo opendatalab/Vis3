@@ -6,8 +6,7 @@ export interface BucketParams {
   path?: string
   pageSize?: number
   pageNo?: number
-
-  cluster?: string
+  id?: number
 }
 
 export interface BucketData {
@@ -20,21 +19,34 @@ export interface BucketData {
   content: string | null
   size: number | null
   last_modified: string | null
-  owner: string | null
+  created_by: string | null
 }
+
+export interface BucketCreateBody {
+  name: string
+  path: string
+  endpoint: string
+  keychain_id: number
+}
+
+export type BucketUpdateBody = Partial<BucketCreateBody>
+
+export type BatchBucketCreateBody = Omit<BucketCreateBody, 'name'>[]
 
 export interface BucketResponse {
   data: BucketData[]
   total: number
 }
 
-export async function digBucket({ pageNo, pageSize, path }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
+export async function digBucket({ pageNo, pageSize, path, id }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
   const params = {
     path: path || '',
+    id,
   } as {
     path: string
     page_no?: number
     page_size?: number
+    id?: number
   }
 
   if (path && path.endsWith('/')) {
@@ -46,6 +58,26 @@ export async function digBucket({ pageNo, pageSize, path }: BucketParams = {}, o
     params,
     ...options,
   } as any)
+}
+
+export async function getBucket(id: number): Promise<BucketData> {
+  return request(`/bucket/${id}`)
+}
+
+export async function updateBucket(id: number, body: BucketUpdateBody): Promise<BucketData> {
+  return request.patch(`/bucket/${id}`, body)
+}
+
+export async function createBucket(body: BucketCreateBody): Promise<BucketData> {
+  return request.post('/bucket', body)
+}
+
+export async function createBatchBucket(body: BatchBucketCreateBody[]): Promise<BucketData[]> {
+  return request.post('/bucket/batch', body)
+}
+
+export async function deleteBucket(id: number): Promise<void> {
+  return request.delete(`/bucket/${id}`)
 }
 
 export interface DownloadParams {

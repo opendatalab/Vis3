@@ -14,12 +14,19 @@ import { useBuckets } from '../../../queries/bucket.query'
 import type { BucketItem, BucketParams } from '../../../types'
 import { download, getBasename, getBytes, getNextUrl } from '../../../utils'
 
+import { ROOT_BLOCK_ID } from '../../../constant'
 import { PreviewBlockContext } from '../contexts/preview.context'
 import FolderRenderer from '../Folder'
 import MediaCard from '../Media'
 
 export const PAGENATION_CHANGE_EVENT = 'visu-pagenation-change'
 export const PATH_CORRECTION_EVENT = 'visu-path-correction'
+
+const StyledBlockWrapper = styled.div`
+  height: 100%;
+  position: relative;
+  min-width: calc(100% / 5);
+`
 
 const StyledSpin = styled(Spin)<{ $visible: boolean }>`
   height: 100%;
@@ -95,17 +102,18 @@ export interface RenderBlockProps {
   block: BlockInfo
   updateBlock: (id: string, values: Partial<BlockInfo>) => void
   onClose?: () => void
-  initialParams?: BucketParams
-  enableFetch?: boolean
+  initialParams?: Partial<BucketParams>
   dataSource?: BucketItem
+  style?: React.CSSProperties
+  className?: string
 }
 
-export function RenderBlock({ block, updateBlock, onClose, initialParams, enableFetch = true, dataSource }: RenderBlockProps) {
+export function RenderBlock({ block, updateBlock, onClose, dataSource, style, className }: RenderBlockProps) {
   const { id, path, pathType } = block
-  const [pageSize, setPageSize] = useState(initialParams?.pageSize || 50)
-  const [pageNo, setPageNo] = useState(initialParams?.pageNo || 1)
+  const [pageSize, setPageSize] = useState(50)
+  const [pageNo, setPageNo] = useState(1)
   const basename = getBasename(path)
-  const { onParamsChange, setTotal, previewUrl, downloadUrl, bucketQueryOptions } = useBucketContext()
+  const { onParamsChange, previewUrl, downloadUrl, bucketQueryOptions } = useBucketContext()
   const { t } = useTranslation()
   
   // 未知的文件类型，包括没有后缀名的文件，供用户选择渲染类型
@@ -113,7 +121,24 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
   const [renderAs, setRenderAs] = useState<string | undefined>()
   const pathWithoutQuery = path.split('?')[0]
 
-  const { data, error, isFetching } = useBuckets(bucketQueryOptions)
+  const queryOptions = useMemo(() => {
+    if (id === ROOT_BLOCK_ID) {
+      return bucketQueryOptions
+    }
+
+    return {
+      ...bucketQueryOptions,
+      queryKey: ['bucket', id, {
+        path,
+        pageSize,
+        pageNo,
+      }],
+    }
+  }, [bucketQueryOptions, pageSize, pageNo])
+
+  const { data, error, isFetching } = useBuckets(queryOptions)
+
+  console.log('isFetching', isFetching)
 
   const finalData = useMemo(() => {
     if (dataSource) {
@@ -130,12 +155,6 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
 
     return []
   }, [finalData, pathWithoutQuery])
-
-  console.log('folders', data)
-
-  useEffect(() => {
-    setTotal(folders.length)
-  }, [folders, setTotal])
 
   useEffect(() => {
     handleBucketError(error as AxiosError<{ err_code: number, detail: { bucket: string, endpoint: string }[] }> | null, path)
@@ -167,7 +186,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
       newUrl = url.split('?')[0]
     }
 
-    if (id !== 'origin' || !pathType || !url || !['jsonl', 'csv', 'txt'].includes(pathType)) {
+    if (id !== ROOT_BLOCK_ID || !pathType || !url || !['jsonl', 'csv', 'txt'].includes(pathType)) {
       return
     }
 
@@ -194,7 +213,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
   const handlePageNoChange = useCallback((pageNo: number) => {
     setPageNo(pageNo)
 
-    if (id === 'origin') {
+    if (id === ROOT_BLOCK_ID) {
       onParamsChange?.({ pageNo })
     }
   }, [id, onParamsChange])
@@ -212,7 +231,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
   const handleNextLine = useCallback(async () => {
     setPrevBytes([...prevBytes, range?.byte ?? 0])
 
-    if (id === 'origin') {
+    if (id === ROOT_BLOCK_ID) {
       onParamsChange?.({ path: nextUrl })
     }
     else {
@@ -229,7 +248,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
     setPrevBytes(prevBytes.slice(0, -1))
 
     // 第一个默认block
-    if (id === 'origin') {
+    if (id === ROOT_BLOCK_ID) {
       onParamsChange?.({ path: prevUrl })
     }
     else {
@@ -239,7 +258,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
     }
   }, [id, prevBytes, updateBlock, onParamsChange, url])
 
-  const onFolderPathChange = useCallback((path: string, _cluster?: string) => {
+  const onFolderPathChange = useCallback((path: string) => {
     updateBlock(id, {
       path,
       pathType: getPathType(path),
@@ -247,7 +266,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
 
     setPageNo(1)
 
-    if (id === 'origin') {
+    if (id === ROOT_BLOCK_ID) {
       onParamsChange?.({ path, pageNo: 1 })
     }
   }, [id, onParamsChange, updateBlock])
@@ -272,7 +291,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
       pathType: getPathType(newPath),
     })
 
-    if (id === 'origin') {
+    if (id === ROOT_BLOCK_ID) {
       onParamsChange?.({ path: newPath, pageNo: 1 })
     }
   }, [path, updateBlock, id, onParamsChange])
@@ -313,7 +332,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
                     {
                       label: t('renderer.author'),
                       span: 3,
-                      children: <span>{fileObject?.owner}</span>,
+                      children: <span>{fileObject?.created_by}</span>,
                     },
                     {
                       label: t('renderer.lastModified'),
@@ -334,14 +353,14 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
           )
         }
         {
-          id !== 'origin' && !!path && (
+          id !== ROOT_BLOCK_ID && !!path && (
             <Tooltip title={t('renderer.returnToParent')}>
               <Button size="small" type="text" icon={<ArrowUpOutlined />} onClick={handleGoParent} />
             </Tooltip>
           )
         }
         {
-          id !== 'origin' && block.pathType === 'folder' && !!path && (
+          id !== ROOT_BLOCK_ID && block.pathType === 'folder' && !!path && (
             (
               <Space.Compact size="small">
                 <Tooltip title={t('renderer.prevPage')}>
@@ -375,7 +394,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
     return (
       <>
         {
-          id !== 'origin' && !dataSource && (
+          id !== ROOT_BLOCK_ID && !dataSource && (
             <Tooltip title={t('renderer.openInNewTab')}>
               <a href={`${location.origin}${location.pathname}?path=${encodeURIComponent(path)}&pageSize=${pageSize}&pageNo=${pageNo}`} target="_blank" rel="noopener noreferrer">
                 <Button type="text" size="small" icon={<ExportOutlined />} />
@@ -391,7 +410,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
           )
         }
         {
-          id !== 'origin' || onClose && (
+          id !== ROOT_BLOCK_ID || onClose && (
             <>
               <Divider type="vertical" />
               <Tooltip title={t('renderer.close')}>
@@ -408,7 +427,7 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
     if (pathWithoutQuery.endsWith('/') || !path) {
       return (
         <FolderRenderer
-          showHeader={id !== 'origin'}
+          showHeader={id !== ROOT_BLOCK_ID}
           path={path}
           name={path}
           value={folders}
@@ -439,9 +458,11 @@ export function RenderBlock({ block, updateBlock, onClose, initialParams, enable
 
   return (
     <PreviewBlockContext.Provider value={contextValue}>
-      {content}
+      <StyledBlockWrapper data-block-id={block.id} style={style} className={className}>
+        {content}
+      </StyledBlockWrapper>
       <StyledSpin
-        spinning={isFetching}
+        spinning
         indicator={<LoadingOutlined spin />}
         $visible={isFetching}
       />

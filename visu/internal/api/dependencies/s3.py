@@ -117,7 +117,7 @@ async def get_s3_reader(
     request: Request, s3_info: UserCredentials = Depends(get_s3_info)
 ) -> S3Reader:
     return S3Reader(
-        bucket=s3_info.bucket_name,
+        bucket_name=s3_info.bucket_name,
         key=s3_info.key,
         aws_access_key_id=s3_info.aws_access_key_id if s3_info.aws_access_key_id else None,
         aws_secret_access_key=s3_info.aws_secret_access_key if s3_info.aws_secret_access_key else None,

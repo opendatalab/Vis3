@@ -5,25 +5,16 @@ import { BucketItem, BucketParams } from '../../types'
 export type BucketQueryOptions = Parameters<typeof useQuery>[0]
 
 export const BucketContext = createContext<{
-  pageSize: number
-  pageNo: number
   path: string
-  onParamsChange: (params: BucketParams) => void
-  total: number
-  setTotal: (value: number) => void
+  onParamsChange?: (params: Partial<BucketParams>) => void
   downloadUrl: string
   previewUrl: string
   // useQuery options
   bucketQueryOptions: BucketQueryOptions,
+  renderBucketItem?: (item: BucketItem) => React.ReactNode
 }>({
-  pageSize: 50,
-  pageNo: 1,
   path: '',
   onParamsChange: () => {
-    console.warn('no implement')
-  },
-  total: 0,
-  setTotal: () => {
     console.warn('no implement')
   },
   downloadUrl: '',
@@ -34,6 +25,7 @@ export const BucketContext = createContext<{
       return []
     },
   },
+  renderBucketItem: () => null,
 })
 
 export function formatBucketList(bucketList: BucketItem[], parentPath: string) {

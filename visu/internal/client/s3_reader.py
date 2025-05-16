@@ -16,9 +16,10 @@ from fastapi.responses import StreamingResponse
 from loguru import logger
 
 from visu.internal.common.exceptions import AppEx, ErrorCode
+from visu.internal.models.bucket import Bucket
 from visu.internal.schema import JsonRow
-from visu.internal.utils import decrypt_secret_key, json_dumps, ping_host, timer
-from visu.internal.utils.path import extract_bytes_range, split_s3_path
+from visu.internal.utils import json_dumps, timer
+from visu.internal.utils.path import extract_bytes_range
 
 
 class FakeRedis:
@@ -79,27 +80,28 @@ class S3Reader:
     def __init__(
         self,
         key: str,
-        buckets_dict: dict,
-        aws_access_key_id: str,
-        aws_secret_access_key: str,
+        bucket: Bucket,
+        access_key_id: str,
+        secret_access_key: str,
         region_name: str = "us-east-1",
-        bucket: str | None = None,
+        bucket_name: str | None = None,
         endpoint_url: str | None = None,
     ):
-        self.bucket = bucket
+        self.bucket_name = bucket_name
         self.key = key
+        self.bucket = bucket
         self.key_without_query = key.split("?")[0]
-        self.aws_access_key_id = aws_access_key_id
-        self.aws_secret_access_key = aws_secret_access_key
+        self.access_key_id = access_key_id
+        self.secret_access_key = secret_access_key
         self.region_name = region_name
-        self.buckets_dict = buckets_dict
         self.endpoint_url = endpoint_url
         self.is_compressed = self.key_without_query.endswith(".gz")
 
-        if self.aws_access_key_id and self.aws_secret_access_key:
-            self.client = self.get_client(self.aws_access_key_id, self.aws_secret_access_key, self.endpoint_url, self.region_name)
+        if self.access_key_id and self.secret_access_key:
+            self.client = S3Reader.get_client(self.access_key_id, self.secret_access_key, self.endpoint_url, self.region_name)
 
-    async def _run_in_executor(self, func, *args, **kwargs):
+    @staticmethod
+    async def _run_in_executor(func, *args, **kwargs):
         loop = asyncio.get_event_loop()
 
         # 创建一个包装函数来处理关键字参数
@@ -119,7 +121,8 @@ class S3Reader:
 
         return range_header
     
-    async def get_client(self, ak: str, sk: str, endpoint: str, region_name: str):
+    @staticmethod
+    def get_client(ak: str, sk: str, endpoint: str, region_name: str):
         try:
             return boto3.client(
                 "s3",
@@ -155,20 +158,20 @@ class S3Reader:
         """
         try:
             with timer("head_object"):
-                return await self._run_in_executor(
+                return await S3Reader._run_in_executor(
                     self.client.head_object,
-                    Bucket=self.bucket,
+                    Bucket=self.bucket_name,
                     Key=self.key_without_query,
                 )
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "NoSuchBucket":
-                raise ValueError(f"Bucket {self.bucket} does not exist")
+                raise ValueError(f"Bucket {self.bucket_name} does not exist")
             elif error_code == "AccessDenied":
-                raise PermissionError(f"Access denied to bucket {self.bucket}")
+                raise PermissionError(f"Access denied to bucket {self.bucket_name}")
             elif error_code == "404":
                 raise ValueError(
-                    f"Object {self.key_without_query} does not exist in bucket {self.bucket}"
+                    f"Object {self.key_without_query} does not exist in bucket {self.bucket_name}"
                 )
             else:
                 raise
@@ -194,9 +197,9 @@ class S3Reader:
         """
         try:
             # 获取文件的前 2048 字节用于 MIME 类型检测
-            response = await self._run_in_executor(
+            response = await S3Reader._run_in_executor(
                 self.client.get_object,
-                Bucket=self.bucket,
+                Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range="bytes=0-2047",
             )
@@ -216,12 +219,12 @@ class S3Reader:
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "NoSuchBucket":
-                raise ValueError(f"Bucket {self.bucket} does not exist")
+                raise ValueError(f"Bucket {self.bucket_name} does not exist")
             elif error_code == "AccessDenied":
-                raise PermissionError(f"Access denied to bucket {self.bucket}")
+                raise PermissionError(f"Access denied to bucket {self.bucket_name}")
             elif error_code == "404":
                 raise ValueError(
-                    f"Object {self.key_without_query} does not exist in bucket {self.bucket}"
+                    f"Object {self.key_without_query} does not exist in bucket {self.bucket_name}"
                 )
             else:
                 raise
@@ -251,7 +254,7 @@ class S3Reader:
 
         while True:
             operation_parameters = {
-                "Bucket": self.bucket,
+                "Bucket": self.bucket_name,
                 "Prefix": self.key_without_query,
                 "MaxKeys": page_size,
                 "Delimiter": "/" if not recursive else None,
@@ -260,15 +263,15 @@ class S3Reader:
                 operation_parameters["Marker"] = marker
 
             try:
-                result = await self._run_in_executor(
+                result = await S3Reader._run_in_executor(
                     self.client.list_objects, **operation_parameters
                 )
             except ClientError as e:
                 error_code = e.response["Error"]["Code"]
                 if error_code == "NoSuchBucket":
-                    raise ValueError(f"Bucket {self.bucket} does not exist")
+                    raise ValueError(f"Bucket {self.bucket_name} does not exist")
                 elif error_code == "AccessDenied":
-                    raise PermissionError(f"Access denied to bucket {self.bucket}")
+                    raise PermissionError(f"Access denied to bucket {self.bucket_name}")
                 else:
                     raise
 
@@ -280,7 +283,7 @@ class S3Reader:
                 for content in contents:
                     if not content["Key"].endswith("/"):
                         yield (
-                            f"s3://{self.bucket}/{content['Key']}",
+                            f"s3://{self.bucket_name}/{content['Key']}",
                             content,
                             "file",
                         )
@@ -292,7 +295,7 @@ class S3Reader:
 
                 for _prefix in common_prefixes:
                     yield (
-                        f"s3://{self.bucket}/{_prefix['Prefix']}",
+                        f"s3://{self.bucket_name}/{_prefix['Prefix']}",
                         _prefix,
                         "directory",
                     )
@@ -337,9 +340,9 @@ class S3Reader:
         try:
             from fastwarc.warc import ArchiveIterator, WarcRecordType
 
-            response = await self._run_in_executor(
+            response = await S3Reader._run_in_executor(
                 self.client.get_object,
-                Bucket=self.bucket,
+                Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range=self._get_range_header(start=start, length=length),
                 RequestPayer="requester",
@@ -477,7 +480,7 @@ class S3Reader:
         # 创建包装函数正确处理get_object
         def get_object():
             return self.client.get_object(
-                Bucket=self.bucket,
+                Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range=f"bytes={start_byte}-{end_byte}"
                 if end_byte
@@ -485,7 +488,7 @@ class S3Reader:
                 RequestPayer="requester",
             )
 
-        response = await self._run_in_executor(get_object)
+        response = await S3Reader._run_in_executor(get_object)
         stream = response["Body"]
         current_byte = start_byte
 
@@ -494,7 +497,7 @@ class S3Reader:
             def read_chunks():
                 return stream.read()
 
-            content = await self._run_in_executor(read_chunks)
+            content = await S3Reader._run_in_executor(read_chunks)
 
             # 按块返回内容
             chunk_size = 8192  # 8KB 块大小
@@ -511,7 +514,7 @@ class S3Reader:
                 decompressed_data += decompressor.flush()
                 return decompressed_data
 
-            decompressed_content = await self._run_in_executor(read_and_decompress)
+            decompressed_content = await S3Reader._run_in_executor(read_and_decompress)
 
             if self.key_without_query.endswith(".jsonl.gz"):
                 # 对于 JSONL 文件，解析每一行
@@ -543,11 +546,11 @@ class S3Reader:
             return None
 
     def _make_location(self, start: int, offset: Optional[int] = None):
-        return f"s3://{self.bucket}/{self.key_without_query}?bytes={start},{offset}"
+        return f"s3://{self.bucket_name}/{self.key_without_query}?bytes={start},{offset}"
 
     async def read_s3_row_with_cache(self, start: int, length: int | None = None):
         row = None
-        cache_key = f"s3_svc:s3://{self.bucket}/{self.key}"
+        cache_key = f"s3_svc:s3://{self.bucket_name}/{self.key}"
         cached_result = redis_client.get(cache_key)
 
         if cached_result:
@@ -606,14 +609,13 @@ class S3Reader:
         # 变成异步
         def get_object_sync():
             return self.client.get_object(
-                Bucket=self.bucket,
+                Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range=self._get_range_header(start=start, length=length),
                 RequestPayer="requester",  # 添加请求者付费支持
             )
 
-        response = await asyncio.get_event_loop().run_in_executor(
-            None,
+        response = await S3Reader._run_in_executor(
             get_object_sync,
         )
         stream = response["Body"]
@@ -669,9 +671,9 @@ class S3Reader:
 
         try:
             # 从文件开头读取数据
-            response = await self._run_in_executor(
+            response = await S3Reader._run_in_executor(
                 self.client.get_object,
-                Bucket=self.bucket,
+                Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range=self._get_range_header(start, length),
             )
@@ -720,7 +722,7 @@ class S3Reader:
             return JsonRow(value="", loc=self._make_location(start, 0), offset=0)
 
     async def get_s3_presigned_url(self, as_attachment=True) -> str:
-        params = {"Bucket": self.bucket, "Key": self.key_without_query}
+        params = {"Bucket": self.bucket_name, "Key": self.key_without_query}
         if as_attachment:
             filename = self.key_without_query.split("/")[-1]
             params["ResponseContentDisposition"] = f'attachment; filename="{filename}"'
@@ -729,7 +731,7 @@ class S3Reader:
         def generate_url():
             return self.client.generate_presigned_url("get_object", Params=params)
 
-        return await self._run_in_executor(generate_url)
+        return await S3Reader._run_in_executor(generate_url)
 
     async def upload(
         self,
@@ -778,15 +780,15 @@ class S3Reader:
 
                 extra_args["Callback"] = _progress_callback
 
-            await self._run_in_executor(
+            await S3Reader._run_in_executor(
                 self.client.upload_fileobj,
                 Fileobj=file.file,
-                Bucket=self.bucket,
+                Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 ExtraArgs=extra_args,
             )
 
-            return f"s3://{self.bucket}/{self.key_without_query}"
+            return f"s3://{self.bucket_name}/{self.key_without_query}"
 
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "UnknownError")
@@ -795,12 +797,12 @@ class S3Reader:
             if error_code == "NoSuchBucket":
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"目标存储桶 {self.bucket} 不存在",
+                    detail=f"目标存储桶 {self.bucket_name} 不存在",
                 )
             elif error_code == "AccessDenied":
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"无访问权限上传到存储桶 {self.bucket}",
+                    detail=f"无访问权限上传到存储桶 {self.bucket_name}",
                 )
             else:
                 raise HTTPException(
@@ -883,7 +885,7 @@ class S3Reader:
 
             total_size = 0
 
-            paginator = await self._run_in_executor(
+            paginator = await S3Reader._run_in_executor(
                 self.client.get_paginator, "list_objects_v2"
             )
 
@@ -891,7 +893,7 @@ class S3Reader:
             def process_pages():
                 nonlocal total_size
                 pages = paginator.paginate(
-                    Bucket=self.bucket, Prefix=self.key_without_query
+                    Bucket=self.bucket_name, Prefix=self.key_without_query
                 )
 
                 for page in pages:
@@ -901,7 +903,7 @@ class S3Reader:
                     for obj in contents:
                         total_size += obj["Size"]
 
-            await self._run_in_executor(process_pages)
+            await S3Reader._run_in_executor(process_pages)
             return total_size
 
         except Exception as e:

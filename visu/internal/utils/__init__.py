@@ -59,9 +59,6 @@ def should_not_read_as_raw(mimetype: str):
 
 
 def ping_host(url: str) -> bool:
-    if url is None:
-        return False
-
     if not url.startswith("http"):
         url = "http://" + url
 
@@ -77,18 +74,19 @@ def ping_host(url: str) -> bool:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     
-async def validate_path_accessibility(self, path: str, endpoint: str, ak: str, sk: str):
+async def validate_path_accessibility(path: str, endpoint: str, ak: str, sk: str):
+    from visu.internal.client.s3_reader import S3Reader
+
     is_endpoint_valid = ping_host(endpoint)
-    sk = decrypt_secret_key(sk)
 
     if not is_endpoint_valid:
         return False
 
-    client = await self.get_client(
+    client = S3Reader.get_client(
         ak=ak,
         sk=sk,
         endpoint=endpoint,
-        region_name=self.region_name,
+        region_name=None,
     )
     bucket_name, prefix = split_s3_path(path)
 
@@ -96,7 +94,7 @@ async def validate_path_accessibility(self, path: str, endpoint: str, ak: str, s
         return client.list_objects(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
 
     try:
-        res = await self._run_in_executor(_list_objects)
+        res = await S3Reader._run_in_executor(_list_objects)
         contents = res.get("Contents", [])
         logger.info(contents)
     except ClientError:

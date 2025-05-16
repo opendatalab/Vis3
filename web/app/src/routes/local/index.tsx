@@ -2,7 +2,7 @@ import UploadIcon from '@/assets/upload.svg?react';
 import { ClearOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons';
 import { createFileRoute } from '@tanstack/react-router';
 import { useTranslation } from '@visu/i18n';
-import { BucketContext, BucketParams, getBytes, getPathType, RenderBlock } from '@visu/kit';
+import { BucketContext, BucketParams, getBytes, getPathType, RenderBlock, ROOT_BLOCK_ID } from '@visu/kit';
 import { Button, List, message, Tooltip, Upload, UploadProps } from 'antd';
 import clsx from 'clsx';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -10,6 +10,7 @@ import styles from './index.module.css';
 
 import SiderArrowLeft from '@/assets/sider-arrow-left.svg?react';
 import SiderArrowRight from '@/assets/sider-arrow-right.svg?react';
+import { QueryOptions } from '@tanstack/react-query';
 
 export const Route = createFileRoute('/local/')({
   component: RouteComponent,
@@ -409,12 +410,8 @@ function RouteComponent() {
 
   const bucketContextValue = useMemo(() => ({
     path: fakePath,
-    total: 0,
-    pageSize: 50,
-    pageNo: 1,
     onParamsChange: handleParamsChange,
-    setTotal: () => {},
-    bucketUrl: '',
+    bucketQueryOptions: {} as QueryOptions,
     downloadUrl: '',
     previewUrl: '',
     mimeTypeUrl: '',
@@ -450,12 +447,14 @@ function RouteComponent() {
     const bytes = getBytes(fakePath)
 
     return {
+      id: selectedFile.id!,
+      mimetype: selectedFile.type,
       name: selectedFile.name,
       type: getPathType(selectedFile.name) || selectedFile.type.split('/')[0] as any,
       content,
       last_modified: selectedFile.lastModified.toString(),
       size: selectedFile.content.length,
-      owner: 'local',
+      created_by: 'local',
       // 模拟range
       path: `http://localhost:3000/local/${selectedFile.name}?bytes=${bytes?.byte ?? 0},${content.length}`,
     }
@@ -478,6 +477,8 @@ function RouteComponent() {
   if (fileList.length === 0) {
     return uploader
   }
+
+  console.log('bucketContextValue', dataSource?.type)
   
   return (
     <BucketContext.Provider value={bucketContextValue}>
@@ -539,7 +540,7 @@ function RouteComponent() {
               <RenderBlock 
                 dataSource={dataSource}
                 block={{
-                  id: 'origin',
+                  id: ROOT_BLOCK_ID,
                   path: fakePath,
                   pathType: dataSource?.type,
                 }}
