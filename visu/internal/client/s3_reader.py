@@ -549,6 +549,9 @@ class S3Reader:
         return f"s3://{self.bucket_name}/{self.key_without_query}?bytes={start},{offset}"
 
     async def read_s3_row_with_cache(self, start: int, length: int | None = None):
+        """
+        读取S3行，并缓存结果，Need redis support
+        """
         row = None
         cache_key = f"s3_svc:s3://{self.bucket_name}/{self.key}"
         cached_result = redis_client.get(cache_key)
@@ -591,7 +594,7 @@ class S3Reader:
     async def read_row(
         self,
         start: int,
-        length: Optional[int] = None,
+        length: int | None = None,
     ) -> JsonRow:
         """
         根据字节范围读取一行内容。
@@ -607,52 +610,77 @@ class S3Reader:
             return await self.read_gz_row(start=start, length=length)
 
         # 变成异步
-        def get_object_sync():
-            return self.client.get_object(
-                Bucket=self.bucket_name,
-                Key=self.key_without_query,
-                Range=self._get_range_header(start=start, length=length),
-                RequestPayer="requester",  # 添加请求者付费支持
-            )
+        MAX_TOTAL_SIZE = 10 * 1024 * 1024  # 10MB
+        NEXT_READ_SIZE = 1 * 1024 * 1024  # 1MB
 
-        response = await S3Reader._run_in_executor(
-            get_object_sync,
-        )
-        stream = response["Body"]
-        # 读取数据
+        current_start = start
+        total_size = 0
         buffer = bytearray()
-        for chunk in stream:
+
+        while total_size < MAX_TOTAL_SIZE:
+            # 计算本次读取的大小
+            read_size = NEXT_READ_SIZE
+
+            # 变成异步
+            def get_object_sync():
+                return self.client.get_object(
+                    Bucket=self.bucket_name,
+                    Key=self.key_without_query,
+                    Range=self._get_range_header(start=current_start, length=read_size),
+                    RequestPayer="requester",
+                )
+
+            response = await self._run_in_executor(get_object_sync)
+            stream = response["Body"]
+
+            # 读取数据
+            chunk = await self._run_in_executor(stream.read)
+            if not chunk:
+                break
+
             buffer.extend(chunk)
+            total_size += len(chunk)
 
-        start_pos = 0
-        # 查找第一个换行符，如果 pos 为 0，则找第二个换行符
-        newline_pos = buffer.find(b"\n")
+            # 查找换行符
+            newline_pos = buffer.find(b"\n")
+            if newline_pos != -1:
+                # 找到换行符，提取内容
+                line = buffer[:newline_pos]
+                new_start = start
+                new_len = len(line) + 1
 
-        if newline_pos == 0:
-            newline_pos = buffer.find(b"\n", newline_pos + 1)
-            start_pos = 1
+                # 处理行内容
+                try:
+                    decoded_line = line.decode("utf-8")
+                except UnicodeDecodeError:
+                    try:
+                        decoded_line = line.decode("latin1")
+                    except UnicodeDecodeError:
+                        decoded_line = str(line)
 
-        if newline_pos == -1:
-            # 如果没有找到换行符，返回整个缓冲区内容
-            line = buffer
-        else:
-            # 提取到换行符为止的内容
-            line = buffer[start_pos:newline_pos]
+                return JsonRow(
+                    value=decoded_line,
+                    loc=self._make_location(new_start, new_len),
+                    offset=new_len,
+                    size=len(line),
+                )
 
-        new_start = start + start_pos
-        new_len = len(line) + 1
-        # 处理行内容
+            current_start += len(chunk)
+
+        # 如果达到最大限制还没找到换行符，返回所有内容
         try:
-            decoded_line = line.decode("utf-8")
+            decoded_line = buffer.decode("utf-8")
         except UnicodeDecodeError:
             try:
-                decoded_line = line.decode("latin1")
+                decoded_line = buffer.decode("latin1")
             except UnicodeDecodeError:
-                decoded_line = str(line)
+                decoded_line = str(buffer)
+
         return JsonRow(
             value=decoded_line,
-            loc=self._make_location(new_start, new_len),
-            offset=new_len,
+            loc=self._make_location(start, len(buffer)),
+            offset=len(buffer),
+            size=len(buffer),
         )
 
     async def read_gz_row(self, start: int, length: int | None = None) -> JsonRow:

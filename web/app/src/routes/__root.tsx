@@ -1,6 +1,6 @@
+import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet, useLocation } from '@tanstack/react-router'
 
-import { QueryClient } from '@tanstack/react-query'
 import Header from '../components/Header'
 
 export const Route = createRootRouteWithContext<{
@@ -18,7 +18,7 @@ function RootComponent() {
     <div className="flex flex-col min-h-screen">
       {!isLoginOrRegister && <Header />}
 
-      <main className="flex-grow bg-gray-100 flex flex-col items-stretch">
+      <main className="flex-grow flex flex-col items-stretch">
         <Outlet />
       </main>
 

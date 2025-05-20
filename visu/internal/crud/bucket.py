@@ -61,7 +61,8 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
             db_objs.append(db_obj)
 
         db.commit()
-        db.refresh(db_objs)
+        for db_obj in db_objs:
+            db.refresh(db_obj)
 
         return db_objs
 

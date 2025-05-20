@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { createKeychain, deleteKeychain, getAllKeychains, getKeychain, getKeychains, KeychainUpdateBody, updateKeychain } from "./keychain"
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type { KeychainUpdateBody } from './keychain';
+import { createKeychain, deleteKeychain, getAllKeychains, getKeychain, getKeychains, updateKeychain } from './keychain';
 
-export const useMyKeychains = (pageNo: number, pageSize: number) => {
+export function useMyKeychains(pageNo: number, pageSize: number) {
   return useQuery({
     queryKey: ['my_keychain'],
     queryFn: () => getKeychains({
@@ -11,15 +12,16 @@ export const useMyKeychains = (pageNo: number, pageSize: number) => {
   })
 }
 
-export const useAllKeychains = () => {
+export function useAllKeychains(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['all_keychain'],
     queryFn: () => getAllKeychains(),
-    select: (data) => data.data,
+    select: data => data.data,
   })
 }
 
-export const useKeychain = (id?: number) => {
+export function useKeychain(id?: number) {
   return useQuery({
     enabled: typeof id === 'number',
     queryKey: ['keychain', id],
@@ -27,19 +29,19 @@ export const useKeychain = (id?: number) => {
   })
 }
 
-export const useCreateKeychain = () => {
+export function useCreateKeychain() {
   return useMutation({
     mutationFn: createKeychain,
   })
 }
 
-export const useUpdateKeychain = () => {
+export function useUpdateKeychain() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number, data: KeychainUpdateBody }) => updateKeychain(id, data),
   })
 }
 
-export const useDeleteKeychain = () => {
+export function useDeleteKeychain() {
   return useMutation({
     mutationFn: deleteKeychain,
   })

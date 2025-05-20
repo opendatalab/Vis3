@@ -2,7 +2,8 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Button, Form, Input, message } from 'antd'
 
-import { getUserInfo, LoginPayload } from '../../api/user'
+import type { LoginPayload } from '../../api/user'
+import { getUserInfo } from '../../api/user'
 import { useLogin } from '../../api/user.query'
 
 export const Route = createFileRoute('/login/')({
@@ -11,25 +12,26 @@ export const Route = createFileRoute('/login/')({
     if (!window.__CONFIG__?.ENABLE_AUTH) {
       return redirect({ to: '/' })
     }
-    
+
     try {
       const response = await getUserInfo()
-  
+
       if (response) {
         return redirect({ to: '/' })
       }
-  
+
       return null
-    } catch (error) {
+    }
+    catch (error) {
       console.error('get user info error', error)
     }
-  }
+  },
 })
 
 function RouteComponent() {
   const [form] = Form.useForm()
   const navigate = useNavigate()
-  
+
   // 使用React Query的useMutation
   const loginMutation = useLogin()
 
@@ -37,7 +39,8 @@ function RouteComponent() {
     try {
       await loginMutation.mutateAsync(values)
       navigate({ to: '/' })
-    } catch (error) {
+    }
+    catch (error) {
       console.error('登录失败:', error)
       message.error('用户名或密码错误')
     }
@@ -55,7 +58,7 @@ function RouteComponent() {
           </div>
           <p className="mt-2 text-gray-600">大模型语料可视化工具</p>
         </div>
-        
+
         <Form
           form={form}
           name="login"
@@ -69,9 +72,9 @@ function RouteComponent() {
             name="username"
             rules={[{ required: true, message: '请输入用户名' }]}
           >
-            <Input 
-              prefix={<UserOutlined className="site-form-item-icon" />} 
-              placeholder="用户名" 
+            <Input
+              prefix={<UserOutlined className="site-form-item-icon" />}
+              placeholder="用户名"
             />
           </Form.Item>
 
@@ -79,23 +82,23 @@ function RouteComponent() {
             name="password"
             rules={[{ required: true, message: '请输入密码' }]}
           >
-            <Input.Password 
+            <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
               placeholder="密码"
             />
           </Form.Item>
 
           <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              className="w-full" 
+            <Button
+              type="primary"
+              htmlType="submit"
+              className="w-full"
               loading={loginMutation.isPending}
             >
               登录
             </Button>
           </Form.Item>
-          
+
           <div className="text-center">
             <a
               onClick={() => navigate({ to: '/register' })}

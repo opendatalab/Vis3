@@ -1,7 +1,8 @@
+import type { RegisterPayload } from '../../api/user'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Button, Form, Input, message } from 'antd'
-import { getUserInfo, RegisterPayload } from '../../api/user'
+import { getUserInfo } from '../../api/user'
 import { useRegister } from '../../api/user.query'
 
 export const Route = createFileRoute('/register/')({
@@ -13,16 +14,17 @@ export const Route = createFileRoute('/register/')({
 
     try {
       const response = await getUserInfo()
-  
+
       if (response) {
         return redirect({ to: '/' })
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('get user info error', error)
     }
 
     return null
-  }
+  },
 })
 
 interface RegisterFormValues extends RegisterPayload {
@@ -32,7 +34,7 @@ interface RegisterFormValues extends RegisterPayload {
 function RouteComponent() {
   const [form] = Form.useForm<RegisterFormValues>()
   const navigate = useNavigate()
-  
+
   // 使用React Query的useMutation
   const registerMutation = useRegister()
 
@@ -47,7 +49,8 @@ function RouteComponent() {
       await registerMutation.mutateAsync(values)
       message.success('注册成功，请登录')
       navigate({ to: '/login' })
-    } catch (error: any) {
+    }
+    catch (error: any) {
       console.error('注册失败:', error)
       message.error(error.response?.data?.detail || '注册失败，请稍后重试')
     }
@@ -65,7 +68,7 @@ function RouteComponent() {
           </div>
           <p className="mt-2 text-gray-600">创建新账号</p>
         </div>
-        
+
         <Form<RegisterFormValues>
           form={form}
           name="register"
@@ -78,12 +81,12 @@ function RouteComponent() {
             name="username"
             rules={[
               { required: true, message: '请输入用户名' },
-              { min: 3, message: '用户名至少3个字符' }
+              { min: 3, message: '用户名至少3个字符' },
             ]}
           >
-            <Input 
-              prefix={<UserOutlined className="site-form-item-icon" />} 
-              placeholder="用户名" 
+            <Input
+              prefix={<UserOutlined className="site-form-item-icon" />}
+              placeholder="用户名"
             />
           </Form.Item>
 
@@ -91,10 +94,10 @@ function RouteComponent() {
             name="password"
             rules={[
               { required: true, message: '请输入密码' },
-              { min: 6, message: '密码至少6个字符' }
+              { min: 6, message: '密码至少6个字符' },
             ]}
           >
-            <Input.Password 
+            <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
               placeholder="密码"
             />
@@ -115,23 +118,23 @@ function RouteComponent() {
               }),
             ]}
           >
-            <Input.Password 
+            <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
               placeholder="确认密码"
             />
           </Form.Item>
 
           <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              className="w-full" 
+            <Button
+              type="primary"
+              htmlType="submit"
+              className="w-full"
               loading={registerMutation.isPending}
             >
               注册
             </Button>
           </Form.Item>
-          
+
           <div className="text-center">
             <span className="text-gray-600">已有账号？</span>
             <a
@@ -145,4 +148,4 @@ function RouteComponent() {
       </div>
     </div>
   )
-} 
+}

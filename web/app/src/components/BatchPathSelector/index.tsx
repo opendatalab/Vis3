@@ -1,7 +1,7 @@
+import type { CollapseProps } from 'antd/es/collapse'
 import { ClearOutlined, CloseOutlined, LinkOutlined, MenuOutlined } from '@ant-design/icons'
 import { useLocation } from '@tanstack/react-router'
 import { Button, Collapse, Form, Input, List, Popover } from 'antd'
-import type { CollapseProps } from 'antd/es/collapse'
 import clsx from 'clsx'
 import { useMemo, useState } from 'react'
 
@@ -34,7 +34,7 @@ function OverlayContent({ onClose }: { onClose?: () => void }) {
     const _validPaths = values.paths
       .split('\n')
       .filter(path => path.trim().startsWith('s3://'))
-      .filter((path, index, self) => self.indexOf(path) === index); // 去重
+      .filter((path, index, self) => self.indexOf(path) === index) // 去重
 
     localStorage.setItem('bucket::paths', JSON.stringify(_validPaths))
     setValidPaths(_validPaths)

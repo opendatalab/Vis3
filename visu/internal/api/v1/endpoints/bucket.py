@@ -7,6 +7,7 @@ from visu.internal.api.dependencies.auth import get_auth_user_or_error
 from visu.internal.api.v1.schema.request.bucket import (
     BucketCreateBody,
     BucketUpdateBody,
+    BucketUpdatePayload,
 )
 from visu.internal.api.v1.schema.response import ItemResponse, ListResponse, OkResponse
 from visu.internal.api.v1.schema.response.bucket import BucketResponse, PathType
@@ -70,6 +71,7 @@ async def create_bucket_request(
         name=result.name,
         path=result.path,
         endpoint=result.endpoint,
+        keychain_id=result.keychain_id,
         created_by=current_user.username if current_user else None,
         type=PathType.Bucket,
     )
@@ -89,6 +91,7 @@ async def create_batch_bucket_request(
         name=bucket.name,
         path=bucket.path,
         endpoint=bucket.endpoint,
+        keychain_id=bucket.keychain_id,
         created_by=current_user.username if current_user else None,
         type=PathType.Bucket,
     ) for bucket in result]
@@ -103,7 +106,10 @@ async def update_bucket_request(
     """
     更新bucket
     """
-    result = await bucket_crud.update(db, id=id, obj_in=bucket_in, updated_by=current_user.id if current_user else None)
+    result = await bucket_crud.update(db, id=id, obj_in=BucketUpdatePayload(
+        **bucket_in.model_dump(),
+        updated_by=current_user.id if current_user else None,
+    ))
     return BucketResponse(
         id=result.id,
         name=result.name,
@@ -186,7 +192,7 @@ async def make_ping_request(url: str):
     return OkResponse(data=result)
 
 
-@router.get("/bucket/{id}", summary="获取bucket详情")
+@router.get("/bucket/{id}", summary="获取bucket详情", response_model=BucketResponse)
 async def get_bucket_request(
     id: int,
     db: Session = Depends(get_db),
@@ -200,16 +206,18 @@ async def get_bucket_request(
     if not settings.ENABLE_AUTH:
         result = await bucket_crud.get(db, id=id)
     else:
-        result = await bucket_crud.get_by_user_id(db, user_id=current_user.id)
+        result = await bucket_crud.get_by_user(db, id=id, user_id=current_user.id)
 
     return BucketResponse(
         id=result.id,
         name=result.name,
         path=result.path,
         endpoint=result.endpoint,
+        keychain_id=result.keychain_id,
         created_by=current_user.username if current_user else None,
         type=PathType.Bucket,
     )
+    
 
 @router.delete("/bucket/{id}", summary="删除bucket")
 async def delete_bucket_request(

@@ -1,3 +1,4 @@
+import type { KeyChainFormRef } from './-components/Form'
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -10,7 +11,8 @@ import { useDeleteKeychain, useMyKeychains, useUpdateKeychain } from '../../api/
 import CopySvg from '../../assets/copy.svg?react'
 import DeleteSvg from '../../assets/delete.svg?react'
 import EditableText from '../../components/EditableText'
-import KeyChainForm, { KeyChainFormRef } from './-components/Form'
+import KeyChainForm from './-components/Form'
+
 export const Route = createFileRoute('/keychain/')({
   component: RouteComponent,
 })
@@ -82,14 +84,13 @@ function KeyChainCard({ data, className }: {
   )
 }
 
-
 function RouteComponent() {
   const modalFormRef = useRef<KeyChainFormRef>(null)
   const { data } = useMyKeychains(1, 100)
   const queryClient = useQueryClient()
 
   console.log('data', data)
-  
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <div className="flex text-2xl font-bold mb-2 items-center justify-between">
@@ -120,10 +121,12 @@ function RouteComponent() {
             .value()
         }
       </div>
-      <KeyChainForm modalFormRef={modalFormRef} onClose={() => {
-        queryClient.invalidateQueries({ queryKey: ['my_keychain'] })
-      }} />
+      <KeyChainForm
+        modalFormRef={modalFormRef}
+        onClose={() => {
+          queryClient.invalidateQueries({ queryKey: ['my_keychain'] })
+        }}
+      />
     </div>
   )
-
 }

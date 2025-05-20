@@ -4,6 +4,7 @@ export default antfu({
   react: true,
   ignores: [
     '**/dist/',
+    '**/routeTree.gen.ts',
   ],
 }, {
   rules: {

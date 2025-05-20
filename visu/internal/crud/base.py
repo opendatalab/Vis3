@@ -16,11 +16,18 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[T]):
         self.model = model
 
-    async def get(self, db: AsyncSession, id: int) -> Optional[T]:
+    async def get(self, db: AsyncSession, id: int) -> T | None:
         """
         获取单个对象
         """
         result = db.execute(select(self.model).filter(self.model.id == id))
+        return result.scalars().first()
+    
+    async def get_by_user(self, db: AsyncSession, id: int, user_id: int) -> T | None:
+        """
+        获取单个对象
+        """
+        result = db.execute(select(self.model).filter(self.model.id == id, self.model.created_by == user_id))
         return result.scalars().first()
     
     async def get_all(self, db: AsyncSession) -> List[T]:
@@ -92,9 +99,9 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
         return db_obj
 
     async def update(
-        self, db: AsyncSession, *, id: int, obj_in: Union[UpdateSchemaType, Dict[str, Any]], 
+        self, db: AsyncSession, *, id: int, obj_in: Union[UpdateSchemaType, Dict[str, Any]],
         auto_commit: bool | None = True
-    ) -> Optional[T]:
+    ) -> T | None:
         """
         更新对象
         

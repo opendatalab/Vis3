@@ -1,6 +1,6 @@
+import type { InputProps } from 'antd/lib'
 import { CheckOutlined, CloseOutlined, FormOutlined } from '@ant-design/icons'
 import { Button, Input, Space, Tooltip } from 'antd'
-import type { InputProps } from 'antd/lib'
 import { useCallback, useMemo, useState } from 'react'
 
 export interface EditableTextProps extends Omit<InputProps, 'onChange'> {
@@ -39,7 +39,7 @@ export default function EditableText({ value, onChange, onEditableChange }: Edit
         />
         <Button
           className="!text-[var(--color-success)]"
-          
+
           icon={<CheckOutlined />}
           onClick={async () => {
             await onChange?.(stateValue)

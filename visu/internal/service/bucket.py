@@ -142,31 +142,15 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
             else 0
         )
 
+        if request_byte_start and request_byte_start >= size:
+            raise AppEx(
+                code=ErrorCode.BUCKET_30002_OUT_OF_RANGE,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+
         # 文件
-        if parsed_path.endswith(".jsonl"):
-            # jsonl一行读取2mb
-            row = await s3_reader.read_s3_row_with_cache(
-                start=request_byte_start, length=2 << 20
-            )
-
-            return BucketResponse(
-                type=PathType.File,
-                id=s3_reader.bucket.id,
-                owner=owner,
-                size=size,
-                mimetype=mimetype,
-                last_modified=file_header_info.get("LastModified"),
-                content=row.value,
-                path=row.loc,
-            )
-        if parsed_path.endswith(".jsonl.gz") or parsed_path.endswith(".warc.gz"):
-            if request_byte_start and request_byte_start >= size:
-                raise AppEx(
-                    code=ErrorCode.BUCKET_30002_OUT_OF_RANGE,
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                )
-
-            row = await s3_reader.read_s3_row_with_cache(start=request_byte_start)
+        if parsed_path.endswith(".jsonl") or parsed_path.endswith(".jsonl.gz") or parsed_path.endswith(".warc.gz"):
+            row = await s3_reader.read_row(start=request_byte_start)
 
             return BucketResponse(
                 type=PathType.File,
@@ -229,6 +213,7 @@ async def get_buckets_or_objects(
         result = [
             BucketResponse(
                 id=bucket.id,
+                keychain_id=bucket.keychain_id,
                 name=bucket.name,
                 type=PathType.Bucket
                 if bucket.path.endswith("/")
@@ -246,7 +231,9 @@ async def get_buckets_or_objects(
     
     _, s3_reader = await get_bucket(path, db, id)
 
-    s3_path = quote(path, safe=":/")
+
+    path_without_query, _, query = path.partition("?")
+    s3_path = quote(path_without_query, safe=":/")
     parsed_url = urlparse(s3_path)
     parsed_path = parsed_url.path
     _, _, query = path.partition("?")

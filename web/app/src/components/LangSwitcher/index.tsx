@@ -1,7 +1,8 @@
-import LangIcon from '@/assets/i18n.svg?react';
-import { useTranslation } from "@visu/i18n";
-import { Button, Dropdown } from 'antd';
-import { useMemo } from "react";
+import LangIcon from '@/assets/i18n.svg?react'
+import { useTranslation } from '@visu/i18n';
+
+import { Button, Dropdown } from 'antd'
+import { useMemo } from 'react';
 
 const langOptions = [
   {
@@ -14,23 +15,23 @@ const langOptions = [
     label: 'English',
     value: 'en-US',
   },
-];
+]
 
 export default function LangSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n } = useTranslation()
 
   const lang = useMemo(() => {
-    return ['zh', 'zh_CN', 'zh-CN'].includes(i18n.language) ? 'zh-CN' : 'en-US';
-  }, [i18n.language]);
+    return ['zh', 'zh_CN', 'zh-CN'].includes(i18n.language) ? 'zh-CN' : 'en-US'
+  }, [i18n.language])
 
   const langLabel = useMemo(() => {
-    return langOptions.find((item) => item.key === lang)?.label;
-  }, [lang]);
+    return langOptions.find(item => item.key === lang)?.label
+  }, [lang])
 
   const changeLocale = (lang: string) => {
-    i18n.changeLanguage(lang);
-    window.location.reload();
-  };
+    i18n.changeLanguage(lang)
+    window.location.reload()
+  }
 
   return (
     <Dropdown
@@ -41,20 +42,20 @@ export default function LangSwitcher() {
             label: '简体中文',
             key: 'zh-CN',
             onClick: () => {
-            changeLocale('zh-CN')
-          }
-        },
-        {
-          label: 'English',
-          key: 'en-US',
-          onClick: () => {
-            changeLocale('en-US')
-          }
-        }
-      ]}
-    }
+              changeLocale('zh-CN')
+            },
+          },
+          {
+            label: 'English',
+            key: 'en-US',
+            onClick: () => {
+              changeLocale('en-US')
+            },
+          },
+        ],
+      }}
     >
-      <Button type='text' icon={<LangIcon />}>{langLabel}</Button>
+      <Button type="text" icon={<LangIcon />}>{langLabel}</Button>
     </Dropdown>
   )
 }

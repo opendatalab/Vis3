@@ -1,5 +1,5 @@
-import request from "../utils/request";
-import { PaginationParams } from "./types";
+import type { PaginationParams } from './types'
+import request from '../utils/request'
 
 export interface KeychainResponse {
   id: number

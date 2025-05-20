@@ -4,16 +4,16 @@ export interface PaginationParams {
 }
 
 export interface ResponseWrapper<T> {
-  data: T;
+  data: T
 }
 
 // 正确声明全局Window接口
 declare global {
   interface Window {
     __CONFIG__: {
-      ENABLE_AUTH: boolean;
-      VERSION: string;
-      [key: string]: any;
+      ENABLE_AUTH: boolean
+      VERSION: string
+      [key: string]: any
     }
   }
 }

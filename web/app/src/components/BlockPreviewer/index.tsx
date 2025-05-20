@@ -1,8 +1,10 @@
 import type { BlockInfo } from '@visu/kit'
-import { ROOT_BLOCK_ID, RenderBlock, getBasename, getPathType } from '@visu/kit'
+import { getBasename, getPathType, RenderBlock, ROOT_BLOCK_ID } from '@visu/kit'
 import clsx from 'clsx'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
 import { gid } from '../../utils'
+
 export interface BlockPreviewerProps {
   className?: string
   path: string
@@ -91,7 +93,7 @@ export default function BlockPreviewer({ className, path }: BlockPreviewerProps)
   return (
     <div ref={containerRef} className={clsx(className, 'block-previewer', 'flex', 'items-start', 'gap-4', 'overflow-x-auto', 'h-full')}>
       {
-        blocks.map(block => {
+        blocks.map((block) => {
           return (
             <RenderBlock
               key={block.id}

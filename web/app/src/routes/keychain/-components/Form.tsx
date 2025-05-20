@@ -1,8 +1,10 @@
+import type { Ref } from 'react'
+
 import { useQueryClient } from '@tanstack/react-query'
 import { Form, Input, message, Modal } from 'antd'
-import type { Ref } from 'react'
+
 import { useImperativeHandle, useState } from 'react'
-import { KeychainCreateBody } from '../../../api/keychain'
+import type { KeychainCreateBody } from '../../../api/keychain'
 import { useCreateKeychain } from '../../../api/keychain.query'
 
 export interface KeyChainFormRef {
@@ -50,7 +52,7 @@ export default function KeyChainForm({
   }
 
   const handleOk = () => {
-    form.validateFields().then(values => {
+    form.validateFields().then((values) => {
       handleSaveCreate(values)
     })
   }

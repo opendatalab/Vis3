@@ -1,21 +1,29 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { BatchBucketCreateBody, createBatchBucket, deleteBucket, getBucket } from "./bucket"
+import { useMutation, useQuery } from '@tanstack/react-query';
+import type { BatchBucketCreateBody, BucketUpdateBody } from './bucket';
+import { createBatchBucket, deleteBucket, getBucket, updateBucket } from './bucket';
 
-export const useBucket = (id: number) => {
+export function useBucket(id?: number | null) {
   return useQuery({
+    enabled: typeof id === 'number',
     queryKey: ['bucket', id],
-    queryFn: () => getBucket(id),
+    queryFn: () => getBucket(id!),
   })
 }
 
-export const useBatchCreateBucket = () => {
+export function useBatchCreateBucket() {
   return useMutation({
     mutationFn: (body: BatchBucketCreateBody[]) => createBatchBucket(body),
   })
 }
 
-export const useDeleteBucket = () => {
+export function useDeleteBucket() {
   return useMutation({
     mutationFn: (id: number) => deleteBucket(id),
+  })
+}
+
+export function useUpdateBucket() {
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number, body: BucketUpdateBody }) => updateBucket(id, body),
   })
 }
