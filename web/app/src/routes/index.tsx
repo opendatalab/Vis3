@@ -1,4 +1,4 @@
-import { EditOutlined, LeftOutlined, MenuOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
+import { EditOutlined, LeftOutlined, PlusOutlined, RightOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from '@visu/i18n'
@@ -17,6 +17,7 @@ import DeleteSvg from '../assets/delete.svg?react'
 import BlockPreviewer from '../components/BlockPreviewer'
 import BucketEditModal from '../components/BucketEditModal'
 import BucketManager, { openBucketManager } from '../components/BucketManager'
+import DirectoryTree, { DirectoryTreeProvider, DirectoryTreeTrigger, TreeRef } from '../components/DirectoryTree'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -102,6 +103,7 @@ function RouteComponent() {
   const location = useLocation()
   const navigate = useNavigate()
   const bucketEditModalRef = useRef<BucketEditModalRef>(null)
+  const treeRef = useRef<TreeRef>(null)
   const search = location.search as Record<string, string | number>
   const path = search.path as string || ''
   const pageSize = Number(search.page_size) || 50
@@ -114,23 +116,26 @@ function RouteComponent() {
   const { mutateAsync: deleteBucket } = useDeleteBucket()
 
   const onParamsChange = useCallback((params: Partial<BucketParams>) => {
+    const { path, ...restParams } = params
     const newSearch = {} as Record<string, string | number>
 
     if (typeof params.path === 'string') {
-      newSearch.path = params.path
+      newSearch.path = path as string
+
+      treeRef.current?.onPathSelect(params.path)
     }
 
-    if (params.pageNo) {
-      newSearch.page_no = params.pageNo
+    if (restParams.pageNo) {
+      newSearch.page_no = restParams.pageNo
     }
 
-    if (params.pageSize) {
-      newSearch.page_size = params.pageSize
+    if (restParams.pageSize) {
+      newSearch.page_size = restParams.pageSize
     }
 
     navigate({
       to: '/',
-      search: { ...search, ...newSearch, id: !newSearch.path ? undefined : search.id },
+      search: { ...search, ...newSearch, id: !newSearch.path && Object.keys(restParams).length === 0 ? undefined : search.id },
     })
   }, [navigate, search])
 
@@ -172,6 +177,8 @@ function RouteComponent() {
   }), [bucketQueryKey])
 
   const showPlaceholder = !total && !isLoading && !path
+  const pathWithoutQuery = path.split('?')[0]
+  const showPagination = path && pathWithoutQuery.endsWith('/')
 
   return (
     <div
@@ -193,7 +200,7 @@ function RouteComponent() {
         previewUrl="/api/v1/bucket/file_preview"
         renderBucketItem={(item) => {
           return (
-            <List.Item className="!flex !items-center">
+            <List.Item className="!flex !items-center hover:bg-gray-50 rounded-lg">
               <div className="flex items-center gap-2">
                 <BucketIcon />
                 <Link className="!hover:underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
@@ -209,51 +216,57 @@ function RouteComponent() {
           )
         }}
       >
-        <div className={clsx('flex-col gap-4 h-[calc(100vh-88px)]', {
-          hidden: showPlaceholder,
-          flex: !showPlaceholder,
-        })}
-        >
-          <div className={clsx('bucket-header', ' flex items-center gap-2')}>
-            <Button icon={<MenuOutlined />} />
-            <BucketHeader className="flex-1" />
-            <>
+        <DirectoryTreeProvider>
+          <div className={clsx('flex-col gap-4 h-[calc(100vh-88px)]', {
+            hidden: showPlaceholder,
+            flex: !showPlaceholder,
+          })}
+          >
+
+            <div className={clsx('bucket-header', ' flex items-center gap-2')}>
               {
-                !!path && (
-                  <Space.Compact>
-                    <Tooltip title={t('bucket.prevPage')}>
-                      <Button
-                        disabled={!pageNo || pageNo === 1}
-                        onClick={() => onParamsChange({ pageNo: pageNo - 1 })}
-                        icon={<LeftOutlined />}
-                      />
-                    </Tooltip>
-                    <Input className="!w-16 text-center" min={1} readOnly value={pageNo ?? '1'} />
-                    <Tooltip title={t('bucket.nextPage')}>
-                      <Button
-                        disabled={total < pageSize}
-                        onClick={() => onParamsChange({ pageNo: pageNo + 1 })}
-                        icon={<RightOutlined />}
-                      />
-                    </Tooltip>
-                  </Space.Compact>
-                )
+                path && <DirectoryTreeTrigger />
               }
-              <Tooltip title="添加路径" placement="topLeft">
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    openBucketManager()
-                  }}
-                />
-              </Tooltip>
-            </>
+              <BucketHeader className="flex-1" />
+              <>
+                {
+                  showPagination && (
+                    <Space.Compact>
+                      <Tooltip title={t('bucket.prevPage')}>
+                        <Button
+                          disabled={!pageNo || pageNo === 1}
+                          onClick={() => onParamsChange({ pageNo: pageNo - 1 })}
+                          icon={<LeftOutlined />}
+                        />
+                      </Tooltip>
+                      <Input className="!w-16 text-center" min={1} readOnly value={pageNo ?? '1'} />
+                      <Tooltip title={t('bucket.nextPage')}>
+                        <Button
+                          disabled={total < pageSize}
+                          onClick={() => onParamsChange({ pageNo: pageNo + 1 })}
+                          icon={<RightOutlined />}
+                        />
+                      </Tooltip>
+                    </Space.Compact>
+                  )
+                }
+                <Tooltip title="添加路径" placement="topLeft">
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      openBucketManager()
+                    }}
+                  />
+                </Tooltip>
+              </>
+            </div>
+            <div className="flex flex-1 min-h-0 overflow-y-auto relative gap-4">
+              <DirectoryTree treeRef={treeRef} />
+              <BlockPreviewer className='flex-1' path={path} />
+            </div>
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto relative">
-            <BlockPreviewer path={path} />
-          </div>
-        </div>
+        </DirectoryTreeProvider>
       </BucketProvider>
       <BucketManager showTrigger={false} />
       <BucketEditModal modalRef={bucketEditModalRef} />

@@ -1,10 +1,10 @@
-import type { FormProps } from 'antd/lib'
-import type { MutableRefObject } from 'react'
 import DeleteSvg from '@/assets/delete.svg?react'
 import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { Alert, Button, Divider, Form, Input, message, Select, Tooltip } from 'antd'
+import type { FormProps } from 'antd/lib'
 import _ from 'lodash'
+import type { MutableRefObject } from 'react'
 
 import { useEffect, useImperativeHandle, useMemo, useState } from 'react'
 
@@ -109,7 +109,6 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
   const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
   const { mutateAsync: batchCreateBucketMutation, isPending } = useBatchCreateBucket()
   const queryClient = useQueryClient()
-  console.log('keyChain', keyChain)
 
   useEffect(() => {
     const handleOpenOutside = (e: CustomEvent) => {

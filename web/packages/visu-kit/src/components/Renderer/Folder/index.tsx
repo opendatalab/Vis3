@@ -93,6 +93,15 @@ const ExtraContainer = styled.div`
   align-items: center;
 `
 
+const Link = styled.a`
+  text-decoration: none;
+  color: #333;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`
+
 export default function FolderRenderer({ path, onPathChange, name, extraTail, titleExtra, value, highlightCurrent, pathWithoutQuery, showHeader = true }: FolderRendererProps) {
   const ref = useRef<HTMLDivElement>(null)
   const { id } = usePreviewBlockContext()
@@ -143,9 +152,9 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
             <FlexRow>
               <FlexRow>
                 <IconWrapper>{icon}</IconWrapper>
-                <BreakAllButton type="link" size="small" onClick={handleDig(item)}>
+                <Link href="javascript:void(0)" onClick={handleDig(item)} rel="noreferrer">
                   {item.path}
-                </BreakAllButton>
+                </Link>
               </FlexRow>
               <Tooltip title={t('renderer.copyFullPath')}>
                 <ShrinkButton

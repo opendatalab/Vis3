@@ -1,13 +1,13 @@
-import type { QueryOptions } from '@tanstack/react-query'
-import type { BucketParams } from '@visu/kit'
-import type { UploadProps } from 'antd'
 import SiderArrowLeft from '@/assets/sider-arrow-left.svg?react'
 import SiderArrowRight from '@/assets/sider-arrow-right.svg?react'
 import UploadIcon from '@/assets/upload.svg?react'
 import { ClearOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons'
+import type { QueryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from '@visu/i18n'
+import type { BucketParams } from '@visu/kit'
 import { BucketContext, getBytes, getPathType, RenderBlock, ROOT_BLOCK_ID } from '@visu/kit'
+import type { UploadProps } from 'antd'
 
 import { Button, List, message, Tooltip, Upload } from 'antd'
 import clsx from 'clsx'
@@ -501,7 +501,7 @@ function RouteComponent() {
 
   return (
     <BucketContext.Provider value={bucketContextValue}>
-      <div className="flex-1 flex flex-row py-4 gap-4">
+      <div className="flex-1 flex flex-row py-4 gap-4 bg-gray-100">
         <div className={clsx('bg-white rounded-r-lg shrink-0 left-sider transition-all', {
           'w-[260px]': !siderCollapsed,
           'w-0 overflow-hidden': siderCollapsed,

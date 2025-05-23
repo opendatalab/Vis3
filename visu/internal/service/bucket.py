@@ -95,7 +95,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 id=s3_reader.bucket.id,
                 owner=await s3_reader.get_object_owner(),
                 size=size,
-                path=s3_reader.key,
+                path=s3_reader.path,
                 last_modified=file_header_info.get("LastModified")
                 if file_header_info
                 else None,
@@ -110,7 +110,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 owner=await s3_reader.get_object_owner(),
                 size=size,
                 mimetype=mimetype,
-                path=s3_reader.key,
+                path=s3_reader.path,
                 last_modified=file_header_info.get("LastModified"),
             )
 
@@ -131,7 +131,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 size=size,
                 mimetype=mimetype,
                 content="",
-                path=s3_reader.key,
+                path=s3_reader.path,
                 last_modified=file_header_info.get("LastModified"),
             )
 
@@ -192,7 +192,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
             mimetype=mimetype,
             last_modified=file_header_info.get("LastModified"),
             content=content,
-            path=f"{s3_reader.key_without_query}?bytes={byte_range}",
+            path=f"s3://{s3_reader.bucket_name}/{s3_reader.key_without_query}?bytes={byte_range}",
         )
 
 
@@ -227,7 +227,7 @@ async def get_buckets_or_objects(
             for bucket in buckets
         ]
 
-        return ListResponse[BucketResponse](data=result, total=len(result))
+        return ListResponse[BucketResponse](data=result, total=len(result), page_no=page_no)
     
     _, s3_reader = await get_bucket(path, db, id)
 
@@ -252,7 +252,7 @@ async def get_buckets_or_objects(
                 page_no=page_no,
                 page_size=page_size,
             )
-        return ListResponse[BucketResponse](data=result, total=len(result))
+        return ListResponse[BucketResponse](data=result, total=len(result), page_no=page_no)
 
     # 文件
     result = await get_file(

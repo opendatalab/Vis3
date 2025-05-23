@@ -36,6 +36,7 @@ export type BatchBucketCreateBody = Omit<BucketCreateBody, 'name'>[]
 export interface BucketResponse {
   data: BucketData[]
   total: number
+  page_no: number
 }
 
 export async function digBucket({ pageNo, pageSize, path, id }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {

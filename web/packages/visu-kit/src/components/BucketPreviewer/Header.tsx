@@ -186,6 +186,7 @@ const ErrorMessage = styled.div<{ theme: Theme }>`
 
 function extractPath(path: string) {
   const _fragments = path.replace(/^s3:\/\//, '').split('/')
+
   return _fragments
     .map((fragment, index) => {
       return {

@@ -90,6 +90,7 @@ class S3Reader:
         self.bucket_name = bucket_name
         self.key = key
         self.bucket = bucket
+        self.path = f"s3://{bucket_name}/{key}"
         self.key_without_query = key.split("?")[0]
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
