@@ -161,6 +161,10 @@ export function FileIcon({ path, type }: FileIconProps) {
       return 'folder'
     }
 
+    if (filePath.endsWith('.jsonl.gz')) {
+      return 'jsonl'
+    }
+
     // 检查特定的配置文件
     const fileName = filePath.split('/').pop()?.toLowerCase()
     if (fileName && fileTypeIconMapping.hasOwnProperty(fileName)) {
