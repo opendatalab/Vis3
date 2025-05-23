@@ -222,7 +222,6 @@ function RouteComponent() {
             flex: !showPlaceholder,
           })}
           >
-
             <div className={clsx('bucket-header', ' flex items-center gap-2')}>
               {
                 path && <DirectoryTreeTrigger />

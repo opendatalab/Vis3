@@ -1,4 +1,4 @@
-import { BucketItem, useBucketContext } from "@visu/kit";
+import { BucketItem, FileIcon, useBucketContext } from "@visu/kit";
 import { Button, Skeleton, Tooltip, Tree, TreeDataNode } from "antd";
 import { createContext, MutableRefObject, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import styles from './index.module.css';
@@ -6,7 +6,7 @@ import styles from './index.module.css';
 import ArrowFromLeftSvg from '@/assets/arrow-from-left.svg?react';
 import ArrowFromRightSvg from '@/assets/arrow-from-right.svg?react';
 import FolderIcon from '@/assets/folder.svg?react';
-import { ArrowDownOutlined, FileOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "@tanstack/react-router";
 import clsx from "clsx";
@@ -25,7 +25,6 @@ export interface DirectoryTreeProps {
 
 function extractPath(path: string) {
   const _fragments = path.replace(/^s3:\/\//, '').split('/')
-  console.log('extractPath', path, _fragments)
   return _fragments
     .map((fragment, index) => {
       const prefix = _fragments.slice(0, index + 1).join('/')
@@ -267,19 +266,18 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
 
       onParamsChange?.({ path: key })
     },
-    [onParamsChange],
+    [onParamsChange, treeDataMap],
   )
 
   const onLoadData = useCallback(
     (node: TreeDataNode) => {
-      console.log('onLoadData')
       if (treeDataMap[node.key as string]) {
         return Promise.resolve()
       }
 
       return handleDig(_.get(node, 'raw.type') as unknown as string, node.key as string)
     },
-    [handleDig],
+    [handleDig, treeDataMap],
   )
 
   const treeData = useMemo(() => {
@@ -305,7 +303,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
           key: `${item.path}`,
           children,
           isLeaf: item.type === 'file',
-          icon: item.path.endsWith('/') ? <FolderIcon className="text-lg" /> : <FileOutlined />,
+          icon: <div className="text-lg w-4 h-4">{item.path.endsWith('/') ? <FileIcon  type="folder" /> : <FileIcon path={item.path} />}</div>,
           raw: item,
         }
       })
@@ -317,8 +315,6 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   if (loading) {
     return <Skeleton className={styles.tree} active />
   }
-
-  console.log('expandedKeys', expandedKeys)
 
   return (
     <div className={clsx(styles.tree, className, {
