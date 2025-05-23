@@ -8,10 +8,10 @@ import { useCallback, useMemo, useRef } from 'react'
 import { BucketItemWrapper } from '../../../components/BucketPreviewer/BucketList'
 import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
-import { BucketIcon, FolderIcon } from '../../../components/Icon'
-import { getFullPath, getPathIcon } from '../../../components/Renderer/utils'
+import { getFullPath } from '../../../components/Renderer/utils'
 import { ROOT_BLOCK_ID } from '../../../constant'
 import { download } from '../../../utils'
+import { FileIcon } from '../../FileIcon'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { usePreviewBlockContext } from '../contexts/preview.context'
@@ -63,7 +63,9 @@ const FlexRow = styled.div`
 `
 
 const IconWrapper = styled.div`
-  font-size: 16px;
+  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
 `
 
 const ShrinkButton = styled(Button)`
@@ -135,13 +137,13 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
         let icon = null
 
         if (item.type === 'bucket') {
-          icon = <BucketIcon />
+          icon = <FileIcon type="bucket" path={item.fullPath!} />
         }
         else if (item.type === 'directory') {
-          icon = <FolderIcon />
+          icon = <FileIcon type="folder" />
         }
         else {
-          icon = getPathIcon(item.fullPath!)
+          icon = <FileIcon path={item.fullPath!} />
         }
 
         return (

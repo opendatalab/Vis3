@@ -3,21 +3,6 @@ import { i18n } from '@visu/i18n'
 import { Button, Modal } from 'antd'
 import type { AxiosError } from 'axios'
 
-import {
-  AudioIcon,
-  BucketIcon,
-  CsvIcon,
-  DocIcon,
-  HtmlIcon,
-  ImageIcon,
-  JsonIcon,
-  MarkdownIcon,
-  PdfIcon,
-  PythonIcon,
-  TxtIcon,
-  VideoIcon,
-  ZipIcon,
-} from '../../components/Icon'
 import { BucketItem } from '../../types'
 import { isAudio, isImage, isVideo, isZip } from '../../utils'
 
@@ -29,34 +14,7 @@ const FooterContainer = styled.div`
   padding-top: 1rem;
 `
 
-export const fileTypeIconMapping = {
-  json: <JsonIcon />,
-  jsonl: <JsonIcon />,
-  image: <ImageIcon />,
-  txt: <TxtIcon />,
-  csv: <CsvIcon />,
-  doc: <DocIcon />,
-  video: <VideoIcon />,
-  audio: <AudioIcon />,
-  markdown: <MarkdownIcon />,
-  pdf: <PdfIcon />,
-  zip: <ZipIcon />,
-  html: <HtmlIcon />,
-  folder: <BucketIcon />,
-  python: <PythonIcon />,
-  epub: <DocIcon />,
-  mobi: <DocIcon />,
-} as const
-
-export type PathType = keyof typeof fileTypeIconMapping
-
-export function getPathIcon(path: string) {
-  const type = getPathType(path) || 'txt'
-
-  return fileTypeIconMapping[type]
-}
-
-export function getPathType(path: string): PathType | undefined {
+export function getPathType(path: string) {
   let type
 
   if (!path) {
@@ -133,7 +91,7 @@ export function getPathType(path: string): PathType | undefined {
     type = 'mobi'
   }
 
-  return type as PathType
+  return type
 }
 
 export function getBasename(path: string) {

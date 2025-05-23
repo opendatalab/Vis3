@@ -7,7 +7,6 @@ import type { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { formatBucketList, useBucketContext } from '../../../components/BucketPreviewer/context'
-import type { PathType } from '../../../components/Renderer/utils'
 import { getPathType, handleBucketError } from '../../../components/Renderer/utils'
 import TextLikePreviewer from '../../../components/TextLikePreviewer'
 import { useBuckets } from '../../../queries/bucket.query'
@@ -59,7 +58,7 @@ const StyledMediaCard = styled(MediaCard)`
 export interface BlockInfo {
   id: string
   path: string
-  pathType: PathType
+  pathType: string
 }
 
 function extractRenderAs(mimeType: string) {
@@ -137,8 +136,6 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
   }, [bucketQueryOptions, pageSize, pageNo])
 
   const { data, error, isFetching } = useBuckets(queryOptions)
-
-  console.log('isFetching', isFetching)
 
   const finalData = useMemo(() => {
     if (dataSource) {
@@ -410,7 +407,7 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
           )
         }
         {
-          id !== ROOT_BLOCK_ID || onClose && (
+          id !== ROOT_BLOCK_ID && (
             <>
               <Divider type="vertical" />
               <Tooltip title={t('renderer.close')}>
@@ -440,7 +437,7 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
     }
 
     if (isTextLike || ['jsonl'].includes(s3PathType!)) {
-      return <TextLikePreviewer name={basename} type={s3PathType as PathType || 'txt'} extraTail={extra} titleExtra={extraTitle} />
+      return <TextLikePreviewer name={basename} type={s3PathType || 'txt'} extraTail={extra} titleExtra={extraTitle} />
     }
 
     let mediaUrl = `${previewUrl}?path=${encodeURIComponent(path)}`
@@ -453,7 +450,7 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
       mediaUrl = dataSource.content!
     }
 
-    return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType as PathType} extraTail={extra} titleExtra={extraTitle} />
+    return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType} extraTail={extra} titleExtra={extraTitle} />
   }, [basename, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType, dataSource])
 
   return (
