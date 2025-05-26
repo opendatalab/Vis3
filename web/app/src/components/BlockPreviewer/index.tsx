@@ -91,7 +91,7 @@ export default function BlockPreviewer({ className, path }: BlockPreviewerProps)
   // s3://llm-users-phdd2/jinzhenj2/demo_data_output/part-675bf9ba2e22-000000.jsonl
 
   return (
-    <div ref={containerRef} className={clsx(className, 'block-previewer', 'flex', 'items-start', 'gap-4', 'overflow-x-auto', 'h-full')}>
+    <div ref={containerRef} className={clsx(className, 'block-previewer', 'flex', 'items-start', 'gap-4', 'overflow-x-auto', 'h-full relative')}>
       {
         blocks.map((block) => {
           return (

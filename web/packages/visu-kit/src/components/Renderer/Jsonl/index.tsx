@@ -87,7 +87,11 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
   
   useLayoutEffect(() => {
     const bucketContainer = document.getElementById('bucketContainer')
-    if (wrapper) {
+    if (!wrapper) {
+      return
+    }
+
+    const observer = new ResizeObserver(() => {
       const wrapRect = wrapper.getBoundingClientRect()
       let height = window.innerHeight - wrapRect.top - 1
   
@@ -103,9 +107,14 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
         width: wrapRect.width,
         height,
       })
+    })
+
+    observer.observe(wrapper)
+
+    return () => {
+      observer.disconnect()
     }
   }, [wrapper])
-    
 
   return size
 }
