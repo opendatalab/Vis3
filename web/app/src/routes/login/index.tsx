@@ -2,6 +2,7 @@ import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { Button, Form, Input, message } from 'antd'
 
+import { useTranslation } from '@visu/i18n'
 import type { LoginPayload } from '../../api/user'
 import { getUserInfo } from '../../api/user'
 import { useLogin } from '../../api/user.query'
@@ -31,6 +32,7 @@ export const Route = createFileRoute('/login/')({
 function RouteComponent() {
   const [form] = Form.useForm()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   // 使用React Query的useMutation
   const loginMutation = useLogin()
@@ -41,8 +43,8 @@ function RouteComponent() {
       navigate({ to: '/' })
     }
     catch (error) {
-      console.error('登录失败:', error)
-      message.error('用户名或密码错误')
+      console.error('login failed', error)
+      message.error(t('account.usernameIncorrect'))
     }
   }
 
@@ -56,7 +58,7 @@ function RouteComponent() {
               VisU
             </span>
           </div>
-          <p className="mt-2 text-gray-600">大模型语料可视化工具</p>
+          <p className="mt-2 text-gray-600">{t('slogan')}</p>
         </div>
 
         <Form
@@ -70,21 +72,21 @@ function RouteComponent() {
         >
           <Form.Item
             name="username"
-            rules={[{ required: true, message: '请输入用户名' }]}
+            rules={[{ required: true, message: t('account.usernamePlaceholder') }]}
           >
             <Input
               prefix={<UserOutlined className="site-form-item-icon" />}
-              placeholder="用户名"
+              placeholder={t('account.username')}
             />
           </Form.Item>
 
           <Form.Item
             name="password"
-            rules={[{ required: true, message: '请输入密码' }]}
+            rules={[{ required: true, message: t('account.passwordPlaceholder') }]}
           >
             <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
-              placeholder="密码"
+              placeholder={t('account.password')}
             />
           </Form.Item>
 
@@ -95,7 +97,7 @@ function RouteComponent() {
               className="w-full"
               loading={loginMutation.isPending}
             >
-              登录
+              {t('account.login')}
             </Button>
           </Form.Item>
 
@@ -104,7 +106,7 @@ function RouteComponent() {
               onClick={() => navigate({ to: '/register' })}
               className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer"
             >
-              立即注册
+              {t('account.register')}
             </a>
           </div>
         </Form>

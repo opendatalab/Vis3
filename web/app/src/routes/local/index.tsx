@@ -6,7 +6,7 @@ import type { QueryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from '@visu/i18n'
 import type { BucketParams } from '@visu/kit'
-import { BucketContext, getBytes, getPathType, RenderBlock, ROOT_BLOCK_ID } from '@visu/kit'
+import { BucketBlock, BucketContext, getBytes, getPathType } from '@visu/kit'
 import type { UploadProps } from 'antd'
 
 import { Button, List, message, Tooltip, Upload } from 'antd'
@@ -298,8 +298,8 @@ function RouteComponent() {
             fileItem.content = JSON.stringify(warcRecords, null, 2)
           }
           catch (error) {
-            console.error('解析WARC文件失败:', error)
-            message.error('解析WARC文件失败')
+            console.error(t('upload.warcError'), error)
+            message.error(t('upload.warcError'))
           }
         }
 
@@ -312,13 +312,13 @@ function RouteComponent() {
         message.success(`${file.name} ${t('upload.success')}`)
       }
       catch (error) {
-        console.error('处理文件失败:', error)
-        message.error(t('save.error'))
+        console.error(t('upload.readError'), error)
+        message.error(t('upload.readError'))
       }
     }
 
     reader.onerror = () => {
-      message.error(t('upload.error'))
+      message.error(t('upload.readError'))
     }
 
     // 判断文件类型并读取
@@ -353,11 +353,11 @@ function RouteComponent() {
       // 选中删除文件的前一个文件
       setSelectedFile(null)
       setFileList(prev => prev.filter(file => file.id !== id))
-      message.success(t('delete.success'))
+      message.success(t('upload.deleteSuccess'))
     }
     catch (error) {
       console.error('Failed to delete file:', error)
-      message.error(t('delete.error'))
+      message.error(t('upload.deleteFailed'))
     }
   }
 
@@ -373,14 +373,14 @@ function RouteComponent() {
     beforeUpload: (file) => {
       // 检查文件大小是否超出限制
       if (file.size > MAX_FILE_SIZE) {
-        message.error(`${file.name} 超过最大限制 500MB`)
+        message.error(`${file.name} ${t('upload.maxSize')} 500MB`)
         return false
       }
 
       // 检查是否存在同名文件
       const fileExists = fileList.some(existingFile => existingFile.name === file.name)
       if (fileExists) {
-        message.error(`已存在同名文件：${file.name}`)
+        message.error(`${t('upload.sameName')}: ${file.name}`)
         return false
       }
 
@@ -392,14 +392,14 @@ function RouteComponent() {
       const filesToProcess = Array.from(e.dataTransfer.files).filter((file) => {
         // 检查文件大小
         if (file.size > MAX_FILE_SIZE) {
-          message.error(`${file.name} 超过最大限制 500MB`)
+          message.error(`${file.name} ${t('upload.maxSize')} 500MB`)
           return false
         }
 
         // 检查是否存在同名文件
         const fileExists = fileList.some(existingFile => existingFile.name === file.name)
         if (fileExists) {
-          message.error(`已存在同名文件：${file.name}`)
+          message.error(`${t('upload.sameName')}: ${file.name}`)
           return false
         }
 
@@ -513,7 +513,7 @@ function RouteComponent() {
             className={clsx('w-[260px] flex flex-col', styles.fileList)}
             header={(
               <div className="flex justify-between px-4">
-                <span className="font-bold">文件列表</span>
+                <span className="font-bold">{t('fileList')}</span>
                 <div className="flex flex-row items-center gap-2">
                   <Upload {...props}>
                     <Button type="text" size="small" icon={<UploadOutlined />} />
@@ -564,14 +564,13 @@ function RouteComponent() {
           {
             selectedFile
               ? (
-                  <RenderBlock
+                  <BucketBlock
                     dataSource={dataSource}
                     block={{
-                      id: ROOT_BLOCK_ID,
+                      id: 'original',
                       path: fakePath,
                       pathType: dataSource?.type,
                     }}
-                    updateBlock={() => {}}
                   />
                 )
               : uploader

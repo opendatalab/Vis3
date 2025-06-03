@@ -1,7 +1,8 @@
-import type { RegisterPayload } from '../../api/user'
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useTranslation } from '@visu/i18n'
 import { Button, Form, Input, message } from 'antd'
+import type { RegisterPayload } from '../../api/user'
 import { getUserInfo } from '../../api/user'
 import { useRegister } from '../../api/user.query'
 
@@ -34,6 +35,7 @@ interface RegisterFormValues extends RegisterPayload {
 function RouteComponent() {
   const [form] = Form.useForm<RegisterFormValues>()
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   // 使用React Query的useMutation
   const registerMutation = useRegister()
@@ -41,18 +43,18 @@ function RouteComponent() {
   const handleSubmit = async (values: RegisterFormValues) => {
     // 验证两次密码是否一致
     if (values.password !== values.confirm_password) {
-      message.error('两次输入的密码不一致')
+      message.error(t('account.passwordConfirmError'))
       return
     }
 
     try {
       await registerMutation.mutateAsync(values)
-      message.success('注册成功，请登录')
+      message.success(t('account.registerSuccess'))
       navigate({ to: '/login' })
     }
     catch (error: any) {
-      console.error('注册失败:', error)
-      message.error(error.response?.data?.detail || '注册失败，请稍后重试')
+      console.error('register failed', error)
+      message.error(error.response?.data?.detail || t('account.registerFailed'))
     }
   }
 
@@ -66,7 +68,7 @@ function RouteComponent() {
               VisU
             </span>
           </div>
-          <p className="mt-2 text-gray-600">创建新账号</p>
+          <p className="mt-2 text-gray-600">{t('account.createNewAccount')}</p>
         </div>
 
         <Form<RegisterFormValues>
@@ -80,26 +82,26 @@ function RouteComponent() {
           <Form.Item
             name="username"
             rules={[
-              { required: true, message: '请输入用户名' },
-              { min: 3, message: '用户名至少3个字符' },
+              { required: true, message: t('account.usernameRequired') },
+              { min: 3, message: t('account.usernameMinLength') },
             ]}
           >
             <Input
               prefix={<UserOutlined className="site-form-item-icon" />}
-              placeholder="用户名"
+              placeholder={t('account.username')}
             />
           </Form.Item>
 
           <Form.Item
             name="password"
             rules={[
-              { required: true, message: '请输入密码' },
-              { min: 6, message: '密码至少6个字符' },
+              { required: true, message: t('account.passwordRequired') },
+              { min: 6, message: t('account.passwordMinLength') },
             ]}
           >
             <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
-              placeholder="密码"
+              placeholder={t('account.password')}
             />
           </Form.Item>
 
@@ -107,20 +109,20 @@ function RouteComponent() {
             name="confirm_password"
             dependencies={['password']}
             rules={[
-              { required: true, message: '请确认密码' },
+              { required: true, message: t('account.passwordConfirmRequired') },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (!value || getFieldValue('password') === value) {
                     return Promise.resolve()
                   }
-                  return Promise.reject(new Error('两次输入的密码不一致'))
+                  return Promise.reject(new Error(t('account.passwordConfirmError')))
                 },
               }),
             ]}
           >
             <Input.Password
               prefix={<LockOutlined className="site-form-item-icon" />}
-              placeholder="确认密码"
+              placeholder={t('account.passwordConfirm')}
             />
           </Form.Item>
 
@@ -131,17 +133,17 @@ function RouteComponent() {
               className="w-full"
               loading={registerMutation.isPending}
             >
-              注册
+              {t('account.register')}
             </Button>
           </Form.Item>
 
           <div className="text-center">
-            <span className="text-gray-600">已有账号？</span>
+            <span className="text-gray-600">{t('account.haveAccount')}</span>
             <a
               onClick={() => navigate({ to: '/login' })}
               className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer"
             >
-              立即登录
+              {t('account.loginNow')}
             </a>
           </div>
         </Form>

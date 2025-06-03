@@ -1,4 +1,4 @@
-import { BucketItem, FileIcon, useBucketContext } from "@visu/kit";
+import { BucketItem, FileIcon } from "@visu/kit";
 import { Button, Skeleton, Tooltip, Tree, TreeDataNode } from "antd";
 import { createContext, MutableRefObject, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import styles from './index.module.css';
@@ -8,14 +8,14 @@ import ArrowFromRightSvg from '@/assets/arrow-from-right.svg?react';
 import FolderIcon from '@/assets/folder.svg?react';
 import { ArrowDownOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "@visu/i18n";
 import clsx from "clsx";
 import _ from "lodash";
 import { digBucket } from "../../api/bucket";
 
 export interface TreeRef {
   toggle: (open: boolean) => void
-  onPathSelect: (path: string) => void
 }
 
 export interface DirectoryTreeProps {
@@ -38,13 +38,14 @@ function extractPath(path: string) {
 
 export function DirectoryTreeTrigger() {
   const { open, setOpen } = useTreeContext()
+  const { t } = useTranslation()
 
   const handleToggle = useCallback(() => {
     document.dispatchEvent(new CustomEvent('toggleDirectoryTree', { detail: { open: !open } }))
   }, [open, setOpen])
 
   return (
-    <Tooltip title={open ? '隐藏目录树' : '显示目录树'} placement="bottomLeft"><Button icon={open ? <ArrowFromRightSvg /> : <ArrowFromLeftSvg />} onClick={handleToggle} /></Tooltip>
+    <Tooltip title={open ? t('directoryTree.hide') : t('directoryTree.show')} placement="bottomLeft"><Button icon={open ? <ArrowFromRightSvg /> : <ArrowFromLeftSvg />} onClick={handleToggle} /></Tooltip>
   )
 }
 
@@ -86,18 +87,20 @@ interface TreeMapItem {
 }
 
 export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps) {
-  const { path, onParamsChange } = useBucketContext()
-  const [expandedKeys, setExpandedKeys] = useState<string[]>([path])
   const [treeDataMap, setTreeDataMap] = useState<Record<string, TreeMapItem>>({})
   const openedRef = useRef<boolean>(false)
   const location = useLocation()
+  const search = location.search as Record<string, string>
+  const path = search.path as string || ''
   const pathWithoutQuery = path?.split('?')[0]
   const [selectedKeys, setSelectedKeys] = useState<string[]>([pathWithoutQuery])
-  const search = location.search as Record<string, string>
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([path])
   const { open, setOpen } = useTreeContext()
   const [loading, setLoading] = useState(false)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const pageSize = Number(search.page_size) || 50
+  const { t } = useTranslation()
 
   const getBucketQueryKey = useCallback((_path?: string, pageNo?: number) => {
     if (!_path) {
@@ -177,31 +180,6 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
 
   useImperativeHandle(treeRef, () => ({
     toggle: handleToggle,
-    onPathSelect: async (_path: string) => {
-      const fragments = extractPath(_path).slice(0, -1)
-      const paths = fragments.filter(_item => {
-        return !treeDataMap[_item.fullPath]
-      })
-
-      if (paths.length > 0) {
-        const response = await Promise.all(paths.map(_fragment => queryClient.fetchQuery({ queryKey: getBucketQueryKey(_fragment.fullPath), staleTime: 10000, queryFn: () => digBucket({ path: _fragment.fullPath, id: Number(search.id) }) })))
-        const _treeDataMap = response.reduce((acc: Record<string, TreeMapItem>, item, index) => {
-          acc[paths[index].fullPath] = {
-            total: item.total ?? 0,
-            data: item.data as BucketItem[],
-            pageNo: item.page_no ?? 1,
-          }
-          return acc
-        }, {})
-
-        setTreeDataMap((pre) => {
-          return {
-            ...pre,
-            ..._treeDataMap,
-          }
-        })
-      }
-    },
   }))
 
   const handleDig = useCallback(
@@ -264,9 +242,15 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         return
       }
 
-      onParamsChange?.({ path: key })
+      navigate({
+        to: '/',
+        search: {
+          ...search,
+          path: key,
+        },
+      })
     },
-    [onParamsChange, treeDataMap],
+    [search, treeDataMap],
   )
 
   const onLoadData = useCallback(
@@ -285,7 +269,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
       return _.map(rootMap, (item) => {
         const _path = item.path.replace(parentPath, '').replace(/\/$/, '')
         const loadMore = {
-          title: <span className="whitespace-nowrap">加载更多</span>,
+          title: <span className="whitespace-nowrap">{t('directoryTree.loadMore')}</span>,
           key: `${item.path}///load-more`,
           isLeaf: true,
           icon: <ArrowDownOutlined />,

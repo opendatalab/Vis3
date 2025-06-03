@@ -1,6 +1,7 @@
 import DeleteSvg from '@/assets/delete.svg?react'
 import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
+import { i18n, useTranslation } from '@visu/i18n'
 import { Alert, Button, Divider, Form, Input, message, Select, Tooltip } from 'antd'
 import type { FormProps } from 'antd/lib'
 import _ from 'lodash'
@@ -24,26 +25,26 @@ export function pathValidator(keyOptions: any) {
       const keychain_id = getFieldValue(_meta.field.replace('path', 'keychain_id'))
 
       if (!keychain_id) {
-        return Promise.reject(new Error('请选择AK&SK'))
+        return Promise.reject(new Error(i18n.t('bucketForm.keychainIdRequired')))
       }
 
       if (!endpoint) {
-        return Promise.reject(new Error('请先填写Endpoint'))
+        return Promise.reject(new Error(i18n.t('bucketForm.endpointRequired')))
       }
 
       if (!value) {
-        return Promise.reject(new Error('请填写S3存储地址'))
+        return Promise.reject(new Error(i18n.t('bucketForm.pathRequired')))
       }
 
       if (!value.startsWith('s3://')) {
-        return Promise.reject(new Error('S3路径格式错误，必须以s3://开头'))
+        return Promise.reject(new Error(i18n.t('bucketForm.pathValidMessage')))
       }
 
       try {
         const correctKey = _.find(keyOptions, _item => _item.value === keychain_id)
 
         if (!correctKey) {
-          return Promise.reject(new Error('没有对应的AK&SK'))
+          return Promise.reject(new Error(i18n.t('bucketForm.keychainIdRequired')))
         }
 
         const accessibleResult = await isBucketAccessible({
@@ -56,7 +57,7 @@ export function pathValidator(keyOptions: any) {
           return Promise.resolve()
         }
         else {
-          return Promise.reject(new Error('所选的 AK&SK 暂无查看此地址权限'))
+          return Promise.reject(new Error(i18n.t('bucketForm.noPermission')))
         }
       }
       catch (error) {
@@ -78,16 +79,16 @@ export function endpointValidator() {
   return {
     async validator(_meta: any, value: string) {
       if (!value) {
-        return Promise.reject(new Error('请填写Endpoint'))
+        return Promise.reject(new Error(i18n.t('bucketForm.endpointRequired')))
       }
 
       const result = await ping(value)
 
       if (_.get(result, 'data', false)) {
-        return Promise.resolve('Endpoint可访问')
+        return Promise.resolve(i18n.t('bucketForm.endpointAccessible'))
       }
 
-      return Promise.reject(new Error('此Endpoint无法访问'))
+      return Promise.reject(new Error(i18n.t('bucketForm.endpointInvalid')))
     },
   }
 }
@@ -106,6 +107,7 @@ export interface BucketCreateFormRef {
 export default function BucketManager({ modalRef, className, showTrigger = true }: BucketCreateFormProps) {
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
+  const { t } = useTranslation()
   const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
   const { mutateAsync: batchCreateBucketMutation, isPending } = useBatchCreateBucket()
   const queryClient = useQueryClient()
@@ -151,11 +153,11 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
 
   const onFinish: FormProps['onFinish'] = async (values) => {
     if (_.size(values?.buckets) === 0) {
-      message.error('请至少添加一个地址')
+      message.error(t('bucketForm.atLeastOnePath'))
       return
     }
     await batchCreateBucketMutation(values.buckets)
-    message.success('添加成功')
+    message.success(t('bucketForm.pathAdded'))
     onClose()
     queryClient.invalidateQueries({ queryKey: ['bucket'] })
   }
@@ -174,59 +176,13 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
     })
   }, [keyChain])
 
-  const pathValidator = async (_meta: any, value: string) => {
-    const values = form.getFieldsValue()
-    const endpoint = _.get(values, _meta.field.replace('path', 'endpoint'))
-    const keychain_id = _.get(values, _meta.field.replace('path', 'keychain_id'))
-
-    if (!keychain_id) {
-      return Promise.reject(new Error('请选择AK&SK'))
-    }
-
-    if (!endpoint) {
-      return Promise.reject(new Error('请先填写Endpoint'))
-    }
-
-    if (!value) {
-      return Promise.reject(new Error('请填写S3存储地址'))
-    }
-
-    if (!value.startsWith('s3://')) {
-      return Promise.reject(new Error('S3路径格式错误，必须以s3://开头'))
-    }
-
-    try {
-      const correctKey = _.find(keyOptions, _item => _item.value === keychain_id)
-
-      if (!correctKey) {
-        return Promise.reject(new Error('没有对应的AK&SK'))
-      }
-
-      const accessibleResult = await isBucketAccessible({
-        endpoint,
-        keychain_id: correctKey.value,
-        path: value,
-      })
-
-      if (_.get(accessibleResult, 'data')) {
-        return Promise.resolve()
-      }
-      else {
-        return Promise.reject(new Error('所选的 AK&SK 暂无查看此地址权限'))
-      }
-    }
-    catch (error) {
-      return Promise.reject(new Error(_.get(error, 'message')))
-    }
-  }
-
   return (
     <>
-      {showTrigger && <Tooltip title="添加Bucket或对象地址" placement="bottomLeft"><Button className={className} onClick={() => setOpen(true)} type="primary" icon={<PlusOutlined />}>添加地址</Button></Tooltip>}
+      {showTrigger && <Tooltip title={t('bucketForm.triggerTooltipMessage')} placement="bottomLeft"><Button className={className} onClick={() => setOpen(true)} type="primary" icon={<PlusOutlined />}>{t('bucketForm.addBucket')}</Button></Tooltip>}
       <PopPanel
         isOpen={open}
         onClose={onClose}
-        title="添加 S3 路径"
+        title={t('bucketForm.addBucket')}
         width={600}
         offset={{
           right: 16,
@@ -235,8 +191,8 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
         }}
         footer={(
           <div className="flex gap-2">
-            <Button type="primary" loading={isPending} onClick={handleSave}>保存</Button>
-            <Button type="default" onClick={onClose}>取消</Button>
+            <Button type="primary" loading={isPending} onClick={handleSave}>{t('bucketForm.save')}</Button>
+            <Button type="default" onClick={onClose}>{t('bucketForm.cancel')}</Button>
           </div>
         )}
       >
@@ -248,9 +204,7 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
               showIcon
               message={(
                 <div>
-                  请选择或添加对目标路径有访问权限的AK/SK（前往
-                  <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">AK&SK 管理</Button>
-                  添加）
+                  {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')}</Button>
                 </div>
               )}
             />
@@ -263,10 +217,10 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
                         <div className="flex justify-between items-center mb-4">
 
                           <span className="font-bold text-black">
-                            地址 &nbsp;
+                            {t('bucketForm.path')} &nbsp;
                             {index + 1}
                           </span>
-                          <Tooltip title="移除地址">
+                          <Tooltip title={t('bucketForm.remove')}>
                             <Button size="small" type="text" danger icon={<Icon component={DeleteSvg} />} onClick={() => remove(index)} />
                           </Tooltip>
                         </div>
@@ -275,20 +229,20 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
                           label={(
                             <div className="flex items-center gap-2">
                               AK&SK
-                              <Tooltip title="刷新">
+                              <Tooltip title={t('bucketForm.refresh')}>
                                 <Button type="text" size="small" icon={<ReloadOutlined />} loading={keyChainQuery.isFetching} onClick={() => keyChainQuery.refetch()} />
                               </Tooltip>
                             </div>
                           )}
                           required
                           name={[index, 'keychain_id']}
-                          rules={[{ required: true, message: '请选择AK&SK' }]}
+                          rules={[{ required: true, message: t('bucketForm.keychainIdRequired') }]}
                         >
                           <Select
                             className="w-full"
                             loading={isLoading}
                             options={keyOptions}
-                            placeholder="请选择AK&SK"
+                            placeholder={t('bucketForm.keychainIdRequired')}
                             optionRender={item => (
                               <div className="flex flex-col gap-1">
                                 {item.label}
@@ -308,16 +262,16 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
                           validateDebounce={1000}
                           rules={
                             [
-                              { type: 'url', message: '请填写正确的url格式' },
+                              { type: 'url', message: t('bucketForm.endpointValidMessage') },
                               endpointValidator,
                             ]
                           }
                         >
-                          <Input placeholder="请填写有效的Endpoint" />
+                          <Input placeholder={t('bucketForm.endpointPlaceholder')} />
                         </Form.Item>
                         <Form.Item
-                          label="S3地址"
-                          tooltip="检查可访问的时限为30秒，若超时则判定为不可访问"
+                          label={t('bucketForm.path')}
+                          tooltip={t('bucketForm.pathTooltip')}
                           required
                           hasFeedback
                           className="!mb-0"
@@ -325,17 +279,17 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
                           validateDebounce={1000}
                           rules={
                             [
-                              { type: 'string', validator: pathValidator },
+                              pathValidator(keyOptions)
                             ]
                           }
                         >
-                          <Input placeholder="请填写S3存储地址，以s3://开头" />
+                          <Input placeholder={t('bucketForm.pathPlaceholder')} />
                         </Form.Item>
                         {fields.length > 1 && index < fields.length - 1 && <Divider />}
                       </div>
                     ))
                   }
-                  <Button className="mt-6" block icon={<PlusOutlined />} onClick={() => add()}>增加地址</Button>
+                  <Button className="mt-6" block icon={<PlusOutlined />} onClick={() => add()}>{t('bucketForm.add')}</Button>
                 </>
               )}
             </Form.List>

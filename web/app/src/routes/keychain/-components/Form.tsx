@@ -3,6 +3,7 @@ import type { Ref } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Form, Input, message, Modal } from 'antd'
 
+import { useTranslation } from '@visu/i18n'
 import { useImperativeHandle, useState } from 'react'
 import type { KeychainCreateBody } from '../../../api/keychain'
 import { useCreateKeychain } from '../../../api/keychain.query'
@@ -25,6 +26,8 @@ export default function KeyChainForm({
   const [form] = Form.useForm<KeychainCreateBody>()
   const queryClient = useQueryClient()
   const { mutateAsync: createKeychain } = useCreateKeychain()
+  const { t } = useTranslation()
+  
   useImperativeHandle(modalFormRef, () => {
     return {
       open: () => {
@@ -47,7 +50,7 @@ export default function KeyChainForm({
     createKeychain(values).then(() => {
       queryClient.invalidateQueries({ queryKey: ['my_keychain'] })
       handleClose()
-      message.success('创建成功')
+      message.success(t('keychain.added'))
     })
   }
 
@@ -58,16 +61,16 @@ export default function KeyChainForm({
   }
 
   return (
-    <Modal open={open} onCancel={handleClose} title="添加AK&SK" okText="保存" onOk={handleOk}>
+    <Modal open={open} onCancel={handleClose} title={t('keychain.add')} okText={t('bucketForm.save')} onOk={handleOk}>
       <Form form={form} layout="vertical" name="keychain" onFinish={handleSaveCreate}>
-        <Form.Item label="名称" name="name" rules={[{ required: true, message: '请输入名称' }]}>
-          <Input placeholder="请输入名称" />
+        <Form.Item label={t('keychain.name')} name="name" rules={[{ required: true, message: t('keychain.namePlaceholder') }]}>
+          <Input placeholder={t('keychain.namePlaceholder')} />
         </Form.Item>
-        <Form.Item label="Access Key ID" name="access_key_id" rules={[{ required: true, message: '请输入Access Key ID' }]}>
-          <Input placeholder="请输入Access Key ID" />
+        <Form.Item label={t('keychain.accessKeyId')} name="access_key_id" rules={[{ required: true, message: t('keychain.accessKeyIdPlaceholder') }]}>
+          <Input placeholder={t('keychain.accessKeyIdPlaceholder')} />
         </Form.Item>
-        <Form.Item label="Secret Key ID" name="secret_key_id" rules={[{ required: true, message: '请输入Secret Key ID' }]}>
-          <Input placeholder="请输入Secret Key ID" />
+        <Form.Item label={t('keychain.secretKeyId')} name="secret_key_id" rules={[{ required: true, message: t('keychain.secretKeyIdPlaceholder') }]}>
+          <Input placeholder={t('keychain.secretKeyIdPlaceholder')} />
         </Form.Item>
       </Form>
     </Modal>

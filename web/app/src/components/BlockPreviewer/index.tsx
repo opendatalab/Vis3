@@ -1,18 +1,163 @@
-import type { BlockInfo } from '@visu/kit'
-import { getBasename, getPathType, RenderBlock, ROOT_BLOCK_ID } from '@visu/kit'
+import type { BlockInfo, BucketBlockProps, BucketItem, BucketParams } from '@visu/kit'
+import { BucketBlock, getBasename, getPathType } from '@visu/kit'
 import clsx from 'clsx'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { gid } from '../../utils'
+import { EditOutlined } from '@ant-design/icons'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useLocation, useNavigate } from '@tanstack/react-router'
+import { Button, List, message, Popconfirm, Tag } from 'antd'
+import { correctPath } from './Header'
+
+import BucketIcon from '@/assets/bucket.svg?react'
+import DeleteSvg from '@/assets/delete.svg?react'
+import { useTranslation } from '@visu/i18n'
+import { deleteBucket, digBucket } from '../../api/bucket'
+import { ROOT_BLOCK_ID } from '../../constant'
+import { download, gid } from '../../utils'
+import BucketEditModal, { BucketEditModalRef } from '../BucketEditModal'
 
 export interface BlockPreviewerProps {
   className?: string
-  path: string
 }
 
-export default function BlockPreviewer({ className, path }: BlockPreviewerProps) {
+export interface BucketBlockWrapperProps extends BucketBlockProps {
+  pageSize?: number
+  pageNo?: number
+  updateBlock?: (id: string, values: Partial<BlockInfo>) => void
+}
+
+function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageNo: propPageNo = 1, updateBlock, ...props }: BucketBlockWrapperProps) {
+  const { path, id } = block
+  const [pageSize, setPageSize] = useState(propPageSize)
+  const [pageNo, setPageNo] = useState(propPageNo)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const search = location.search as Record<string, string | number>
+  const bucketId = search.id as number
+  
+  const bucketQueryKey = useMemo(() => {
+    if (path) {
+      return ['bucket', {
+        path,
+        pageSize,
+        pageNo,
+        id: bucketId,
+      }]
+    }
+
+    return ['bucket']
+  }, [path, pageSize, pageNo, bucketId])
+
+  useEffect(() => {
+    if (id === ROOT_BLOCK_ID) {
+      setPageNo(propPageNo)
+    }
+  }, [propPageNo])
+
+  useEffect(() => {
+    if (id === ROOT_BLOCK_ID) {
+      setPageSize(propPageSize)
+    }
+  }, [propPageSize])
+
+  console.log('pageNo', pageNo)
+
+  const bucketQueryOptions = useMemo(() => ({
+    staleTime: path ? 10000 : 0,
+    queryKey: bucketQueryKey,
+    queryFn: () => {
+      const result = digBucket({ path, pageSize, pageNo, id: bucketId ? Number(bucketId) : undefined }).then((res) => {
+        return res
+      })
+
+      return result
+    },
+    select: (data: any) => data.data as BucketItem[],
+  }), [bucketQueryKey])
+
+  const { data, isLoading } = useQuery(bucketQueryOptions)
+
+  const handlePathCorrection = useCallback((path: string) => {
+    if (id === ROOT_BLOCK_ID) {
+      correctPath(path)
+    }
+  }, [id])
+
+  const handleOnChange = useCallback((params: Partial<BucketParams>) => {
+    if (id === ROOT_BLOCK_ID) {
+      const { path, ...restParams } = params
+      const newSearch = {} as Record<string, string | number>
+
+      if (typeof params.path === 'string') {
+        newSearch.path = path as string
+      }
+
+      if (restParams.pageNo) {
+        newSearch.page_no = restParams.pageNo
+      }
+
+      if (restParams.pageSize) {
+        newSearch.page_size = restParams.pageSize
+      }
+
+      navigate({
+        to: '/',
+        search: { ...search, ...newSearch, id: !newSearch.path && Object.keys(restParams).length === 0 ? undefined : search.id },
+      })
+    } else {
+      if (params.pageSize) {
+        setPageSize(params.pageSize)
+      }
+
+      if (params.pageNo) {
+        setPageNo(params.pageNo)
+      }
+    }
+
+    updateBlock?.(id, {
+      path: params.path,
+      pathType: getPathType(params.path ?? ''),
+    })
+  }, [id, search, updateBlock])
+  
+  const handleOpenInNewTab = useCallback((path: string) => {
+    window.open(`${window.location.origin}${window.location.pathname}?path=${encodeURIComponent(path)}&pageSize=${pageSize}&pageNo=${pageNo}&id=${bucketId}`, '_blank', 'noopener,noreferrer')
+  }, [pageSize, pageNo, bucketId])
+
+  const isRootBlock = id === ROOT_BLOCK_ID
+
+  return (
+    <BucketBlock
+      block={block}
+      loading={isLoading}
+      dataSource={data}
+      onClose={onClose}
+      onPathCorrection={handlePathCorrection}
+      onDownload={download}
+      previewUrl="/api/v1/bucket/file_preview"
+      showGoParent={!isRootBlock}
+      showPagination={!isRootBlock && block.pathType === 'folder'}
+      onChange={handleOnChange}
+      closeable={!isRootBlock}
+      onOpenInNewTab={handleOpenInNewTab}
+      showOpenInNewTab={!isRootBlock}
+      {...props}
+    />
+  )
+}
+
+export default function BlockPreviewer({ className }: BlockPreviewerProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const bucketEditModalRef = useRef<BucketEditModalRef>(null)
+  const location = useLocation()
+  const queryClient = useQueryClient()
+  const { t } = useTranslation()
+  const search = location.search as Record<string, string | number>
+  const path = search.path as string || ''
   const basename = getBasename(path)
+  const pageSize = Number(search.page_size) || 50
+  const pageNo = Number(search.page_no) || 1
   const pathType = getPathType(basename) || 'txt'
   const [blocks, setBlocks] = useState<BlockInfo[]>([{
     id: ROOT_BLOCK_ID,
@@ -88,6 +233,13 @@ export default function BlockPreviewer({ className, path }: BlockPreviewerProps)
     setBlocks(pre => pre.filter(block => block.id !== id))
   }, [])
 
+  const handleDeleteBucket = useCallback((id: number) => {
+    return deleteBucket(id).then(() => {
+      message.success(t('upload.deleteSuccess'))
+      queryClient.invalidateQueries({ queryKey: ['bucket'] })
+    })
+  }, [deleteBucket, queryClient])
+
   // s3://llm-users-phdd2/jinzhenj2/demo_data_output/part-675bf9ba2e22-000000.jsonl
 
   return (
@@ -95,16 +247,37 @@ export default function BlockPreviewer({ className, path }: BlockPreviewerProps)
       {
         blocks.map((block) => {
           return (
-            <RenderBlock
+            <BucketBlockWrapper
               key={block.id}
               block={block}
               updateBlock={updateBlock}
               onClose={() => handleBlockClose(block.id)}
+              pageSize={block.id === ROOT_BLOCK_ID ? pageSize : undefined}
+              pageNo={block.id === ROOT_BLOCK_ID ? pageNo : undefined}
               style={{ width: `calc(100% / ${blocks.length})` }}
+              renderBucketItem={block.id === ROOT_BLOCK_ID ? (item) => {
+                return (
+                  <List.Item className="!flex !items-center hover:bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <BucketIcon />
+                      <Link className="!hover:underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
+                      {item.name && <Tag>{item.name}</Tag>}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id)} />
+                      <Popconfirm title={t('bucketForm.deleteConfirm')} onConfirm={() => handleDeleteBucket(item.id)}>
+                        <Button danger type="text" size="small" icon={<DeleteSvg />} />
+                      </Popconfirm>
+                    </div>
+                  </List.Item>
+                )
+              } : undefined}
             />
           )
         })
       }
+      <BucketEditModal modalRef={bucketEditModalRef} />
     </div>
   )
 }
+

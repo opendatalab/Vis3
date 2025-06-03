@@ -3,6 +3,7 @@ import { Form, Input, message, Modal, Select } from 'antd'
 import _ from 'lodash'
 import { useEffect, useImperativeHandle, useState } from 'react'
 
+import { useTranslation } from '@visu/i18n'
 import { useBucket, useUpdateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import { endpointValidator, pathValidator } from '../BucketManager'
@@ -20,6 +21,7 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
   const [isOpen, setIsOpen] = useState(false)
   const { data: keyChain, isLoading } = useAllKeychains(typeof id === 'number')
   const [form] = Form.useForm()
+  const { t } = useTranslation()
   const { mutateAsync: updateBucket } = useUpdateBucket()
   const queryClient = useQueryClient()
   const keychainOptions = keyChain?.map(item => ({
@@ -67,35 +69,35 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
     })
 
     queryClient.invalidateQueries({ queryKey: ['bucket'] })
-    message.success('Bucket 已更新')
+    message.success(t('bucketUpdated'))
   }
   return (
-    <Modal title="编辑Bucket" open={isOpen} onCancel={handleCancel} onOk={handleOk} loading={isLoading}>
+    <Modal title={t('editBucket')} open={isOpen} onCancel={handleCancel} onOk={handleOk} loading={isLoading}>
       <Form form={form} layout="vertical" name="bucket" initialValues={editingBucket} onFinish={handleOk}>
-        <Form.Item label="名称" name="name">
-          <Input placeholder="Bucket 名称（可选）" />
+        <Form.Item label={t('bucketForm.name')} name="name">
+          <Input placeholder={t('bucketForm.namePlaceholder')} />
         </Form.Item>
         <Form.Item
-          label="S3 地址"
+          label={t('bucketForm.path')}
           hasFeedback
           name="path"
           required
           validateDebounce={1000}
           rules={[pathValidator(keychainOptions)]}
         >
-          <Input placeholder="Bucket 路径" />
+          <Input placeholder={t('bucketForm.pathPlaceholder')} />
         </Form.Item>
         <Form.Item
-          label="Endpoint"
+          label={t('bucketForm.endpoint')}
           name="endpoint"
           required
           hasFeedback
           validateDebounce={1000}
-          rules={[{ type: 'url', message: '请填写正确的url格式' }, endpointValidator]}
+          rules={[{ type: 'url', message: t('bucketForm.endpointValidMessage') }, endpointValidator]}
         >
-          <Input placeholder="Bucket Endpoint" />
+          <Input placeholder={t('bucketForm.endpointPlaceholder')} />
         </Form.Item>
-        <Form.Item label="AK&SK" name="keychain_id" rules={[{ required: true, message: '请选择AK&SK' }]}>
+        <Form.Item label={t('bucketForm.keychainId')} name="keychain_id" rules={[{ required: true, message: t('bucketForm.keychainIdRequired') }]}>
           <Select options={keychainOptions} />
         </Form.Item>
       </Form>
