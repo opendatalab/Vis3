@@ -9,19 +9,17 @@ import { useEffect, useState } from 'react'
 
 import { usePreviewBlockContext } from '../../components/Renderer/contexts/preview.context'
 import renders from '../../components/Renderer/index'
-import type { PathType } from '../../components/Renderer/utils'
-import { ROOT_BLOCK_ID } from '../../constant'
 import type { RendererProps } from '../Renderer/Card'
 import styles from './index.module.css'
 
 export interface TextLikePreviewerProps extends Omit<RendererProps, 'value'> {
   className?: string
   style?: React.CSSProperties
-  type: PathType
+  type: string
 }
 
 export default function TextLikePreviewer({ name, type, className, extraTail, titleExtra }: TextLikePreviewerProps) {
-  const { id, data, onNext, onPrev, prevable, nextable } = usePreviewBlockContext()
+  const { data, onNext, onPrev, prevable, nextable } = usePreviewBlockContext()
   const [stateContent, setStateContent] = useState('')
   const { t } = useTranslation()
 
@@ -47,9 +45,7 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
   return (
     <Render
       name={name}
-      className={clsx(className, styles.textLikePreviewer, {
-        'original-previewer': id === ROOT_BLOCK_ID,
-      })}
+      className={clsx(className, styles.textLikePreviewer)}
       value={stateContent}
       titleExtra={(
         <>

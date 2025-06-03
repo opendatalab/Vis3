@@ -2,13 +2,13 @@ import styled from '@emotion/styled'
 import { Image, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext } from '../../../components/CodeViewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
 import MarkdownPreview from '../../../components/Markdown'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
+import { usePreviewBlockContext } from '../contexts/preview.context'
 import usePreview from '../stateHooks/usePreview'
 import useWrap from '../stateHooks/useWrap'
 import styles from './index.module.css'
@@ -96,7 +96,7 @@ const ExtraContainer = styled.div`
 `
 
 function ContentList({ name, data }: ContentListProps) {
-  const { previewUrl } = useBucketContext()
+  const { previewUrl } = usePreviewBlockContext()
   const renderItem = useCallback((item: ContentItem, index: number) => {
     if (item.text_format === 'md') {
       return <MarkdownPreview inline key={`${name}-${index}`} value={item?.md ?? item?.text ?? ''} />

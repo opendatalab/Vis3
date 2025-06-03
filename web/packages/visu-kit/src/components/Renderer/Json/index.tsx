@@ -9,7 +9,6 @@ import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext, useCodeViewerContext } from '../../../components/CodeViewer/context'
 import { JSON_KEY_CLICK_EVENT, type CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
 import FullScreenButton from '../../../components/FullscreenButton'
-import { ROOT_BLOCK_ID } from '../../../constant'
 import { get, gid } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
@@ -65,7 +64,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [jsonError, setJsonError] = useState('')
   const subOpendKeys = useRef<Record<string, FieldChain>>({
-    [ROOT_BLOCK_ID]: new FieldChain(''),
+    __root__: new FieldChain(''),
   })
   const size = useContainerSize(wrapperRef.current)
   const parsedValue = useMemo(() => {
@@ -103,7 +102,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   }, [value])
 
   useEffect(() => {
-    subOpendKeys.current[ROOT_BLOCK_ID] = new FieldChain('')
+    subOpendKeys.current.__root__ = new FieldChain('')
     setPreviewConfig([])
   }, [basename])
 

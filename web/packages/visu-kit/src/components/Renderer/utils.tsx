@@ -1,18 +1,6 @@
-import styled from '@emotion/styled'
-import { i18n } from '@visu/i18n'
-import { Button, Modal } from 'antd'
-import type { AxiosError } from 'axios'
 
 import { BucketItem } from '../../types'
 import { isAudio, isImage, isVideo, isZip } from '../../utils'
-
-const FooterContainer = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: flex-end;
-  padding-top: 1rem;
-`
 
 export function getPathType(path: string) {
   let type
@@ -119,61 +107,4 @@ export function getFullPath(input: BucketItem, path: string) {
   }
 
   return fullPath
-}
-
-export function handleBucketError(e: AxiosError<{ err_code: number, detail: { bucket: string, endpoint: string }[] }> | null, path: string) {
-  const errorCode = e?.response?.data?.err_code
-  
-
-  Modal.destroyAll()
-
-  if (errorCode === 40001) {
-    Modal.warning({
-      title: i18n.t('renderer.noPermission'),
-      content: i18n.t('renderer.needPermission'),
-      footer: (
-        <FooterContainer>
-          <Button onClick={() => Modal.destroyAll()}>{i18n.t('renderer.iKnow')}</Button>
-          <Button
-            type="primary"
-            onClick={() => {
-              Modal.destroyAll()
-              document.dispatchEvent(new CustomEvent('open-bucket-manager', { detail: { path } }))
-            }}
-          >
-            {i18n.t('renderer.addNow')}
-          </Button>
-        </FooterContainer>
-      ),
-    })
-  }
-
-  if (errorCode === 40002) {
-    Modal.warning({
-      title: i18n.t('renderer.pathNotExist'),
-      content: (
-        <div>
-          <p>{i18n.t('renderer.ifPathExists')}</p>
-          <p>
-            {i18n.t('renderer.step1AddKey')}
-          </p>
-          <p>{i18n.t('renderer.step2AddPath')}</p>
-        </div>
-      ),
-      footer: (
-        <FooterContainer>
-          <Button onClick={() => Modal.destroyAll()}>{i18n.t('renderer.iKnow')}</Button>
-          <Button
-            type="primary"
-            onClick={() => {
-              Modal.destroyAll()
-              document.dispatchEvent(new CustomEvent('open-bucket-manager', { detail: { path } }))
-            }}
-          >
-            {i18n.t('renderer.addNow')}
-          </Button>
-        </FooterContainer>
-      ),
-    })
-  }
 }

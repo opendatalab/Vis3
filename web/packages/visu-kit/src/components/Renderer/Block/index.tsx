@@ -3,20 +3,24 @@ import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
 import { useTranslation } from '@visu/i18n'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
-import type { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { formatBucketList, useBucketContext } from '../../../components/BucketPreviewer/context'
-import { getPathType, handleBucketError } from '../../../components/Renderer/utils'
+import { getPathType } from '../../../components/Renderer/utils'
 import TextLikePreviewer from '../../../components/TextLikePreviewer'
-import { useBuckets } from '../../../queries/bucket.query'
 import type { BucketItem, BucketParams } from '../../../types'
-import { download, getBasename, getBytes, getNextUrl } from '../../../utils'
+import { getBasename, getBytes, getNextUrl } from '../../../utils'
 
-import { ROOT_BLOCK_ID } from '../../../constant'
 import { PreviewBlockContext } from '../contexts/preview.context'
 import FolderRenderer from '../Folder'
 import MediaCard from '../Media'
+
+function formatBucketList(bucketList: BucketItem[], parentPath: string) {
+  return bucketList.map(item => ({
+    ...item,
+    path: item.path.replace(parentPath, '').replace(/\/$/, ''),
+    fullPath: item.path,
+  }))
+}
 
 export const PAGENATION_CHANGE_EVENT = 'visu-pagenation-change'
 export const PATH_CORRECTION_EVENT = 'visu-path-correction'
@@ -97,22 +101,51 @@ function extractRenderAs(mimeType: string) {
   }
 }
 
-export interface RenderBlockProps {
+export interface BucketBlockProps {
   block: BlockInfo
-  updateBlock: (id: string, values: Partial<BlockInfo>) => void
+  // updateBlock: (id: string, values: Partial<BlockInfo>) => void
   onClose?: () => void
-  initialParams?: Partial<BucketParams>
-  dataSource?: BucketItem
+  dataSource?: BucketItem | BucketItem[]
   style?: React.CSSProperties
   className?: string
+  loading?: boolean
+  onDownload?: (path: string) => void
+  pageSize?: number
+  pageNo?: number
+  onPathCorrection?: (path: string) => void
+  showGoParent?: boolean
+  showPagination?: boolean
+  closeable?: boolean
+  showOpenInNewTab?: boolean
+  onChange?: (params: Partial<BucketParams>) => void
+  renderBucketItem?: (item: BucketItem) => React.ReactNode,
+  previewUrl?: string,
+  onOpenInNewTab?: (path: string) => void
 }
 
-export function RenderBlock({ block, updateBlock, onClose, dataSource, style, className }: RenderBlockProps) {
+export function BucketBlock({
+  block,
+  // updateBlock,
+  onClose,
+  dataSource,
+  style,
+  className,
+  loading,
+  onDownload,
+  pageSize = 50,
+  pageNo = 1,
+  onPathCorrection,
+  showGoParent,
+  showPagination = true,
+  onChange,
+  closeable = false,
+  showOpenInNewTab = false,
+  onOpenInNewTab,
+  renderBucketItem,
+  previewUrl,
+}: BucketBlockProps) {
   const { id, path, pathType } = block
-  const [pageSize, setPageSize] = useState(50)
-  const [pageNo, setPageNo] = useState(1)
   const basename = getBasename(path)
-  const { onParamsChange, previewUrl, downloadUrl, bucketQueryOptions } = useBucketContext()
   const { t } = useTranslation()
   
   // 未知的文件类型，包括没有后缀名的文件，供用户选择渲染类型
@@ -120,53 +153,24 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
   const [renderAs, setRenderAs] = useState<string | undefined>()
   const pathWithoutQuery = path.split('?')[0]
 
-  const queryOptions = useMemo(() => {
-    if (id === ROOT_BLOCK_ID) {
-      return bucketQueryOptions
-    }
-
-    return {
-      ...bucketQueryOptions,
-      queryKey: ['bucket', id, {
-        path,
-        pageSize,
-        pageNo,
-      }],
-    }
-  }, [bucketQueryOptions, pageSize, pageNo])
-
-  const { data, error, isFetching } = useBuckets(queryOptions)
-
-  const finalData = useMemo(() => {
-    if (dataSource) {
-      return dataSource
-    }
-
-    return data
-  }, [dataSource, data])
-
   const folders = useMemo(() => {
-    if (Array.isArray(finalData)) {
-      return formatBucketList(finalData, pathWithoutQuery)
+    if (Array.isArray(dataSource)) {
+      return formatBucketList(dataSource, pathWithoutQuery)
     }
 
     return []
-  }, [finalData, pathWithoutQuery])
+  }, [dataSource, pathWithoutQuery])
 
   useEffect(() => {
-    handleBucketError(error as AxiosError<{ err_code: number, detail: { bucket: string, endpoint: string }[] }> | null, path)
-  }, [error, path])
-
-  useEffect(() => {
-    const mimeType = (finalData as BucketItem)?.mimetype
+    const mimeType = (dataSource as BucketItem)?.mimetype
     if (mimeType && unkonwnFileType) {
       setRenderAs(extractRenderAs(mimeType))
     }
-  }, [finalData, unkonwnFileType])
+  }, [dataSource, unkonwnFileType])
 
   const [prevBytes, setPrevBytes] = useState<number[]>([])
   const hasPrev = prevBytes.length > 0
-  const fileObject = finalData as unknown as BucketItem
+  const fileObject = dataSource as unknown as BucketItem
   const url = fileObject?.path ?? ''
   const totalSize = fileObject?.size ?? 0
   const range = getBytes(url.split('?')[1])
@@ -183,37 +187,16 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
       newUrl = url.split('?')[0]
     }
 
-    if (id !== ROOT_BLOCK_ID || !pathType || !url || !['jsonl', 'csv', 'txt'].includes(pathType)) {
+    if (!pathType || !url || !['jsonl', 'csv', 'txt'].includes(pathType)) {
       return
     }
 
-    document.dispatchEvent(new CustomEvent(PATH_CORRECTION_EVENT, { detail: newUrl }))
-  }, [id, pathType, url])
-
-  useEffect(() => {
-    const handlePagenationChange = (e: CustomEvent) => {
-      const { pageNo, pageSize } = e.detail
-      setPageNo(pageNo)
-
-      if (pageSize) {
-        setPageSize(pageSize)
-      }
-    }
-
-    document.addEventListener(PAGENATION_CHANGE_EVENT, handlePagenationChange as EventListener)
-
-    return () => {
-      document.removeEventListener(PAGENATION_CHANGE_EVENT, handlePagenationChange as EventListener)
-    }
-  }, [id, onParamsChange])
+    onPathCorrection?.(newUrl)
+  }, [pathType, url, onPathCorrection])
 
   const handlePageNoChange = useCallback((pageNo: number) => {
-    setPageNo(pageNo)
-
-    if (id === ROOT_BLOCK_ID) {
-      onParamsChange?.({ pageNo })
-    }
-  }, [id, onParamsChange])
+    onChange?.({ pageNo })
+  }, [onChange])
 
   // 换了文件，清空上一次的 prevBytes
   useEffect(() => {
@@ -228,15 +211,8 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
   const handleNextLine = useCallback(async () => {
     setPrevBytes([...prevBytes, range?.byte ?? 0])
 
-    if (id === ROOT_BLOCK_ID) {
-      onParamsChange?.({ path: nextUrl })
-    }
-    else {
-      updateBlock(id, {
-        path: nextUrl,
-      })
-    }
-  }, [id, nextUrl, prevBytes, range?.byte, updateBlock, onParamsChange])
+    onChange?.({ path: nextUrl })
+  }, [id, nextUrl, prevBytes, range?.byte, onChange])
 
   const handlePrevLine = useCallback(async () => {
     const _prevBytes = prevBytes[prevBytes.length - 1] ?? 0
@@ -245,53 +221,30 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
     setPrevBytes(prevBytes.slice(0, -1))
 
     // 第一个默认block
-    if (id === ROOT_BLOCK_ID) {
-      onParamsChange?.({ path: prevUrl })
-    }
-    else {
-      updateBlock(id, {
-        path: prevUrl,
-      })
-    }
-  }, [id, prevBytes, updateBlock, onParamsChange, url])
+    onChange?.({ path: prevUrl })
+  }, [id, prevBytes, onChange, url])
 
   const onFolderPathChange = useCallback((path: string) => {
-    updateBlock(id, {
-      path,
-      pathType: getPathType(path),
-    })
-
-    setPageNo(1)
-
-    if (id === ROOT_BLOCK_ID) {
-      onParamsChange?.({ path, pageNo: 1 })
-    }
-  }, [id, onParamsChange, updateBlock])
+    onChange?.({ path, pageNo: 1 })
+  }, [id, onChange])
 
   const handleGoParent = useCallback(() => {
     let newPath = path
     if (path.endsWith('/')) {
       // s3://abc/ab/ => s3://abc/
-      newPath = path.replace(/[^/]+\/$/, '')
+      newPath = path.replace(/[^\/]+\/$/, '')
     }
     else {
       // s3://abc/ab => s3://abc/
-      newPath = path.replace(/[^/]+$/, '')
+      newPath = path.replace(/[^\/]+$/, '')
     }
 
     if (newPath === 's3://') {
       newPath = ''
     }
 
-    updateBlock(id, {
-      path: newPath,
-      pathType: getPathType(newPath),
-    })
-
-    if (id === ROOT_BLOCK_ID) {
-      onParamsChange?.({ path: newPath, pageNo: 1 })
-    }
-  }, [path, updateBlock, id, onParamsChange])
+    onChange?.({ path: newPath, pageNo: 1 })
+  }, [path, id, onChange])
 
   const contextValue = useMemo(() => ({
     ...block,
@@ -302,15 +255,15 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
     onNext: handleNextLine,
     onPrev: handlePrevLine,
     goParent: handleGoParent,
+    onChange,
     onClose,
+    renderBucketItem,
+    onDownload,
     dataSource,
-  }), [block, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource])
+    previewUrl,
+  }), [block, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl])
 
   const extraTitle = useMemo(() => {
-    if (dataSource) {
-      return null
-    }
-
     return (
       <>
         {
@@ -350,21 +303,21 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
           )
         }
         {
-          id !== ROOT_BLOCK_ID && !!path && (
+          showGoParent && (
             <Tooltip title={t('renderer.returnToParent')}>
               <Button size="small" type="text" icon={<ArrowUpOutlined />} onClick={handleGoParent} />
             </Tooltip>
           )
         }
         {
-          id !== ROOT_BLOCK_ID && block.pathType === 'folder' && !!path && (
+          showPagination && (
             (
               <Space.Compact size="small">
                 <Tooltip title={t('renderer.prevPage')}>
                   <Button
                     disabled={pageNo === 1}
                     onClick={() => {
-                      handlePageNoChange(pageNo - 1)
+                      onChange?.({ pageNo: pageNo - 1 })
                     }}
                     icon={<LeftOutlined />}
                   />
@@ -372,9 +325,9 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
                 <PageInput min={1} readOnly value={pageNo} />
                 <Tooltip title={t('renderer.nextPage')}>
                   <Button
-                    disabled={isFetching || folders.length < Number(pageSize)}
+                    disabled={loading || folders.length < Number(pageSize)}
                     onClick={() => {
-                      handlePageNoChange(pageNo + 1)
+                      onChange?.({ pageNo: pageNo + 1 })
                     }}
                     icon={<RightOutlined />}
                   />
@@ -385,29 +338,27 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
         }
       </>
     )
-  }, [block.pathType, path, totalSize, fileObject, id, handleGoParent, pageNo, isFetching, folders.length, pageSize, handlePageNoChange, t, dataSource])
+  }, [block.pathType, path, totalSize, fileObject, id, handleGoParent, pageNo, loading, folders.length, pageSize, handlePageNoChange, t, dataSource])
 
   const extra = useMemo(() => {
     return (
       <>
         {
-          id !== ROOT_BLOCK_ID && !dataSource && (
+          showOpenInNewTab && (
             <Tooltip title={t('renderer.openInNewTab')}>
-              <a href={`${location.origin}${location.pathname}?path=${encodeURIComponent(path)}&pageSize=${pageSize}&pageNo=${pageNo}`} target="_blank" rel="noopener noreferrer">
-                <Button type="text" size="small" icon={<ExportOutlined />} />
-              </a>
+              <Button type="text" size="small" icon={<ExportOutlined />} onClick={() => onOpenInNewTab?.(path)} />
             </Tooltip>
           )
         }
         {
           block.pathType !== 'folder' && !dataSource && (
             <Tooltip title={t('renderer.downloadFile')}>
-              <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => download(downloadUrl, pathWithoutQuery)} />
+              <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => onDownload?.(pathWithoutQuery)} />
             </Tooltip>
           )
         }
         {
-          id !== ROOT_BLOCK_ID && (
+          closeable && (
             <>
               <Divider type="vertical" />
               <Tooltip title={t('renderer.close')}>
@@ -418,13 +369,13 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
         }
       </>
     )
-  }, [block.pathType, downloadUrl, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t])
+  }, [block.pathType, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t, onDownload])
 
   const content = useMemo(() => {
     if (pathWithoutQuery.endsWith('/') || !path) {
       return (
         <FolderRenderer
-          showHeader={id !== ROOT_BLOCK_ID}
+          showBodyOnly={!showGoParent}
           path={path}
           name={path}
           value={folders}
@@ -446,8 +397,8 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
       mediaUrl = path
     }
 
-    if (dataSource) {
-      mediaUrl = dataSource.content!
+    if ('content' in (dataSource as BucketItem)) {
+      mediaUrl = (dataSource as BucketItem).content!
     }
 
     return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType} extraTail={extra} titleExtra={extraTitle} />
@@ -457,13 +408,12 @@ export function RenderBlock({ block, updateBlock, onClose, dataSource, style, cl
     <PreviewBlockContext.Provider value={contextValue}>
       <StyledBlockWrapper data-block-id={block.id} style={style} className={className}>
         {content}
+        <StyledSpin
+          spinning
+          indicator={<LoadingOutlined spin />}
+          $visible={!!loading}
+        />
       </StyledBlockWrapper>
-      <StyledSpin
-        spinning
-        indicator={<LoadingOutlined spin />}
-        $visible={isFetching}
-      />
-
     </PreviewBlockContext.Provider>
   )
 }

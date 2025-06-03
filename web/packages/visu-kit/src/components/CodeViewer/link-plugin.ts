@@ -55,7 +55,7 @@ function hyperLinkDecorator(regexp?: RegExp, matchData?: Record<string, string>,
       }
       else {
         markAttributes.attributes.onclick = `
-          window.open('${urlStr}', '_blank')
+          document.dispatchEvent(new CustomEvent('s3-path-click-in-new-tab', { detail: { path: '${urlStr}' } }))
         `
       }
 

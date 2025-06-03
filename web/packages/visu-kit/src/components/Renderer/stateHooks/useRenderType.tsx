@@ -1,5 +1,6 @@
 import { DownOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
+import { i18n } from '@visu/i18n'
 import { Divider, Dropdown, type MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
 export type RenderType = 'raw' | 'image' | 'html' | 'json' | 'markdown' | 'content_list' | 'img_list'
@@ -7,27 +8,27 @@ export type RenderType = 'raw' | 'image' | 'html' | 'json' | 'markdown' | 'conte
 const renderOptions = [
   {
     key: 'raw',
-    label: '原始内容',
+    label: i18n.t('renderer.raw'),
     value: 'raw',
   },
   {
     key: 'image',
-    label: '图片',
+    label: i18n.t('renderer.image'),
     value: 'image',
   },
   {
     key: 'html',
-    label: '网页',
+    label: i18n.t('renderer.html'),
     value: 'html',
   },
   {
     key: 'json',
-    label: 'JSON',
+    label: i18n.t('renderer.json'),
     value: 'json',
   },
   {
     key: 'markdown',
-    label: 'Markdown',
+    label: i18n.t('renderer.markdown'),
     value: 'markdown',
   },
   {
@@ -36,12 +37,12 @@ const renderOptions = [
   // build_in_fields
   {
     key: 'content_list',
-    label: '内容列表',
+    label: i18n.t('renderer.contentList'),
     value: 'content_list',
   },
   {
     key: 'img_list',
-    label: '图片列表',
+    label: i18n.t('renderer.imgList'),
     value: 'img_list',
   },
 ]

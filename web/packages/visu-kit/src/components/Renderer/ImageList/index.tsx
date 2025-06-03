@@ -3,12 +3,12 @@ import { useTranslation } from '@visu/i18n'
 import { Image } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext } from '../../../components/CodeViewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
+import { usePreviewBlockContext } from '../contexts/preview.context'
 import useCopy from '../stateHooks/useCopy'
 import usePreview from '../stateHooks/usePreview'
 import useWrap from '../stateHooks/useWrap'
@@ -47,7 +47,7 @@ function WrappedImage({ url, data }: {
   data: any
 }) {
   const [isError, setIsError] = useState(false)
-  const { previewUrl } = useBucketContext()
+  const { previewUrl } = usePreviewBlockContext()
 
   const handleOnError = () => {
     setIsError(true)

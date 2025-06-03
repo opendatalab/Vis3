@@ -192,21 +192,6 @@ export function parseCsv(content: string) {
   }
 }
 
-export function downloadFromUrl(url: string, name?: string) {
-  const link = document.createElement('a')
-  link.href = url
-
-  if (name) {
-    link.setAttribute('download', name)
-  }
-
-  document.body.appendChild(link)
-  link.click()
-  setTimeout(() => {
-    document.body.removeChild(link)
-  })
-}
-
 export function isImage(path: string) {
   return /\.(?:jpg|jpeg|png|gif|bmp|webp)$/.test(path) && !path.endsWith('/')
 }
@@ -232,27 +217,6 @@ export function getBasename(path: string) {
   // 兼容path中带中文的情况
   const pathname = new URL(path).pathname
   return decodeURIComponent(pathname.split('/').pop() ?? '')
-}
-
-export async function download(url: string, fullPath: string) {
-  if (!fullPath.startsWith('s3://')) {
-    throw new Error('s3路径必须以s3://开头')
-  }
-
-  const basename = fullPath.split('/').pop()!
-
-  try {
-    const params = { path: fullPath } as any
-
-    const searchParams = new URLSearchParams(params)
-    const downloadUrl = `${url}?${searchParams.toString()}`
-
-    // window.open(downloadUrl, '_blank')
-    downloadFromUrl(downloadUrl, basename)
-  }
-  catch (error) {
-    throw new Error('下载失败')
-  }
 }
 
 export function getBytes(url: string) {

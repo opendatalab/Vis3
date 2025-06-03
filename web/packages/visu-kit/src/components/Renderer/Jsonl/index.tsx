@@ -14,7 +14,6 @@ import { JsonViewer } from '../../../components/CodeViewer'
 import { CodeViewerContext } from '../../../components/CodeViewer/context'
 import { JSON_KEY_CLICK_EVENT, type CustomEventJsonNodeDetail } from '../../../components/CodeViewer/json-key-plugin'
 import FullScreenButton from '../../../components/FullscreenButton'
-import { ROOT_BLOCK_ID } from '../../../constant'
 import { get, gid } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
@@ -281,7 +280,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
 
   const [previewButton, { preview }, setPreview] = usePreview(false, onPreview)
   const subOpendKeys = useRef<Record<string, FieldChain>>({
-    [ROOT_BLOCK_ID]: new FieldChain(''),
+    __root__: new FieldChain(''),
   })
 
   useEffect(() => {
@@ -290,7 +289,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
 
   // 文件切换，清空字段链缓存，初始化预览区块
   useEffect(() => {
-    subOpendKeys.current[ROOT_BLOCK_ID] = new FieldChain('')
+    subOpendKeys.current.__root__ = new FieldChain('')
     setPreviewConfig([])
   }, [basename])
 

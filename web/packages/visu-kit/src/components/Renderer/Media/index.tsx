@@ -4,15 +4,13 @@ import { useTranslation } from '@visu/i18n'
 import { Button, Image } from 'antd'
 import { useMemo, useRef } from 'react'
 
-import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
-import { download } from '../../../utils'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
-import type { PathType } from '../utils'
+import { usePreviewBlockContext } from '../contexts/preview.context'
 
 export interface MediaCardProps extends RendererProps {
-  type: PathType
+  type: string
 }
 
 const StyledImage = styled(Image)`
@@ -54,7 +52,7 @@ const ExtraContainer = styled.div`
 
 export default function MediaCard({ type, className, name, value, extraTail, titleExtra }: MediaCardProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const { downloadUrl } = useBucketContext()
+  const { onDownload } = usePreviewBlockContext()
   const { t } = useTranslation()
 
   const content = useMemo(() => {
@@ -94,12 +92,12 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
 
     if (type === 'zip') {
       return (
-        <PrimaryButton icon={<DownloadOutlined type="text" />} onClick={() => download(downloadUrl, value)}>
+        <PrimaryButton icon={<DownloadOutlined type="text" />} onClick={() => onDownload?.(value)}>
           {t('renderer.downloadZipFile')}
         </PrimaryButton>
       )
     }
-  }, [type, value, downloadUrl, t])
+  }, [type, value, onDownload, t])
 
   return (
     <RenderCard

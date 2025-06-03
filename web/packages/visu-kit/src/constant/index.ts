@@ -1,1 +1,0 @@
-export const ROOT_BLOCK_ID = 'ORIGIN'

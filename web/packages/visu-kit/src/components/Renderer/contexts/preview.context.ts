@@ -1,12 +1,11 @@
 import { createContext, useContext } from 'react'
 
-import type { PathType } from '../../../components/Renderer/utils'
 import type { BucketItem } from '../../../types'
 
 export interface RenderBlockContextType {
   id: string
   path: string
-  pathType: PathType
+  pathType: string
   basename?: string
   data?: BucketItem
   nextable?: boolean
@@ -15,7 +14,10 @@ export interface RenderBlockContextType {
   onPrev?: () => void
   onClose?: () => void
   goParent: () => void
-  dataSource?: BucketItem
+  dataSource?: BucketItem | BucketItem[]
+  onDownload?: (path: string) => void
+  renderBucketItem?: (item: BucketItem) => React.ReactNode
+  previewUrl?: string
 }
 
 export const PreviewBlockContext = createContext<RenderBlockContextType>({} as RenderBlockContextType)

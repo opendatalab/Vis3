@@ -5,22 +5,23 @@ import { useTranslation } from '@visu/i18n'
 import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback, useMemo, useRef } from 'react'
 
-import { BucketItemWrapper } from '../../../components/BucketPreviewer/BucketList'
-import { useBucketContext } from '../../../components/BucketPreviewer/context'
 import FullScreenButton from '../../../components/FullscreenButton'
 import { getFullPath } from '../../../components/Renderer/utils'
-import { ROOT_BLOCK_ID } from '../../../constant'
-import { download } from '../../../utils'
+import { BucketItem } from '../../../types'
 import { FileIcon } from '../../FileIcon'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { usePreviewBlockContext } from '../contexts/preview.context'
 
+export interface BucketItemWrapper extends BucketItem {
+  fullPath: string
+}
+
 export interface FolderRendererProps extends Omit<RendererProps, 'value'> {
   value: BucketItemWrapper[]
   highlightCurrent?: boolean
   pathWithoutQuery: string
-  showHeader?: boolean
+  showBodyOnly?: boolean
   onPathChange?: (path: string) => void
   path: string
 }
@@ -72,10 +73,6 @@ const ShrinkButton = styled(Button)`
   flex-shrink: 0;
 `
 
-const BreakAllButton = styled(Button)`
-  word-break: break-all;
-`
-
 const TagInfo = styled(FlexRow)<{ isHidden?: boolean }>`
   display: flex;
   gap: 0.25rem;
@@ -104,10 +101,9 @@ const Link = styled.a`
   }
 `
 
-export default function FolderRenderer({ path, onPathChange, name, extraTail, titleExtra, value, highlightCurrent, pathWithoutQuery, showHeader = true }: FolderRendererProps) {
+export default function FolderRenderer({ path, onPathChange, name, extraTail, titleExtra, value, highlightCurrent, pathWithoutQuery, showBodyOnly = false }: FolderRendererProps) {
   const ref = useRef<HTMLDivElement>(null)
-  const { id } = usePreviewBlockContext()
-  const { downloadUrl, renderBucketItem } = useBucketContext()
+  const { id, onDownload, renderBucketItem } = usePreviewBlockContext()
   const { t } = useTranslation()
   const handleDig = useCallback((item: BucketItemWrapper) => () => {
     const fullPath = highlightCurrent ? item.fullPath : getFullPath(item, path)
@@ -125,7 +121,7 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
     <List
       dataSource={value}
       size="small"
-      bordered={!showHeader}
+      bordered={showBodyOnly}
       style={{
         backgroundColor: '#fff',
       }}
@@ -170,12 +166,12 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
                 <ShrinkButton
                   size="small"
                   type="text"
-                  onClick={() => download(downloadUrl,item.fullPath!)}
+                  onClick={() => onDownload?.(item.fullPath!)}
                   icon={<DownloadOutlined type="text" />}
                 />
               )}
             </FlexRow>
-            <TagInfo isHidden={id !== ROOT_BLOCK_ID}>
+            <TagInfo>
               {item.size !== null && <Tag>{formatter.format('fileSize', item.size)}</Tag>}
               {item.created_by && <Tag>{item.created_by}</Tag>}
 
@@ -191,9 +187,9 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
         )
       }}
     />
-  ), [handleCopy, handleDig, id, highlightCurrent, pathWithoutQuery, showHeader, value, t])
+  ), [handleCopy, handleDig, id, highlightCurrent, pathWithoutQuery, showBodyOnly, value, t])
 
-  if (showHeader) {
+  if (!showBodyOnly) {
     return (
       <RenderCard
         ref={ref}
