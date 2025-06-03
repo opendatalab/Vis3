@@ -1,5 +1,5 @@
 import JsonlCard from './Jsonl'
-import renders from './withtou_jsonl'
+import renders from './withtout_jsonl'
 
 export default {
   ...renders,

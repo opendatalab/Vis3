@@ -134,11 +134,13 @@
     "warcError": "解析 WARC 文件失败",
     "readError": "读取文件失败",
     "drag": "点击或拖拽文件到浏览器",
-    "recommend": "支持格式：json, jsonl, jsonl.gz, html",
+    "recommend": "支持格式：json, jsonl, jsonl.gz, html, md, csv, txt",
     "deleteSuccess": "删除成功",
     "deleteFailed": "删除失败",
     "maxSize": "文件最大大小为",
-    "sameName": "文件名已存在"
+    "sameName": "文件名已存在",
+    "success": "上传成功",
+    "failed": "上传失败"
   },
 
   "renderer": {

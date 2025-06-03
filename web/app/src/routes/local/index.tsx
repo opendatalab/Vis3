@@ -2,11 +2,10 @@ import SiderArrowLeft from '@/assets/sider-arrow-left.svg?react'
 import SiderArrowRight from '@/assets/sider-arrow-right.svg?react'
 import UploadIcon from '@/assets/upload.svg?react'
 import { ClearOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons'
-import type { QueryOptions } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from '@visu/i18n'
 import type { BucketParams } from '@visu/kit'
-import { BucketBlock, BucketContext, getBytes, getPathType } from '@visu/kit'
+import { BucketBlock, getBytes, getPathType } from '@visu/kit'
 import type { UploadProps } from 'antd'
 
 import { Button, List, message, Tooltip, Upload } from 'antd'
@@ -369,6 +368,7 @@ function RouteComponent() {
   const props: UploadProps = {
     name: 'file',
     multiple: true,
+    accept: '.json, .jsonl, .jsonl.gz, .md, .csv, .html, .txt',
     showUploadList: false,
     beforeUpload: (file) => {
       // 检查文件大小是否超出限制
@@ -423,15 +423,6 @@ function RouteComponent() {
 
     setFakePath(path!)
   }, [fakePath])
-
-  const bucketContextValue = useMemo(() => ({
-    path: fakePath,
-    onParamsChange: handleParamsChange,
-    bucketQueryOptions: {} as QueryOptions,
-    downloadUrl: '',
-    previewUrl: '',
-    mimeTypeUrl: '',
-  }), [fakePath, handleParamsChange])
 
   const dataSource = useMemo(() => {
     if (!selectedFile) { return undefined }
@@ -497,86 +488,84 @@ function RouteComponent() {
     return uploader
   }
 
-  console.log('bucketContextValue', dataSource?.type)
-
   return (
-    <BucketContext.Provider value={bucketContextValue}>
-      <div className="flex-1 flex flex-row py-4 gap-4 bg-gray-100">
-        <div className={clsx('bg-white rounded-r-lg shrink-0 left-sider transition-all', {
-          'w-[260px]': !siderCollapsed,
-          'w-0 overflow-hidden': siderCollapsed,
-        })}
-        >
-          <List
-            loading={loading}
-            size="small"
-            className={clsx('w-[260px] flex flex-col', styles.fileList)}
-            header={(
-              <div className="flex justify-between px-4">
-                <span className="font-bold">{t('fileList')}</span>
-                <div className="flex flex-row items-center gap-2">
-                  <Upload {...props}>
-                    <Button type="text" size="small" icon={<UploadOutlined />} />
-                  </Upload>
-                  <Button type="text" size="small" icon={<ClearOutlined />} danger onClick={() => handleDeleteAll()} />
-                </div>
+    <div className="flex-1 flex flex-row py-4 gap-4 bg-gray-100">
+      <div className={clsx('bg-white rounded-r-lg shrink-0 left-sider transition-all', {
+        'w-[260px]': !siderCollapsed,
+        'w-0 overflow-hidden': siderCollapsed,
+      })}
+      >
+        <List
+          loading={loading}
+          size="small"
+          className={clsx('w-[260px] flex flex-col', styles.fileList)}
+          header={(
+            <div className="flex justify-between px-4">
+              <span className="font-bold">{t('fileList')}</span>
+              <div className="flex flex-row items-center gap-2">
+                <Upload {...props}>
+                  <Button type="text" size="small" icon={<UploadOutlined />} />
+                </Upload>
+                <Button type="text" size="small" icon={<ClearOutlined />} danger onClick={() => handleDeleteAll()} />
               </div>
-            )}
-            dataSource={fileList}
-            renderItem={item => (
-              <List.Item
-                className={clsx('flex flex-row items-center justify-between !px-4 cursor-pointer hover:bg-gray-100 transition-colors', {
-                  'bg-blue-100': selectedFile?.id === item.id,
-                })}
-                onClick={() => setSelectedFile(item)}
-              >
-                <List.Item.Meta
-                  title={<Tooltip placement="topLeft" title={item.name}>{item.name}</Tooltip>}
-                  description={new Date(item.lastModified).toLocaleString()}
-                />
-                <Button type="text" size="small" key="delete" icon={<CloseOutlined />} danger onClick={() => handleDelete(item.id)} />
-              </List.Item>
-            )}
-          />
-        </div>
-
-        {/* <div className="flex flex-col"> */}
-        <div
-          onClick={() => setSiderCollapsed(!siderCollapsed)}
-          className="fixed left-[242px] top-1/2 transform -translate-y-1/2 z-10 text-gray-300 h-8 w-4 flex items-center justify-center rounded-r-md cursor-pointer hover:text-gray-400 transition-colors"
-          style={{
-            left: siderCollapsed ? '0' : '242px',
-            transition: 'left 0.1s',
-          }}
-        >
-          {siderCollapsed ? <SiderArrowRight /> : <SiderArrowLeft />}
-        </div>
-        {/* </div> */}
-
-        <div
-          className={clsx('flex-1 body-content transition-all', {
-            'flex flex-col items-center justify-center': !selectedFile,
-            'max-w-[calc(100vw-32px)]': siderCollapsed,
-            'max-w-[calc(100vw-292px)]': !siderCollapsed,
-          })}
-          data-block-id="origin"
-        >
-          {
-            selectedFile
-              ? (
-                  <BucketBlock
-                    dataSource={dataSource}
-                    block={{
-                      id: 'original',
-                      path: fakePath,
-                      pathType: dataSource?.type,
-                    }}
-                  />
-                )
-              : uploader
-          }
-        </div>
+            </div>
+          )}
+          dataSource={fileList}
+          renderItem={item => (
+            <List.Item
+              className={clsx('flex flex-row items-center justify-between !px-4 cursor-pointer hover:bg-gray-100 transition-colors', {
+                'bg-blue-100': selectedFile?.id === item.id,
+              })}
+              onClick={() => setSelectedFile(item)}
+            >
+              <List.Item.Meta
+                title={<Tooltip placement="topLeft" title={item.name}>{item.name}</Tooltip>}
+                description={new Date(item.lastModified).toLocaleString()}
+              />
+              <Button type="text" size="small" key="delete" icon={<CloseOutlined />} danger onClick={() => handleDelete(item.id)} />
+            </List.Item>
+          )}
+        />
       </div>
-    </BucketContext.Provider>
+
+      {/* <div className="flex flex-col"> */}
+      <div
+        onClick={() => setSiderCollapsed(!siderCollapsed)}
+        className="fixed left-[242px] top-1/2 transform -translate-y-1/2 z-10 text-gray-300 h-8 w-4 flex items-center justify-center rounded-r-md cursor-pointer hover:text-gray-400 transition-colors"
+        style={{
+          left: siderCollapsed ? '0' : '242px',
+          transition: 'left 0.1s',
+        }}
+      >
+        {siderCollapsed ? <SiderArrowRight /> : <SiderArrowLeft />}
+      </div>
+      {/* </div> */}
+
+      <div
+        className={clsx('flex-1 body-content transition-all h-[calc(100vh-88px)]', {
+          'flex flex-col items-center justify-center': !selectedFile,
+          'max-w-[calc(100vw-32px)]': siderCollapsed,
+          'max-w-[calc(100vw-292px)]': !siderCollapsed,
+        })}
+        data-block-id="origin"
+      >
+        {
+          selectedFile
+            ? (
+                <BucketBlock
+                  dataSource={dataSource}
+                  block={{
+                    id: 'original',
+                    path: fakePath,
+                    pathType: dataSource?.type,
+                  }}
+                  onChange={handleParamsChange}
+                  showPagination={false}
+                />
+              )
+            : uploader
+        }
+      </div>
+    </div>
   )
 }

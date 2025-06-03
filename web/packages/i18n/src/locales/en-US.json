@@ -1,6 +1,6 @@
 {
-  "cloud": "Cloud",
-  "local": "Local",
+  "cloud": "Cloud Documents",
+  "local": "Local Documents",
   "demoTips": "The current version is a demo version. The data will be automatically cleared at midnight every day. Please back up important data in time. If you need to use it completely, please",
   "localDeploy": "Local deployment",
   "email": "Email address",
@@ -133,11 +133,13 @@
     "warcError": "Parse WARC file failed",
     "readError": "Read file failed",
     "drag": "Click or drag file to upload to the browser",
-    "recommend": "Support format: json, jsonl, jsonl.gz, html",
-    "deleteSuccess": "Delete successfully",
-    "deleteFailed": "Delete failed",
+    "recommend": "Support format: json, jsonl, jsonl.gz, html, md, csv, txt",
+    "deleteSuccess": "Removed",
+    "deleteFailed": "Remove failed",
     "maxSize": "The maximum size of the file is",
-    "sameName": "The file with the same name already exists"
+    "sameName": "The file with the same name already exists",
+    "success": "Added",
+    "failed": "Add failed"
   },
 
   "renderer": {
