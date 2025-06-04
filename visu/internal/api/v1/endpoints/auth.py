@@ -1,12 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from visu.internal.api.dependencies.auth import get_auth_user_or_error
 from visu.internal.api.v1.schema.request.user import UserCreate, UserLogin
 from visu.internal.api.v1.schema.response.user import UserResponse
 from visu.internal.common.db import get_db
+from visu.internal.common.exceptions import AppEx, ErrorCode
 from visu.internal.config import settings
 from visu.internal.crud.user import user_crud
 from visu.internal.models.user import User
@@ -26,9 +27,9 @@ async def register(
     """
     user = await user_crud.get_by_username(db, username=user_in.username)
     if user:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10004_USERNAME_ALREADY_EXISTS,
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="用户名已经被注册",
         )
     user = await user_crud.create(db, obj_in=user_in)
     return user
@@ -47,16 +48,14 @@ async def login(
         db, username=user_in.username, password=user_in.password
     )
     if result == AuthState.USERNAME_ERROR:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户名不正确",
-            headers={"WWW-Authenticate": "Bearer"},
+        raise AppEx(
+            code=ErrorCode.AUTH_10002_INVALID_USERNAME,
+            status_code=status.HTTP_400_BAD_REQUEST,
         )
     elif result == AuthState.PASSWORD_ERROR:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="密码不正确",
-            headers={"WWW-Authenticate": "Bearer"},
+        raise AppEx(
+            code=ErrorCode.AUTH_10003_INVALID_PASSWORD,
+            status_code=status.HTTP_400_BAD_REQUEST,
         )
     else:
         user = result

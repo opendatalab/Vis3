@@ -2,7 +2,7 @@ import DeleteSvg from '@/assets/delete.svg?react'
 import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { i18n, useTranslation } from '@visu/i18n'
-import { Alert, Button, Divider, Form, Input, message, Select, Tooltip } from 'antd'
+import { Alert, Button, Divider, Form, FormInstance, Input, message, Select, Tooltip } from 'antd'
 import type { FormProps } from 'antd/lib'
 import _ from 'lodash'
 import type { MutableRefObject } from 'react'
@@ -19,10 +19,11 @@ function gid() {
 }
 
 export function pathValidator(keyOptions: any) {
-  return ({ getFieldValue }: any) => ({
+  return (form: FormInstance) => ({
     validator: async (_meta: any, value: string) => {
-      const endpoint = getFieldValue(_meta.field.replace('path', 'endpoint'))
-      const keychain_id = getFieldValue(_meta.field.replace('path', 'keychain_id'))
+      const values = form.getFieldsValue()
+      const endpoint = _.get(values, _meta.field.replace('path', 'endpoint'))
+      const keychain_id = _.get(values, _meta.field.replace('path', 'keychain_id'))
 
       if (!keychain_id) {
         return Promise.reject(new Error(i18n.t('bucketForm.keychainIdRequired')))

@@ -1,6 +1,4 @@
-from typing import List, Optional
-
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from visu.internal.api.dependencies.auth import get_auth_user_or_error
@@ -11,6 +9,7 @@ from visu.internal.api.v1.schema.request.keychain import (
 from visu.internal.api.v1.schema.response import ListResponse
 from visu.internal.api.v1.schema.response.keychain import KeyChainResponse
 from visu.internal.common.db import get_db
+from visu.internal.common.exceptions import AppEx, ErrorCode
 from visu.internal.config import settings
 from visu.internal.crud.keychain import keychain_crud
 from visu.internal.models.keychain import KeyChain
@@ -130,16 +129,16 @@ async def get_keychain(
     """
     keychain = await keychain_crud.get(db, id=keychain_id)
     if not keychain:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="钥匙串不存在",
         )
     
     # 如果启用了鉴权，检查权限
     if settings.ENABLE_AUTH and keychain.created_by != current_user.id:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10007_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="无权访问此钥匙串",
         )
     
     
@@ -167,16 +166,16 @@ async def update_keychain(
     """
     keychain = await keychain_crud.get(db, id=keychain_id)
     if not keychain:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="钥匙串不存在",
         )
     
     # 如果启用了鉴权，检查权限
     if settings.ENABLE_AUTH and keychain.created_by != current_user.id:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10009_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="无权更新此钥匙串",
         )
     
     keychain = await keychain_crud.update(db=db, id=keychain_id, obj_in=keychain_in)
@@ -194,16 +193,16 @@ async def delete_keychain(
     """
     keychain = await keychain_crud.get(db=db, id=keychain_id)
     if not keychain:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="钥匙串不存在",
         )
     
     # 如果启用了鉴权，检查权限
     if settings.ENABLE_AUTH and keychain.created_by != current_user.id:
-        raise HTTPException(
+        raise AppEx(
+            code=ErrorCode.AUTH_10008_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="无权删除此钥匙串",
         )
     
     keychain = await keychain_crud.delete(db=db, id=keychain_id)

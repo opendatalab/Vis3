@@ -13,6 +13,7 @@ from loguru import logger
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 COMMON = 00000
+AUTH = 10000
 BUCKET = 30000
 S3_CLIENT = 40000
 PING = 50000
@@ -24,7 +25,7 @@ class ErrorCode(Enum):
     # common
     CODE_00000_SQL_ERROR = (
         COMMON,
-        "SQL 错误",
+        "SQL Error",
     )
     CODE_00001_NO_PERMISSION = (
         COMMON,
@@ -32,27 +33,37 @@ class ErrorCode(Enum):
     )
     CODE_00002_VALIDATION_ERROR = (
         COMMON + 2,
-        "请求验证错误",
+        "Request Validation Error",
     )
     CODE_00003_CLIENT_ERROR = (
         COMMON + 3,
-        "错误请求",
+        "Invalid Request",
     )
-    BUCKET_30001_OBJECT_NOT_FOUND = (BUCKET + 1, "没找到对应文件，请检查路径是否正确")
-    BUCKET_30002_OUT_OF_RANGE = (BUCKET + 2, "请求大小超出范围，最大请求大小为 40 Mb")
-    BUCKET_30003_INVALID_PATH = (BUCKET + 3, "S3路径不正确，请以s3://开头")
-    BUCKET_30004_PATH_IS_EMPTY = (BUCKET + 4, "S3路径不可为空")
-    BUCKET_30005_DATA_IS_EMPTY = (BUCKET + 5, "数据为空")
-    BUCKET_30006_CONFIG_FILE_NOT_FOUND = (BUCKET + 6, "s3配置文件未找到")
-    BUCKET_30007_DUPLICATED_BUCKETS = (BUCKET + 7, "发现重名的桶")
-    S3_CLIENT_40000_ERROR = (S3_CLIENT, "S3客户端错误")
-    S3_CLIENT_40001_ACCESS_DENIED = (S3_CLIENT + 1, "暂无访问权限")
-    S3_CLIENT_40002_NO_SUCH_BUCKET = (S3_CLIENT + 2, "访问的路径不存在")
-    S3_CLIENT_40003_NOT_FOUND = (S3_CLIENT + 3, "未找到对应桶配置")
-    PING_50000_ERROR = (PING, "校验失败")
-    SERVER_60000_ERROR = (SERVER, "服务器错误")
-    SERVER_60001_READ_ERROR = (SERVER + 1, "读取文件失败")
-    TRANSLATE_SERVICE_70000_ERROR = (TRANSLATE_SERVICE_ERROR, "翻译服务错误")
+    AUTH_10001_NOT_AUTHENTICATED = (AUTH + 1, "Not Authenticated")
+    AUTH_10002_INVALID_USERNAME = (AUTH + 2, "Invalid Username")
+    AUTH_10003_INVALID_PASSWORD = (AUTH + 3, "Invalid Password")
+    AUTH_10004_USERNAME_ALREADY_EXISTS = (AUTH + 4, "Username Already Exists")
+    AUTH_10005_KEYCHAIN_NOT_FOUND = (AUTH + 5, "Keychain Not Found")
+    AUTH_10006_KEYCHAIN_ALREADY_EXISTS = (AUTH + 6, "Keychain Already Exists")
+    AUTH_10007_KEYCHAIN_NOT_OWNER = (AUTH + 7, "No Permission to Access This Keychain")
+    AUTH_10008_KEYCHAIN_NOT_OWNER = (AUTH + 8, "No Permission to Delete This Keychain")
+    AUTH_10009_KEYCHAIN_NOT_OWNER = (AUTH + 9, "No Permission to Update This Keychain")
+    BUCKET_30001_OBJECT_NOT_FOUND = (BUCKET + 1, "Object Not Found, Please Check the Path")
+    BUCKET_30002_OUT_OF_RANGE = (BUCKET + 2, "Request Size Out of Range, Maximum Size is 40 Mb")
+    BUCKET_30003_INVALID_PATH = (BUCKET + 3, "Invalid S3 Path, Must Start with s3://")
+    BUCKET_30004_PATH_IS_EMPTY = (BUCKET + 4, "S3 Path Cannot Be Empty")
+    BUCKET_30005_DATA_IS_EMPTY = (BUCKET + 5, "Data is Empty")
+    BUCKET_30006_CONFIG_FILE_NOT_FOUND = (BUCKET + 6, "S3 Config File Not Found")
+    BUCKET_30007_DUPLICATED_BUCKETS = (BUCKET + 7, "Duplicate Bucket Names Found")
+    S3_CLIENT_40000_ERROR = (S3_CLIENT, "S3 Client Error")
+    S3_CLIENT_40001_ACCESS_DENIED = (S3_CLIENT + 1, "Access Denied")
+    S3_CLIENT_40002_NO_SUCH_BUCKET = (S3_CLIENT + 2, "Requested Path Does Not Exist")
+    S3_CLIENT_40003_NOT_FOUND = (S3_CLIENT + 3, "Bucket Configuration Not Found")
+    S3_CLIENT_40004_UNKNOWN_ERROR = (S3_CLIENT + 4, "Unknown Error")
+    PING_50000_ERROR = (PING, "Verification Failed")
+    SERVER_60000_ERROR = (SERVER, "Server Error")
+    SERVER_60001_READ_ERROR = (SERVER + 1, "Failed to Read File")
+    TRANSLATE_SERVICE_70000_ERROR = (TRANSLATE_SERVICE_ERROR, "Translation Service Error")
 
 
 class AppEx(HTTPException):

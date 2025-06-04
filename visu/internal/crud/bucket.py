@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import HTTPException
+from fastapi import status
 from sqlalchemy.orm import Session
 
 from visu.internal.api.v1.schema.request.bucket import (
@@ -8,6 +8,7 @@ from visu.internal.api.v1.schema.request.bucket import (
     BucketCreatePayload,
     BucketUpdatePayload,
 )
+from visu.internal.common.exceptions import AppEx, ErrorCode
 from visu.internal.crud.base import BaseCrud
 from visu.internal.crud.keychain import keychain_crud
 from visu.internal.models.bucket import Bucket
@@ -27,11 +28,17 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
     async def create(self, db: Session, *, obj_in: BucketCreateBody, created_by: int | None = None) -> Bucket:
         keychain = await keychain_crud.get(db, id=obj_in.keychain_id)
         if not keychain:
-            raise HTTPException(status_code=404, detail="Keychain not found")
+            raise AppEx(
+                code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
         
         # path + keychain_id 唯一
         if await self.get_by_path(db, path=obj_in.path, keychain_id=obj_in.keychain_id):
-            raise HTTPException(status_code=400, detail="Bucket name already exists")
+            raise AppEx(
+                code=ErrorCode.AUTH_10006_KEYCHAIN_ALREADY_EXISTS,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
 
         db_obj = Bucket(
             name=obj_in.name,

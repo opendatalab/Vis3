@@ -236,7 +236,6 @@ async def get_buckets_or_objects(
     s3_path = quote(path_without_query, safe=":/")
     parsed_url = urlparse(s3_path)
     parsed_path = parsed_url.path
-    _, _, query = path.partition("?")
 
     if not is_s3_path(path):
         raise AppEx(

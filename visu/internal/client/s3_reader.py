@@ -11,7 +11,7 @@ import httpx
 import magic
 from botocore.client import Config
 from botocore.exceptions import ClientError, NoCredentialsError
-from fastapi import HTTPException, UploadFile, status
+from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
@@ -456,7 +456,8 @@ class S3Reader:
                 metadata={"content_length": result.get("content_length", 0)},
             )
         except Exception as e:
-            raise HTTPException(
+            raise AppEx(
+                code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error reading record: {str(e)}",
             )
@@ -762,94 +763,6 @@ class S3Reader:
 
         return await S3Reader._run_in_executor(generate_url)
 
-    async def upload(
-        self,
-        file: UploadFile,
-        metadata: dict = None,
-        content_type: str = None,
-        callback=None,
-    ):
-        """
-        上传文件到S3存储桶。
-
-        Args:
-            file: 要上传的文件对象
-            metadata: 文件元数据字典（可选）
-            content_type: 文件内容类型（可选，如不提供将自动检测）
-            callback: 进度回调函数（可选）
-
-        Raises:
-            HTTPException: 上传过程中发生错误
-        """
-        try:
-            # 检测内容类型（如果未提供）
-            if not content_type:
-                # 读取文件前几个字节用于内容类型检测
-                file_head = await file.read(2048)
-                mime = magic.Magic(mime=True)
-                content_type = mime.from_buffer(file_head)
-                # 重置文件指针
-                await file.seek(0)
-
-            # 准备上传参数
-            extra_args = {"ContentType": content_type}
-
-            # 添加自定义元数据（如果提供）
-            if metadata:
-                for key, value in metadata.items():
-                    if isinstance(value, str):
-                        extra_args[f"Metadata-{key}"] = value
-
-            # 使用进度回调（如果提供）
-            if callback:
-
-                def _progress_callback(bytes_transferred):
-                    # 避免阻塞上传过程
-                    asyncio.create_task(callback(bytes_transferred))
-
-                extra_args["Callback"] = _progress_callback
-
-            await S3Reader._run_in_executor(
-                self.client.upload_fileobj,
-                Fileobj=file.file,
-                Bucket=self.bucket_name,
-                Key=self.key_without_query,
-                ExtraArgs=extra_args,
-            )
-
-            return f"s3://{self.bucket_name}/{self.key_without_query}"
-
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "UnknownError")
-            error_message = e.response.get("Error", {}).get("Message", str(e))
-
-            if error_code == "NoSuchBucket":
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"目标存储桶 {self.bucket_name} 不存在",
-                )
-            elif error_code == "AccessDenied":
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"无访问权限上传到存储桶 {self.bucket_name}",
-                )
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail=f"上传文件时发生错误: {error_message} (错误代码: {error_code})",
-                )
-        except NoCredentialsError:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="S3认证失败，请检查访问凭证",
-            )
-        except Exception as e:
-            logger.error(f"上传文件到S3时发生未预期错误: {str(e)}")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"上传文件失败: {str(e)}",
-            )
-
     async def download(self, as_attachment=True) -> StreamingResponse:
         try:
             presigned_url = await self.get_s3_presigned_url(as_attachment=as_attachment)
@@ -861,8 +774,9 @@ class S3Reader:
                     try:
                         async with http_client.stream("GET", presigned_url) as response:
                             if response.status_code != 200:
-                                raise HTTPException(
-                                    status_code=response.status_code,
+                                raise AppEx(
+                                    code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+                                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                                     detail=f"Failed to download file: {response.text}",
                                 )
 
@@ -871,12 +785,14 @@ class S3Reader:
                             ):
                                 yield chunk
                     except httpx.RequestError as e:
-                        raise HTTPException(
+                        raise AppEx(
+                            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Failed to stream file: {str(e)}",
                         )
                     except Exception as e:
-                        raise HTTPException(
+                        raise AppEx(
+                            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
                             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail=f"Unexpected error while streaming file: {str(e)}",
                         )
@@ -898,44 +814,8 @@ class S3Reader:
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise
-            raise HTTPException(
+            raise AppEx(
+                code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to prepare download: {str(e)}",
             )
-
-    async def get_path_size(self):
-        try:
-            if not self.key_without_query.endswith("/"):
-                file_header_info = await self.head_object()
-
-                return (
-                    file_header_info.get("ContentLength", 0) if file_header_info else 0
-                )
-
-            total_size = 0
-
-            paginator = await S3Reader._run_in_executor(
-                self.client.get_paginator, "list_objects_v2"
-            )
-
-            # 创建包装函数处理分页器的同步调用
-            def process_pages():
-                nonlocal total_size
-                pages = paginator.paginate(
-                    Bucket=self.bucket_name, Prefix=self.key_without_query
-                )
-
-                for page in pages:
-                    contents = page.get("Contents")
-                    if contents is None:
-                        continue
-                    for obj in contents:
-                        total_size += obj["Size"]
-
-            await S3Reader._run_in_executor(process_pages)
-            return total_size
-
-        except Exception as e:
-            print(e)
-            # 表示获取s3目录大小异常
-            return -1

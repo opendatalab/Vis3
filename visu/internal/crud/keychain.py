@@ -1,7 +1,4 @@
-from typing import List, Tuple
-
-from fastapi import HTTPException
-from sqlalchemy import func
+from fastapi import status
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
@@ -9,6 +6,7 @@ from visu.internal.api.v1.schema.request.keychain import (
     KeychainCreateBody,
     KeychainUpdateBody,
 )
+from visu.internal.common.exceptions import AppEx, ErrorCode
 from visu.internal.crud.base import BaseCrud
 from visu.internal.models.keychain import KeyChain
 from visu.internal.schema.state import State
@@ -37,7 +35,10 @@ class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
         创建新钥匙串，关联到用户
         """
         if await self._get_by_access_key_id(db, access_key_id=obj_in.access_key_id):
-            raise HTTPException(status_code=400, detail="钥匙串已存在")
+            raise AppEx(
+                code=ErrorCode.AUTH_10004_USERNAME_ALREADY_EXISTS,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         
         db_obj = KeyChain(
             name=obj_in.name,
@@ -56,7 +57,10 @@ class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
         创建新钥匙串，不关联用户（用于未启用鉴权时）
         """
         if await self._get_by_access_key_id(db, access_key_id=obj_in.access_key_id):
-            raise HTTPException(status_code=400, detail="钥匙串已存在")
+            raise AppEx(
+                code=ErrorCode.AUTH_10006_KEYCHAIN_ALREADY_EXISTS,
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         
         db_obj = KeyChain(
             name=obj_in.name,
