@@ -23,7 +23,7 @@ from visu.internal.service.bucket import (
     preview_file,
 )
 from visu.internal.utils import ping_host, validate_path_accessibility
-from visu.internal.utils.path import is_s3_path
+from visu.internal.utils.path import is_s3_path, split_s3_path
 
 router = APIRouter(tags=["buckets"])
 
@@ -119,6 +119,31 @@ async def update_bucket_request(
         type=PathType.Bucket,
     )
 
+@router.get("/bucket/filter", summary="过滤bucket")
+async def filter_bucket_request(
+    path: str,
+    db: Session = Depends(get_db),
+):
+    """预览s3文件"""
+    if not is_s3_path(path):
+        raise AppEx(
+            code=ErrorCode.BUCKET_30003_INVALID_PATH,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    bucket_name, _ = split_s3_path(path)
+    buckets = await bucket_crud.list_by_path(db, path=f"s3://{bucket_name}/")
+
+    return ListResponse[BucketResponse](
+        data=[BucketResponse(
+            id=bucket.id,
+            name=bucket.name,
+            path=bucket.path,
+            type=PathType.Bucket,
+            endpoint=bucket.endpoint,
+            keychain_id=bucket.keychain_id,
+        ) for bucket in buckets],
+        total=len(buckets)
+    )
 
 @router.get("/bucket/preview", summary="预览文件")
 async def file_preview_request(

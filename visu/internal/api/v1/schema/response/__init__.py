@@ -8,7 +8,6 @@ T = TypeVar("T")
 class ListResponse(BaseModel, Generic[T]):
     data: List[T]
     total: int
-    page_no: int | None = None
 
 
 class ItemResponse(BaseModel, Generic[T]):

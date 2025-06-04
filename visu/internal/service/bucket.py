@@ -27,7 +27,15 @@ async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Buc
     if id:
         bucket = await bucket_crud.get(db, id=id)
     else:
-        bucket = await bucket_crud.get_by_path(db, path=path)
+        buckets = await bucket_crud.list_by_path(db, path=f"s3://{bucket_name}/")
+
+        if len(buckets) > 0:
+            bucket = buckets[0]
+        else:
+            raise AppEx(
+                code=ErrorCode.BUCKET_30001_OBJECT_NOT_FOUND,
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
 
     if not bucket:
         raise AppEx(
@@ -227,7 +235,7 @@ async def get_buckets_or_objects(
             for bucket in buckets
         ]
 
-        return ListResponse[BucketResponse](data=result, total=len(result), page_no=page_no)
+        return ListResponse[BucketResponse](data=result, total=len(result))
     
     _, s3_reader = await get_bucket(path, db, id)
 
@@ -251,7 +259,7 @@ async def get_buckets_or_objects(
                 page_no=page_no,
                 page_size=page_size,
             )
-        return ListResponse[BucketResponse](data=result, total=len(result), page_no=page_no)
+        return ListResponse[BucketResponse](data=result, total=len(result))
 
     # 文件
     result = await get_file(

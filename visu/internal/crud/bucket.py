@@ -18,12 +18,15 @@ from visu.internal.schema.state import State
 class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
     async def get_by_path(self, db: Session, *, path: str, keychain_id: int | None = None) -> Bucket:
         if keychain_id:
-            return db.query(self.model).filter(self.model.path == path, self.model.keychain_id == keychain_id, self.model.state == State.ENABLED).first()
+            return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.keychain_id == keychain_id, self.model.state == State.ENABLED).first()
         else:
-            return db.query(self.model).filter(self.model.path == path, self.model.state == State.ENABLED).first()
+            return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.state == State.ENABLED).first()
     
     async def get_by_user_id(self, db: Session, *, user_id: int) -> List[Bucket]:
         return db.query(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED).all()
+    
+    async def list_by_path(self, db: Session, *, path: str) -> List[Bucket]:
+        return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.state == State.ENABLED).all()
     
     async def create(self, db: Session, *, obj_in: BucketCreateBody, created_by: int | None = None) -> Bucket:
         keychain = await keychain_crud.get(db, id=obj_in.keychain_id)

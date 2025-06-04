@@ -203,7 +203,8 @@
     "copyPath": "复制路径",
     "directory": "目录",
     "pathMustStartWithS3": "路径必须以s3://开头",
-    "searchPlaceholder": "输入地址检索"
+    "searchPlaceholder": "输入地址检索",
+    "duplicatedBuckets": "存在多个 Bucket，请选择一个"
   },
 
   "textPreviewer": {

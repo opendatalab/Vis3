@@ -6,16 +6,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { Button, List, message, Popconfirm, Tag } from 'antd'
+import { Button, List, message, Modal, Popconfirm, Tag } from 'antd'
 import { correctPath } from './Header'
 
 import BucketIcon from '@/assets/bucket.svg?react'
 import DeleteSvg from '@/assets/delete.svg?react'
 import { useTranslation } from '@visu/i18n'
-import { deleteBucket, digBucket } from '../../api/bucket'
+import { deleteBucket, digBucket, filterBucket } from '../../api/bucket'
 import { ROOT_BLOCK_ID } from '../../constant'
 import { download, gid } from '../../utils'
 import BucketEditModal, { BucketEditModalRef } from '../BucketEditModal'
+
+import styles from './index.module.css'
+
+interface ExtendedInfoItem extends BlockInfo {
+  bucketId: number
+}
 
 export interface BlockPreviewerProps {
   className?: string
@@ -24,17 +30,17 @@ export interface BlockPreviewerProps {
 export interface BucketBlockWrapperProps extends BucketBlockProps {
   pageSize?: number
   pageNo?: number
-  updateBlock?: (id: string, values: Partial<BlockInfo>) => void
+  block: ExtendedInfoItem
+  updateBlock?: (id: string, values: Partial<ExtendedInfoItem>) => void
 }
 
 function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageNo: propPageNo = 1, updateBlock, ...props }: BucketBlockWrapperProps) {
-  const { path, id } = block
+  const { path, id, bucketId } = block
   const [pageSize, setPageSize] = useState(propPageSize)
   const [pageNo, setPageNo] = useState(propPageNo)
   const navigate = useNavigate()
   const location = useLocation()
   const search = location.search as Record<string, string | number>
-  const bucketId = search.id as number
   
   const bucketQueryKey = useMemo(() => {
     if (path) {
@@ -61,13 +67,11 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
     }
   }, [propPageSize])
 
-  console.log('pageNo', pageNo)
-
   const bucketQueryOptions = useMemo(() => ({
     staleTime: path ? 10000 : 0,
     queryKey: bucketQueryKey,
     queryFn: () => {
-      const result = digBucket({ path, pageSize, pageNo, id: bucketId ? Number(bucketId) : undefined }).then((res) => {
+      const result = digBucket({ path, pageSize, pageNo, id: id === ROOT_BLOCK_ID && bucketId ? Number(bucketId) : undefined }).then((res) => {
         return res
       })
 
@@ -122,7 +126,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
   }, [id, search, updateBlock])
   
   const handleOpenInNewTab = useCallback((path: string) => {
-    window.open(`${window.location.origin}${window.location.pathname}?path=${encodeURIComponent(path)}&pageSize=${pageSize}&pageNo=${pageNo}&id=${bucketId}`, '_blank', 'noopener,noreferrer')
+    window.open(`${window.location.origin}${window.location.pathname}?path=${encodeURIComponent(path)}&pageSize=${pageSize}&pageNo=${pageNo}`, '_blank', 'noopener,noreferrer')
   }, [pageSize, pageNo, bucketId])
 
   const isRootBlock = id === ROOT_BLOCK_ID
@@ -136,7 +140,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
       onPathCorrection={handlePathCorrection}
       onDownload={download}
       previewUrl="/api/v1/bucket/file_preview"
-      showGoParent={!isRootBlock}
+      showGoParent={!isRootBlock && !!path}
       showPagination={!isRootBlock && block.pathType === 'folder'}
       onChange={handleOnChange}
       closeable={!isRootBlock}
@@ -154,18 +158,20 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   const search = location.search as Record<string, string | number>
+  const bucketId = search.id as number
   const path = search.path as string || ''
   const basename = getBasename(path)
   const pageSize = Number(search.page_size) || 50
   const pageNo = Number(search.page_no) || 1
   const pathType = getPathType(basename) || 'txt'
-  const [blocks, setBlocks] = useState<BlockInfo[]>([{
+  const [blocks, setBlocks] = useState<ExtendedInfoItem[]>([{
     id: ROOT_BLOCK_ID,
     path,
     pathType,
+    bucketId,
   }])
 
-  const updateBlock = useCallback((id: string, values: Partial<BlockInfo>) => {
+  const updateBlock = useCallback((id: string, values: Partial<ExtendedInfoItem>) => {
     // 更新block
     setBlocks((pre) => {
       return pre.map((_block) => {
@@ -196,7 +202,46 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
     const handleS3PathClick = async (e: any) => {
       const inputPath = e.detail.path
 
-      try {
+      const resp = await filterBucket(inputPath)
+
+      if (resp.data.length > 1) {
+        Modal.info({
+          title: t('bucket.duplicatedBuckets'),
+          content: (
+            <List
+              size="small"
+              bordered
+              dataSource={resp.data.map(item => ({
+                name: item.name,
+                path: item.path,
+                id: item.id,
+              }))}
+              renderItem={(item) => (
+                <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
+                  <div className="flex items-center gap-2">
+                    <BucketIcon />
+                    <a href="javascript:void(0)" className="!hover:underline" onClick={() => {
+                      setBlocks(pre => ([
+                        ...pre.slice(0, 1),
+                        ...pre.slice(1),
+                        {
+                          id: gid(),
+                          path: item.path,
+                          pathType: getPathType(item.path),
+                          bucketId: item.id,
+                        } as ExtendedInfoItem,
+                      ]))
+                      Modal.destroyAll()
+                    }}>{`${item.path}/`}</a>
+                    {item.name && <Tag>{item.name}</Tag>}
+                  </div>
+                </List.Item>
+              )}
+            />
+          ),
+        })
+        return
+      } else {
         setBlocks(pre => ([
           ...pre.slice(0, 1),
           ...pre.slice(1),
@@ -204,22 +249,20 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
             id: gid(),
             path: inputPath,
             pathType: getPathType(inputPath),
-          } as BlockInfo,
+            bucketId: resp.data[0].id,
+          } as ExtendedInfoItem,
         ]))
+      }
 
-        setTimeout(() => {
-          // 滚动到最右侧
-          if (containerRef.current) {
-            containerRef.current.scrollTo({
-              left: containerRef.current.scrollWidth,
-              behavior: 'smooth',
-            })
-          }
-        })
-      }
-      catch (e) {
-        console.error('error', e)
-      }
+      setTimeout(() => {
+        // 滚动到最右侧
+        if (containerRef.current) {
+          containerRef.current.scrollTo({
+            left: containerRef.current.scrollWidth,
+            behavior: 'smooth',
+          })
+        }
+      })
     }
     // 监听s3-path-click事件
     document.addEventListener('s3-path-click', handleS3PathClick)
@@ -227,7 +270,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
     return () => {
       document.removeEventListener('s3-path-click', handleS3PathClick)
     }
-  }, [])
+  }, [t])
 
   const handleBlockClose = useCallback((id: string) => {
     setBlocks(pre => pre.filter(block => block.id !== id))
@@ -257,7 +300,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
               style={{ width: `calc(100% / ${blocks.length})` }}
               renderBucketItem={block.id === ROOT_BLOCK_ID ? (item) => {
                 return (
-                  <List.Item className="!flex !items-center hover:bg-gray-50 rounded-lg">
+                  <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
                     <div className="flex items-center gap-2">
                       <BucketIcon />
                       <Link className="!hover:underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>

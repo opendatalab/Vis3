@@ -26,7 +26,7 @@ export interface FolderRendererProps extends Omit<RendererProps, 'value'> {
   path: string
 }
 
-const StyledListItem = styled(List.Item)<{ isHighlighted?: boolean, isNotCurrent?: boolean }>`
+const StyledListItem = styled(List.Item)<{ isHighlighted?: boolean, isNotCurrent?: boolean, noRadius?: boolean }>`
   position: relative;
   display: flex;
   justify-content: space-between;
@@ -44,7 +44,11 @@ const StyledListItem = styled(List.Item)<{ isHighlighted?: boolean, isNotCurrent
     &:hover {
       background-color: #eff4ff;
     }
+  `}
 
+  ${props => props.noRadius ? `
+    border-radius: 0;
+  ` : `
     &:first-child:hover {
       border-top-left-radius: 0.5rem;
       border-top-right-radius: 0.5rem;
@@ -146,6 +150,7 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
           <StyledListItem 
             isHighlighted={highlightCurrent && item.fullPath === pathWithoutQuery}
             isNotCurrent={item.fullPath !== pathWithoutQuery}
+            noRadius={!showBodyOnly}
           >
             <FlexRow>
               <FlexRow>

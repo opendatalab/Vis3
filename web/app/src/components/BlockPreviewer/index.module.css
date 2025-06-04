@@ -10,3 +10,19 @@
     color: rgb(59 130 246) !important;
   }
 }
+
+.listItem {
+  &:hover {
+    background-color: #eff4ff;
+  }
+
+  &:first-child:hover {
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+  }
+
+  &:last-child:hover {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+  }
+}

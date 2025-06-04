@@ -167,12 +167,22 @@ class S3Reader:
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "NoSuchBucket":
-                raise ValueError(f"Bucket {self.bucket_name} does not exist")
+                raise AppEx(
+                    code=ErrorCode.S3_CLIENT_40002_NO_SUCH_BUCKET,
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Bucket {self.bucket_name} does not exist",
+                )
             elif error_code == "AccessDenied":
-                raise PermissionError(f"Access denied to bucket {self.bucket_name}")
+                raise AppEx(
+                    code=ErrorCode.S3_CLIENT_40001_ACCESS_DENIED,
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Access denied to bucket {self.bucket_name}",
+                )
             elif error_code == "404":
-                raise ValueError(
-                    f"Object {self.key_without_query} does not exist in bucket {self.bucket_name}"
+                raise AppEx(
+                    code=ErrorCode.S3_CLIENT_40003_NOT_FOUND,
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Object {self.key_without_query} does not exist in bucket {self.bucket_name}",
                 )
             else:
                 raise

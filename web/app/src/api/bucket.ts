@@ -77,6 +77,14 @@ export async function createBatchBucket(body: BatchBucketCreateBody[]): Promise<
   return request.post('/bucket/batch', body)
 }
 
+export async function filterBucket(path: string): Promise<BucketResponse> {
+  return request.get('/bucket/filter', {
+    params: {
+      path,
+    },
+  })
+}
+
 export async function deleteBucket(id: number): Promise<void> {
   return request.delete(`/bucket/${id}`)
 }

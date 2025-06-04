@@ -202,7 +202,8 @@
     "copyPath": "Copy Path",
     "directory": "Directory",
     "pathMustStartWithS3": "Path must start with s3://",
-    "searchPlaceholder": "Enter address to search"
+    "searchPlaceholder": "Enter address to search",
+    "duplicatedBuckets": "Duplicated Buckets, please select one"
   },
 
   "textPreviewer": {
