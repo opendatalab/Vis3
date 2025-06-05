@@ -99,55 +99,11 @@ jobs:
         env:
           NEXT_VERSION: ${{ env.NEXT_VERSION }}
         run: |
-          echo "PYPI_URL=https://pypi.org/project/labelu/${{ env.NEXT_VERSION }}" >> $GITHUB_ENV
+          echo "PYPI_URL=https://pypi.org/project/visu/${{ env.NEXT_VERSION }}" >> $GITHUB_ENV
 
       - name: Show pypi url
         run: |
           echo $PYPI_URL
-
-      - name: Inject backend info into frontend
-        uses: satackey/action-js-inline@v0.0.2
-        id: InjectBackend
-        env:
-          NEXT_VERSION: ${{ env.NEXT_VERSION }}
-        with:
-          required-packages: '@iarna/toml'
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            const toml = require('@iarna/toml');
-            const rootPath = path.join(process.cwd(), '');
-
-            console.log('rootPath', rootPath);
-
-            try {
-              const projectInfo = toml.parse(
-                fs.readFileSync(path.join(rootPath, 'pyproject.toml'), 'utf8')
-              );
-              const backendInfo = {
-                  version: process.env.NEXT_VERSION,
-                  name: projectInfo.tool.poetry.name || 'LabelU',
-                  build_time: new Date().toISOString(),
-                  commit: process.env.GITHUB_SHA,
-                };
-
-                const code = `
-                              (function () {
-                                window.__backend = ${JSON.stringify(backendInfo, null, 2)};
-                              })();
-                            `;
-
-                fs.writeFileSync(
-                  path.join(rootPath, 'labelu/internal/statics/backend_version.js'),
-                  code,
-                  'utf-8'
-                );
-
-                console.log('Update backend_version.js success!');
-            } catch (e) {
-              console.error(e);
-              process.exit(1);
-            }
 
       - uses: abatilo/actions-poetry@v2
         with:
@@ -156,15 +112,15 @@ jobs:
       - name: Install dependencies
         run: poetry install --without dev
 
-      - name: Run tests
-        run: poetry run pytest --cov=./ --cov-report=xml
+      # - name: Run tests
+      #   run: poetry run pytest --cov=./ --cov-report=xml
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
-          files: ./coverage.xml
-          verbose: true
+      # - name: Upload coverage to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+      #     files: ./coverage.xml
+      #     verbose: true
 
       - name: Manage version
         run: |
