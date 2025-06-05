@@ -125,7 +125,8 @@ jobs:
       - name: Manage version
         run: |
           sed -i "s/^version[ ]*=.*/version = '${NEXT_VERSION}'/" pyproject.toml
-          sed -i "s/^version[ ]*=.*/version='${NEXT_VERSION}'/" labelu/version.py
+          sed -i "s/^version[ ]*=.*/version='${NEXT_VERSION}'/" visu/version.py
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${NEXT_VERSION}\"/" web/package.json
 
       - name: Publish to PyPi
         # main or alpha
