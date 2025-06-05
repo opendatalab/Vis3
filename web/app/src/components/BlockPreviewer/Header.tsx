@@ -14,6 +14,8 @@ import { Button, Dropdown, Form, Input, message, Space, Tooltip } from 'antd';
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
+import _ from 'lodash';
+import { useBucketQueryKey, useCachedBucket } from '../../api/bucket.query';
 import { openBucketManager } from '../BucketManager';
 import { DirectoryTreeTrigger } from '../DirectoryTree';
 import styles from './index.module.css';
@@ -358,8 +360,10 @@ export default function BucketHeader() {
   const location = useLocation()
   const search = location.search as Record<string, string | number>
   const navigate = useNavigate()
-  const path = search.path as string || ''
-  const pageNo = Number(search.page_no) || 1
+  const [, path, pageNo, pageSize] = useBucketQueryKey()
+
+  // 获取react-query缓存的数据
+  const cachedBucket = useCachedBucket()
 
   const handleGoParent = () => {
     let newPath = path
@@ -381,6 +385,8 @@ export default function BucketHeader() {
       search: { ...search, id: !newPath ? undefined : search.id, path: newPath },
     })
   }
+
+  const total = _.get(cachedBucket, 'data.total', 0)
 
   const handleCopy = () => {
     navigator.clipboard.writeText(path)
@@ -429,6 +435,7 @@ export default function BucketHeader() {
                     search: { ...search, page_no: pageNo + 1 },
                   })}
                   icon={<RightOutlined />}
+                  disabled={total < pageNo * pageSize}
                 />
               </Tooltip>
             </Space.Compact>

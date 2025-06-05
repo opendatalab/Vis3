@@ -14,12 +14,8 @@ import { useBatchCreateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import PopPanel from '../PopPanel'
 
-function gid() {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-}
-
-export function pathValidator(keyOptions: any) {
-  return (form: FormInstance) => ({
+export function pathValidator(keyOptions: any): any {
+  return (form: FormInstance<any>) => ({
     validator: async (_meta: any, value: string) => {
       const values = form.getFieldsValue()
       const endpoint = _.get(values, _meta.field.replace('path', 'endpoint'))

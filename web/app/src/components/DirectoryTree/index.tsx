@@ -93,7 +93,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   const search = location.search as Record<string, string>
   const path = search.path as string || ''
   const pathWithoutQuery = path?.split('?')[0]
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([pathWithoutQuery])
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([`${search.id}-${pathWithoutQuery}`])
   const [expandedKeys, setExpandedKeys] = useState<string[]>([path])
   const { open, setOpen } = useTreeContext()
   const [loading, setLoading] = useState(false)
@@ -102,7 +102,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   const pageSize = Number(search.page_size) || 50
   const { t } = useTranslation()
 
-  const getBucketQueryKey = useCallback((_path?: string, pageNo?: number) => {
+  const getBucketQueryKey = useCallback((_path?: string, pageNo?: number, bucketId?: number) => {
     if (!_path) {
       return ['bucket']
     }
@@ -111,18 +111,18 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
       path: _path,
       pageNo: pageNo ?? _.get(treeDataMap, [_path, 'pageNo'], 1),
       pageSize,
-      id: search.id,
+      id: bucketId ?? search.id,
     }]
   }, [treeDataMap, search.id])
 
   useEffect(() => {
-    setSelectedKeys([pathWithoutQuery])
+    setSelectedKeys([`${search.id}-${pathWithoutQuery}`])
   }, [pathWithoutQuery])
 
   useEffect(() => {
     const fragments = extractPath(path).slice(0, -1)
     if (path) {
-      setExpandedKeys(fragments.map(fragment => fragment.fullPath))
+      setExpandedKeys(fragments.map(fragment => `${search.id}-${fragment.fullPath}`))
     }
   }, [path])
 
@@ -138,7 +138,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
     const fragments = extractPath(path).slice(0, -1)
     setLoading(true)
     const responses = await Promise.all([
-      queryClient.fetchQuery({ queryKey: getBucketQueryKey(), staleTime: 10000, queryFn: () => digBucket({ path: '/', id: Number(search.id) }) }),
+      queryClient.fetchQuery({ queryKey: getBucketQueryKey(), staleTime: 10000, queryFn: () => digBucket({ path: '/' }) }),
       ...fragments.map(fragment => 
         queryClient.fetchQuery({ queryKey: getBucketQueryKey(fragment.fullPath), staleTime: 10000, queryFn: () => digBucket({ path: fragment.fullPath, id: Number(search.id) }) })
       )
@@ -154,7 +154,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
           pageNo: item.page_no ?? 1,
         }
       } else {
-        acc[fragments[index - 1].fullPath] = {
+        acc[`${item.data[0].id}-${fragments[index - 1].fullPath}`] = {
           total: item.total ?? 0,
           data: item.data as BucketItem[],
           pageNo: item.page_no ?? 1,
@@ -183,7 +183,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   }))
 
   const handleDig = useCallback(
-    async (type: string, _path: string) => {
+    async (type: string, _path: string, bucketId: number) => {
       let fullPath = _path
 
       if (type === 'file') {
@@ -199,16 +199,17 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         fullPath = `${fullPath}/`
       }
 
-      const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(fullPath), staleTime: 10000, queryFn: () => digBucket({ path: fullPath, id: Number(search.id) }) })
+      const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(fullPath, bucketId), staleTime: 10000, queryFn: () => digBucket({ path: fullPath, id: bucketId }) })
 
       setTreeDataMap((pre) => {
-        if (pre[fullPath]) {
+        const key = `${bucketId}-${fullPath}`
+        if (pre[key]) {
           return pre
         }
 
         return {
           ...pre,
-          [fullPath]: {
+          [key]: {
             total: response.total ?? 0,
             data: response.data as BucketItem[],
             pageNo: response.page_no ?? 1,
@@ -220,19 +221,19 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   )
 
   const handleSelect = useCallback(
-    async (key: string) => {
+    async ({ key, raw }: { key: string, raw: BucketItem }) => {
       if (key.endsWith('///load-more')) {
-        const _path = key.replace('///load-more', '')
-        const pageNo = _.get(treeDataMap, [_path, 'pageNo'], 1) + 1
+        const pageNo = _.get(treeDataMap, [raw.path, 'pageNo'], 1) + 1
 
-        const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(_path, pageNo), staleTime: 10000, queryFn: () => digBucket({ path: _path, id: Number(search.id), pageNo }) })
+        const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(raw.path, pageNo), staleTime: 10000, queryFn: () => digBucket({ path: raw.path, id: raw.id, pageNo }) })
 
         setTreeDataMap((pre) => {
-          const exist = pre[_path]
+          const _key = `${raw.id}-${raw.path}`
+          const exist = pre[_key]
 
           return {
             ...pre,
-            [_path]: {
+            [_key]: {
               total: response.total + (exist?.total ?? 0),
               data: [...exist?.data ?? [], ...response.data as BucketItem[]],
               pageNo,
@@ -246,7 +247,8 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         to: '/',
         search: {
           ...search,
-          path: key,
+          path: raw.path,
+          id: raw.id,
         },
       })
     },
@@ -255,11 +257,14 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
 
   const onLoadData = useCallback(
     (node: TreeDataNode) => {
-      if (treeDataMap[node.key as string]) {
+      const path = (node as any).raw.path
+      const key = `${(node as any).raw.id}-${path}`
+
+      if (treeDataMap[key]) {
         return Promise.resolve()
       }
 
-      return handleDig(_.get(node, 'raw.type') as unknown as string, node.key as string)
+      return handleDig(_.get(node, 'raw.type') as unknown as string, path, (node as any).raw.id)
     },
     [handleDig, treeDataMap],
   )
@@ -268,23 +273,24 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
     const convertTree = (rootMap: BucketItem[], depth: number = 0, parentPath = ''): TreeDataNode[] => {
       return _.map(rootMap, (item) => {
         const _path = item.path.replace(parentPath, '').replace(/\/$/, '')
+        const key = `${item.id}-${item.path}`
         const loadMore = {
           title: <span className="whitespace-nowrap">{t('directoryTree.loadMore')}</span>,
-          key: `${item.path}///load-more`,
+          key: `${key}///load-more`,
           isLeaf: true,
           icon: <ArrowDownOutlined />,
           raw: item,
         }
 
-        const children = convertTree(treeDataMap[item.path]?.data || [], depth + 1, item.path)
+        const children = convertTree(treeDataMap[key]?.data || [], depth + 1, item.path)
 
-        if (treeDataMap[item.path]?.total % pageSize === 0 && treeDataMap[item.path]?.total > 0) {
+        if (treeDataMap[key]?.total % pageSize === 0 && treeDataMap[key]?.total > 0) {
           children.push(loadMore)
         }
 
         return {
           title: <span className="whitespace-nowrap">{_path}</span>,
-          key: `${item.path}`,
+          key,
           children,
           isLeaf: item.type === 'file',
           icon: <div className="text-lg w-4 h-4">{item.path.endsWith('/') ? <FileIcon  type="folder" /> : <FileIcon path={item.path} />}</div>,
@@ -311,7 +317,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         icon={<FolderIcon className="text-lg" />}
         blockNode
         selectedKeys={selectedKeys}
-        onSelect={(_keys, { node }) => handleSelect(node.key as string)}
+        onSelect={(_keys, { node }) => handleSelect(node as any)}
         treeData={treeData}
       />
     </div>

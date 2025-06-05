@@ -1,10 +1,12 @@
-import { createFileRoute, useLocation } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { Button } from 'antd'
 import clsx from 'clsx'
 import type { BucketEditModalRef } from '../components/BucketEditModal'
 
 import '@visu/kit/dist/index.css'
-import { useRef, useState } from 'react'
+import _ from 'lodash'
+import { useRef } from 'react'
+import { useBucketQueryKey, useCachedBucket } from '../api/bucket.query'
 import BlockPreviewer from '../components/BlockPreviewer'
 import BucketHeader from '../components/BlockPreviewer/Header'
 import BucketEditModal from '../components/BucketEditModal'
@@ -92,14 +94,12 @@ function Empty({ className }: { className?: string }) {
 
 function RouteComponent() {
   const bodyRef = useRef<HTMLDivElement>(null)
-  const location = useLocation()
   const bucketEditModalRef = useRef<BucketEditModalRef>(null)
-  const search = location.search as Record<string, string | number>
-  const path = search.path as string || ''
-  const [total, setTotal] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
+  const [, path] = useBucketQueryKey()
+  const cachedBucket = useCachedBucket()
 
-  const showPlaceholder = !total && !isLoading && !path
+  const showPlaceholder = cachedBucket?.fetchStatus === 'fetching' && !path
+  const total = _.get(cachedBucket, 'data.total', 0)
 
   return (
     <div

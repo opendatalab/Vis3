@@ -171,6 +171,16 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
     bucketId,
   }])
 
+  useEffect(() => {
+    setBlocks(pre => ([
+      {
+        ...pre[0],
+        bucketId,
+      },
+      ...pre.slice(1),
+    ]))
+  }, [bucketId])
+
   const updateBlock = useCallback((id: string, values: Partial<ExtendedInfoItem>) => {
     // 更新block
     setBlocks((pre) => {
