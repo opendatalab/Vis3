@@ -99,7 +99,7 @@ jobs:
         env:
           NEXT_VERSION: ${{ env.NEXT_VERSION }}
         run: |
-          echo "PYPI_URL=https://pypi.org/project/visu/${{ env.NEXT_VERSION }}" >> $GITHUB_ENV
+          echo "PYPI_URL=https://pypi.org/project/ovisu/${{ env.NEXT_VERSION }}" >> $GITHUB_ENV
 
       - name: Show pypi url
         run: |
@@ -125,7 +125,7 @@ jobs:
       - name: Manage version
         run: |
           sed -i "s/^version[ ]*=.*/version = '${NEXT_VERSION}'/" pyproject.toml
-          sed -i "s/^version[ ]*=.*/version='${NEXT_VERSION}'/" visu/version.py
+          sed -i "s/^version[ ]*=.*/version='${NEXT_VERSION}'/" ovisu/version.py
           sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${NEXT_VERSION}\"/" web/package.json
 
       - name: Publish to PyPi

@@ -1,0 +1,86 @@
+import os
+from pathlib import Path
+from typing import Any
+
+import uvicorn
+from fastapi import FastAPI, Response
+from fastapi.staticfiles import StaticFiles
+from loguru import logger
+from typer import Typer
+
+from ovisu.internal.api import initial_routers
+from ovisu.internal.common.db import init_tables
+from ovisu.internal.common.exceptions import add_exception_handler
+from ovisu.internal.config import settings
+
+app = FastAPI(
+  title="VisU",
+  description="Visualize s3 data",
+  version="0.1.0",
+  terms_of_service="",
+  contact={
+      "name": "VisU",
+      "url": "https://github.com/OpenDataLab/VisU",
+      "email": "shenguanlin@pjlab.org.cn",
+  },
+  license_info={
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+  },
+)
+
+
+class NoCacheStaticFiles(StaticFiles):
+    def __init__(self, *args: Any, **kwargs: Any):
+        self.cachecontrol = "max-age=0, no-cache, no-store, must-revalidate"
+        self.pragma = "no-cache"
+        self.expires = "0"
+        super().__init__(*args, **kwargs)
+
+    def file_response(self, *args: Any, **kwargs: Any) -> Response:
+        resp = super().file_response(*args, **kwargs)
+        
+        # No cache for html files
+        if resp.media_type == "text/html":
+            resp.headers.setdefault("Cache-Control", self.cachecontrol)
+            resp.headers.setdefault("Pragma", self.pragma)
+            resp.headers.setdefault("Expires", self.expires)
+            
+        return resp
+
+
+initial_routers(app)
+
+add_exception_handler(app)
+
+init_tables()
+
+# 直接使用目录路径挂载静态文件
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "internal" / "statics"
+
+if STATIC_DIR.exists():
+    app.mount("/static", NoCacheStaticFiles(directory=str(STATIC_DIR)), name="static")
+else:
+    logger.warning(f"警告: 静态文件目录不存在: {STATIC_DIR}")
+    # 创建空的静态目录
+    os.makedirs(STATIC_DIR, exist_ok=True)
+    app.mount("/static", NoCacheStaticFiles(directory=str(STATIC_DIR)), name="static")
+
+cli = Typer()
+
+@cli.callback(invoke_without_command=True)
+def main(
+    host: str = "localhost", port: int = 8000
+):
+    if port:
+        settings.PORT = str(port)  # 确保PORT是字符串
+    if host:
+        settings.HOST = host
+        
+    logger.info(f"启动服务器: http://{settings.HOST}:{settings.PORT}")
+    uvicorn.run(app=app, host=settings.HOST, port=int(settings.PORT))
+        
+
+if __name__ == "__main__":
+    cli()
