@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "VisU"
+name = "vis-u"
 version = "0.1.0"
 description = "Visualize s3 data"
 authors = [
@@ -9,7 +9,7 @@ repository = "https://github.com/OpenDataLab/VisU"
 readme = "README.md"
 license = "Apache 2.0"
 
-packages = [{include = "visu"}]
+packages = [{include = "vis-u"}]
 
 [tool.poetry.dependencies]
 python = "==3.11.*"
