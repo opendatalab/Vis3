@@ -110,7 +110,7 @@ jobs:
           poetry-version: ${{ matrix.poetry-version }}
 
       - name: Install dependencies
-        run: poetry install --without dev
+        run: poetry install
 
       # - name: Run tests
       #   run: poetry run pytest --cov=./ --cov-report=xml
