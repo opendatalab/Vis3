@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { useTranslation } from '@visu/i18n';
+import { useTranslation } from '@vis3/kit';
 import type { FormInstance, FormProps, MenuProps } from 'antd';
 import { Button, Dropdown, Form, Input, message, Space, Tooltip } from 'antd';
 import clsx from 'clsx';
@@ -59,7 +59,7 @@ function PathFragment({ fragment, hideArrow, clickable = true, onClick, classNam
       {!hideArrow && rightIcon}
       <div
         className={clsx({
-          'cursor-pointer duration-100 hover:bg-blue-50 hover:text-blue-500 rounded': clickable,
+          'cursor-pointer duration-100 hover:bg-(--ant-color-primary-bg) hover:text-(--ant-color-primary) rounded': clickable,
           'cursor-text': !clickable,
         }, 'px-1 py-0.5')}
         onClick={clickable ? onClick ?? handleFragmentClick : undefined}
@@ -332,7 +332,7 @@ function PathContainer({ containerRef }: PathContainerProps) {
               menu={dropdownMenuProps}
             >
               <div className="flex items-center">
-                <div className="hover:bg-blue-50 hover:text-blue-500 px-1 cursor-pointer rounded duration-100">
+                <div className="hover:bg-(--ant-color-primary-bg) hover:text-(--ant-color-primary) px-1 cursor-pointer rounded duration-100">
                   ...
                 </div>
                 {rightIcon}
@@ -407,7 +407,7 @@ export default function BucketHeader() {
         </Tooltip>
         <PathContainer containerRef={pathContainerRef} />
         <Tooltip title={t('bucket.searchPath')}>
-          <Button disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
+          <Button disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.form.submit()} />
         </Tooltip>
         <Tooltip title={t('bucket.copyPath')}>
           <Button disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />

@@ -1,3 +1,4 @@
+import { i18n } from '@vis3/kit'
 import { message } from 'antd'
 import type { AxiosError, AxiosResponse } from 'axios'
 import axios from 'axios'
@@ -11,14 +12,14 @@ export function successHandler(response: AxiosResponse<any>) {
 }
 
 function errorHandler(error: AxiosError) {
-  if (error.response?.status === 401 && !window.location.pathname.includes('/login') && window.__CONFIG__.ENABLE_AUTH) {
+  if (error.response?.status === 401 && !['/login', '/register'].includes(window.location.pathname) && window.__CONFIG__.ENABLE_AUTH) {
     window.location.href = '/login'
   }
 
   const msg = _.get(error, 'response.data.detail', '') || _.get(error, 'response.data.msg', '')
   
-  if (msg) {
-    message.error(msg)
+  if (msg && !['/login', '/register'].includes(window.location.pathname)) {
+    message.error(i18n.t(`server.${msg}`, { defaultValue: msg }))
   }
 
   return Promise.reject(error)

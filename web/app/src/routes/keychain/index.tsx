@@ -1,15 +1,17 @@
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useTranslation } from '@visu/i18n'
-import { Alert, Button, Card, Empty, message, Popconfirm } from 'antd'
+import { useTranslation } from '@vis3/kit'
+import { Alert, Button, Card, message, Popconfirm } from 'antd'
 import dayjs from 'dayjs'
 import _ from 'lodash'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
 import type { KeychainResponse } from '../../api/keychain'
 import { useDeleteKeychain, useMyKeychains, useUpdateKeychain } from '../../api/keychain.query'
 import CopySvg from '../../assets/copy.svg?react'
 import DeleteSvg from '../../assets/delete.svg?react'
+import CustomEmpty from '../../components/CustomEmpty'
 import EditableText from '../../components/EditableText'
 import type { KeyChainFormRef } from './-components/Form'
 import KeyChainForm from './-components/Form'
@@ -76,9 +78,9 @@ function KeyChainCard({ data, className }: {
           </div>
         </div>
         <div className="flex items-start gap-2">
-          <span className="text-nowrap">Secret Key({t('keychain.encrypted')}): </span>
+          <span className="text-nowrap">Secret Key: </span>
           <div className="flex items-center gap-2">
-            <span className="text-ellipsis max-w-[200px] overflow-hidden" title={data.secret_key_id}>{data.secret_key_id}</span>
+            <span className="text-ellipsis max-w-[200px] overflow-hidden" title={data.secret_key_id}>***</span>
           </div>
         </div>
       </div>
@@ -91,6 +93,10 @@ function RouteComponent() {
   const { data } = useMyKeychains(1, 100)
   const queryClient = useQueryClient()
   const { t } = useTranslation()
+
+  useEffect(() => {
+    document.title = `Vis3 - AK&SK`
+  }, [t])
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -109,7 +115,7 @@ function RouteComponent() {
       <Alert type="info" message={t('keychain.addAS&SKTips')} showIcon />
       {
         _.isEmpty(data?.data) && (
-          <Empty description={t('keychain.noAK&SK')} />
+          <CustomEmpty description={t('keychain.noAK&SK')} />
         )
       }
       <div className="flex flex-wrap gap-4 items-stretch">

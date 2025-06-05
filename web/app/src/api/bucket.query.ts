@@ -1,8 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsFetching, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import { useMemo } from 'react';
-import type { BatchBucketCreateBody, BucketUpdateBody } from './bucket';
-import { createBatchBucket, deleteBucket, filterBucket, getBucket, updateBucket } from './bucket';
+import type { BatchBucketCreateBody, BucketCreateBody, BucketUpdateBody } from './bucket';
+import { createBatchBucket, createBucket, deleteBucket, filterBucket, getBucket, updateBucket } from './bucket';
 
 export function useBucket(id?: number | null) {
   return useQuery({
@@ -16,6 +16,12 @@ export function useFilterBucket(path: string) {
   return useQuery({
     queryKey: ['bucket', 'filter', path],
     queryFn: () => filterBucket(path),
+  })
+}
+
+export function useCreateBucket() {
+  return useMutation({
+    mutationFn: (body: BucketCreateBody) => createBucket(body),
   })
 }
 
@@ -64,5 +70,10 @@ export function useCachedBucket() {
   const [queryKey] = useBucketQueryKey()
   const queryClient = useQueryClient()
 
-  return queryClient.getQueryState(queryKey as any)
+  const isFetching = useIsFetching({ queryKey })
+
+  return {
+    ...queryClient.getQueryState(queryKey as any),
+    fetchingCount: isFetching,
+  }
 }

@@ -1,11 +1,12 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useTranslation } from '@vis3/kit'
 import { Button, Form, Input, message } from 'antd'
 
-import { useTranslation } from '@visu/i18n'
 import type { LoginPayload } from '../../api/user'
 import { getUserInfo } from '../../api/user'
 import { useLogin } from '../../api/user.query'
+import LangSwitcher from '../../components/LangSwitcher'
 
 export const Route = createFileRoute('/login/')({
   component: RouteComponent,
@@ -49,13 +50,13 @@ function RouteComponent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-[url(/bg.png)] p-4">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 pb-4 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
             <img src="/logo.svg" alt="logo" className="w-8 h-8" />
             <span className="text-3xl text-gray-800">
-              VisU
+            Vis3
             </span>
           </div>
           <p className="mt-2 text-gray-600">{t('slogan')}</p>
@@ -101,15 +102,20 @@ function RouteComponent() {
             </Button>
           </Form.Item>
 
-          <div className="text-center">
-            <a
-              onClick={() => navigate({ to: '/register' })}
-              className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer"
+          <Form.Item className="text-center">
+            <Button
+              type="link"
+              className="!px-0"
+              size="small"
+              href="/register"
             >
               {t('account.register')}
-            </a>
-          </div>
+            </Button>
+          </Form.Item>
         </Form>
+        <div className="flex items-center justify-center">
+          <LangSwitcher />
+        </div>
       </div>
     </div>
   )

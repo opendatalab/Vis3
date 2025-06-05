@@ -1,0 +1,35 @@
+{
+  "branches": ["main", { "name": "alpha", "prerelease": true }],
+  "plugins": [
+    [
+      {
+        "parserOpts": {
+          "noteKeywords": ["BREAKING CHANGE", "BREAKING CHANGES"]
+        }
+      }
+    ],
+    "@semantic-release/commit-analyzer",
+    "@semantic-release/release-notes-generator",
+    [
+      "@semantic-release/github",
+      {
+        "assets": [{ "path": "./dist/*.whl", "label": "vis3-${nextRelease.version}-py3.whl" }, { "path": "./dist/*.gz", "label": "vis3-${nextRelease.version}.tar.gz" }],
+        "successComment": false
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["pyproject.toml", "vis3/version.py"],
+        "message": "chore(release): ${nextRelease.version} [skip ci] \n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "verifyReleaseCmd": "echo \"NEXT_VERSION=${nextRelease.version}\" >> $GITHUB_OUTPUT",
+        "successCmd": "echo \"RELEASE_NOTES<<EOF\n${nextRelease.notes}\nEOF\" >> $GITHUB_ENV"
+      }
+    ]
+  ]
+}

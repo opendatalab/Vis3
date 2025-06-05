@@ -72,7 +72,7 @@ export default function PopPanel({
         style={{ opacity: isAnimating ? 1 : 0 }}
       />
       <div
-        className="absolute right-0 bg-white shadow-lg rounded-lg flex flex-col"
+        className="absolute right-0 bg-white shadow-lg rounded-[var(--ant-border-radius)] flex flex-col"
         style={{
           width: typeof width === 'number' ? `${width}px` : width,
           transform: isAnimating ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.9)',
@@ -85,7 +85,7 @@ export default function PopPanel({
           overflowY: 'auto',
           maxHeight: `calc(100vh - ${finalOffset.top + finalOffset.bottom}px)`,
           boxShadow: '-4px 0 15px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: 'transform 0.2s ease-in-out',
         }}
       >
         <div className="flex justify-between items-center p-4 border-b border-gray-200">

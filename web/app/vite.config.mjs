@@ -8,11 +8,16 @@ import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import svgr from 'vite-plugin-svgr';
 import tsMonoAlias from 'vite-plugin-ts-mono-alias';
 
+const visuAppDir = resolve(__dirname, '../..', 'vis3/internal/statics')
+
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/',
   publicDir: resolve(__dirname, 'public'),
   envDir: resolve(__dirname, 'env'),
+  build: {
+    outDir: visuAppDir,
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,
