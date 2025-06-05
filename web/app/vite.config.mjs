@@ -8,7 +8,7 @@ import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import svgr from 'vite-plugin-svgr';
 import tsMonoAlias from 'vite-plugin-ts-mono-alias';
 
-const visuAppDir = resolve(__dirname, '../..', 'ovisu/static')
+const visuAppDir = resolve(__dirname, '../..', 'ovisu/internal/statics')
 
 // https://vitejs.dev/config/
 export default defineConfig({

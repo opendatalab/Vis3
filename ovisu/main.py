@@ -55,17 +55,7 @@ add_exception_handler(app)
 
 init_tables()
 
-# 直接使用目录路径挂载静态文件
-BASE_DIR = Path(__file__).resolve().parent
-STATIC_DIR = BASE_DIR / "internal" / "statics"
-
-if STATIC_DIR.exists():
-    app.mount("/static", NoCacheStaticFiles(directory=str(STATIC_DIR)), name="static")
-else:
-    logger.warning(f"警告: 静态文件目录不存在: {STATIC_DIR}")
-    # 创建空的静态目录
-    os.makedirs(STATIC_DIR, exist_ok=True)
-    app.mount("/static", NoCacheStaticFiles(directory=str(STATIC_DIR)), name="static")
+app.mount("", NoCacheStaticFiles(packages=["ovisu.internal"], html=True))
 
 cli = Typer()
 
@@ -78,7 +68,7 @@ def main(
     if host:
         settings.HOST = host
         
-    logger.info(f"启动服务器: http://{settings.HOST}:{settings.PORT}")
+    logger.info(f"Start server: http://{settings.HOST}:{settings.PORT}")
     uvicorn.run(app=app, host=settings.HOST, port=int(settings.PORT))
         
 
