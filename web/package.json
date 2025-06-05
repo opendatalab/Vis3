@@ -11,7 +11,7 @@
     "email": "visu@visu.com"
   },
   "scripts": {
-    "build": "cd web && pnpm --filter @visu/i18n --filter @visu/kit build --filter visu-web-app"
+    "build": "pnpm --filter @visu/i18n --filter @visu/kit build --filter visu-web-app"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.12.0",
