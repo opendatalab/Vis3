@@ -4,5 +4,5 @@
 
 ## TODO
 
-- [ ] Readme文档
 - [ ] 流水线发布
+- [ ] Readme文档

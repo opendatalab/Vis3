@@ -1,0 +1,199 @@
+name: 'release'
+
+on:
+  workflow_dispatch:
+    inputs:
+      changelog:
+        type: string
+        description: 'The frontend changelog'
+        required: true
+
+  push:
+    branches:
+      - 'main'
+      - 'alpha'
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.8.1
+
+      - name: Semantic Release dry-run
+        id: dry-run
+        run: |
+          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git semantic-release
+          semantic-release --dry-run --yes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.NEXT_VERSION != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.11]
+        poetry-version: ['1.2.2']
+        os: [ubuntu-24.04]
+        node-version: [20.8.1]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Get next version
+        id: get-next-version
+        run: |
+          echo "NEXT_VERSION=$(echo "${{ needs.prepare.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 7
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        env:
+          CURRENT_BRANCH: ${{ github.ref_name }}
+        run: |
+          cd web/app
+          pnpm run build
+
+        # ====================== release ======================
+
+      - name: Set release pip url
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'alpha' }}
+        env:
+          NEXT_VERSION: ${{ env.NEXT_VERSION }}
+        run: |
+          echo "PYPI_URL=https://pypi.org/project/labelu/${{ env.NEXT_VERSION }}" >> $GITHUB_ENV
+
+      - name: Show pypi url
+        run: |
+          echo $PYPI_URL
+
+      - name: Inject backend info into frontend
+        uses: satackey/action-js-inline@v0.0.2
+        id: InjectBackend
+        env:
+          NEXT_VERSION: ${{ env.NEXT_VERSION }}
+        with:
+          required-packages: '@iarna/toml'
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const toml = require('@iarna/toml');
+            const rootPath = path.join(process.cwd(), '');
+
+            console.log('rootPath', rootPath);
+
+            try {
+              const projectInfo = toml.parse(
+                fs.readFileSync(path.join(rootPath, 'pyproject.toml'), 'utf8')
+              );
+              const backendInfo = {
+                  version: process.env.NEXT_VERSION,
+                  name: projectInfo.tool.poetry.name || 'LabelU',
+                  build_time: new Date().toISOString(),
+                  commit: process.env.GITHUB_SHA,
+                };
+
+                const code = `
+                              (function () {
+                                window.__backend = ${JSON.stringify(backendInfo, null, 2)};
+                              })();
+                            `;
+
+                fs.writeFileSync(
+                  path.join(rootPath, 'labelu/internal/statics/backend_version.js'),
+                  code,
+                  'utf-8'
+                );
+
+                console.log('Update backend_version.js success!');
+            } catch (e) {
+              console.error(e);
+              process.exit(1);
+            }
+
+      - uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ matrix.poetry-version }}
+
+      - name: Install dependencies
+        run: poetry install --without dev
+
+      - name: Run tests
+        run: poetry run pytest --cov=./ --cov-report=xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+          files: ./coverage.xml
+          verbose: true
+
+      - name: Manage version
+        run: |
+          sed -i "s/^version[ ]*=.*/version = '${NEXT_VERSION}'/" pyproject.toml
+          sed -i "s/^version[ ]*=.*/version='${NEXT_VERSION}'/" labelu/version.py
+
+      - name: Publish to PyPi
+        # main or alpha
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'alpha' }}
+        env:
+          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          poetry config pypi-token.pypi $PYPI_TOKEN
+          poetry publish --build --skip-existing
+
+      - name: Semantic Release
+        run: |
+          npm i -g semantic-release @semantic-release/git @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec @semantic-release/github
+          semantic-release --yes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ====================== post release ======================
+      
+      - name: Send release notification
+        env:
+          CHANGELOG: ${{ github.event.inputs.changelog != '' && format('## Frontend changelog👇🏻 \n\n{0}\n\n\n', github.event.inputs.changelog) || '' }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
+          NEXT_VERSION: ${{ env.NEXT_VERSION }}
+          PYPI_URL: ${{ env.PYPI_URL }}
+        run: |
+          node ./scripts/release-notification.js
+          
