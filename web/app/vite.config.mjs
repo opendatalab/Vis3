@@ -8,7 +8,6 @@ import { ViteEjsPlugin } from 'vite-plugin-ejs';
 import svgr from 'vite-plugin-svgr';
 import tsMonoAlias from 'vite-plugin-ts-mono-alias';
 
-const isDev = process.env.NODE_ENV === 'development'
 const visuAppDir = resolve(__dirname, '../..', 'visu/static')
 
 // https://vitejs.dev/config/

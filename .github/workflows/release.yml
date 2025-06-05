@@ -82,14 +82,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd web/app
+          cd web
           pnpm install
 
       - name: Build frontend
         env:
           CURRENT_BRANCH: ${{ github.ref_name }}
         run: |
-          cd web/app
+          cd web
           pnpm run build
 
         # ====================== release ======================

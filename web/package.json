@@ -10,7 +10,9 @@
     "name": "visu",
     "email": "visu@visu.com"
   },
-  "scripts": {},
+  "scripts": {
+    "build": "cd web && pnpm --filter @visu/i18n --filter @visu/kit build --filter visu-web-app"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^4.12.0",
     "@eslint-react/eslint-plugin": "^1.43.0",
