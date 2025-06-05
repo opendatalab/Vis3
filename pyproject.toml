@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ovisu"
-version = '1.0.0-alpha.5'
+version = '1.0.0-alpha.6'
 description = "Visualize s3 data"
 authors = [
     "shenguanlin <shenguanlin@pjlab.org.cn>",
