@@ -13,14 +13,14 @@
     [
       "@semantic-release/github",
       {
-        "assets": [{ "path": "./dist/*.whl", "label": "visu-${nextRelease.version}-py3.whl" }, { "path": "./dist/*.gz", "label": "visu-${nextRelease.version}.tar.gz" }],
+        "assets": [{ "path": "./dist/*.whl", "label": "ovisu-${nextRelease.version}-py3.whl" }, { "path": "./dist/*.gz", "label": "ovisu-${nextRelease.version}.tar.gz" }],
         "successComment": false
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["pyproject.toml", "visu/version.py"],
+        "assets": ["pyproject.toml", "ovisu/version.py"],
         "message": "chore(release): ${nextRelease.version} [skip ci] \n\n${nextRelease.notes}"
       }
     ],
