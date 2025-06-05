@@ -1,4 +1,4 @@
-import { BucketItem, FileIcon } from "@visu/kit";
+import { FileIcon, useTranslation } from "@vis3/kit";
 import { Button, Skeleton, Tooltip, Tree, TreeDataNode } from "antd";
 import { createContext, MutableRefObject, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import styles from './index.module.css';
@@ -6,13 +6,12 @@ import styles from './index.module.css';
 import ArrowFromLeftSvg from '@/assets/arrow-from-left.svg?react';
 import ArrowFromRightSvg from '@/assets/arrow-from-right.svg?react';
 import FolderIcon from '@/assets/folder.svg?react';
-import { ArrowDownOutlined } from "@ant-design/icons";
+import { ArrowDownOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { useTranslation } from "@visu/i18n";
 import clsx from "clsx";
 import _ from "lodash";
-import { digBucket } from "../../api/bucket";
+import { BucketData, digBucket } from "../../api/bucket";
 
 export interface TreeRef {
   toggle: (open: boolean) => void
@@ -82,7 +81,7 @@ export function DirectoryTreeProvider({ children }: { children: React.ReactNode 
 
 interface TreeMapItem {
   total: number
-  data: BucketItem[]
+  data: BucketData[]
   pageNo: number
 }
 
@@ -101,6 +100,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   const navigate = useNavigate()
   const pageSize = Number(search.page_size) || 50
   const { t } = useTranslation()
+  const [treeLoading, setTreeLoading] = useState(false)
 
   const getBucketQueryKey = useCallback((_path?: string, pageNo?: number, bucketId?: number) => {
     if (!_path) {
@@ -150,13 +150,13 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
       if (index === 0) {
         acc['s3://'] = {
           total: item.total ?? 0,
-          data: item.data as BucketItem[],
+          data: item.data as BucketData[],
           pageNo: item.page_no ?? 1,
         }
       } else {
         acc[`${item.data[0].id}-${fragments[index - 1].fullPath}`] = {
           total: item.total ?? 0,
-          data: item.data as BucketItem[],
+          data: item.data as BucketData[],
           pageNo: item.page_no ?? 1,
         }
       }
@@ -211,7 +211,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
           ...pre,
           [key]: {
             total: response.total ?? 0,
-            data: response.data as BucketItem[],
+            data: response.data as BucketData[],
             pageNo: response.page_no ?? 1,
           },
         }
@@ -221,25 +221,30 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   )
 
   const handleSelect = useCallback(
-    async ({ key, raw }: { key: string, raw: BucketItem }) => {
+    async ({ key, raw }: { key: string, raw: BucketData }) => {
       if (key.endsWith('///load-more')) {
-        const pageNo = _.get(treeDataMap, [raw.path, 'pageNo'], 1) + 1
+        if (treeLoading) {
+          return
+        }
 
+        const _key = `${raw.id}-${raw.path}`
+        const pageNo = _.get(treeDataMap, [_key, 'pageNo'], 1) + 1
+        setTreeLoading(true)
         const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(raw.path, pageNo), staleTime: 10000, queryFn: () => digBucket({ path: raw.path, id: raw.id, pageNo }) })
 
         setTreeDataMap((pre) => {
-          const _key = `${raw.id}-${raw.path}`
           const exist = pre[_key]
 
           return {
             ...pre,
             [_key]: {
               total: response.total + (exist?.total ?? 0),
-              data: [...exist?.data ?? [], ...response.data as BucketItem[]],
+              data: [...exist?.data ?? [], ...response.data as BucketData[]],
               pageNo,
             },
           }
         })
+        setTreeLoading(false)
         return
       }
 
@@ -252,7 +257,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         },
       })
     },
-    [search, treeDataMap],
+    [search, treeDataMap, treeLoading],
   )
 
   const onLoadData = useCallback(
@@ -270,7 +275,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
   )
 
   const treeData = useMemo(() => {
-    const convertTree = (rootMap: BucketItem[], depth: number = 0, parentPath = ''): TreeDataNode[] => {
+    const convertTree = (rootMap: BucketData[], depth: number = 0, parentPath = ''): TreeDataNode[] => {
       return _.map(rootMap, (item) => {
         const _path = item.path.replace(parentPath, '').replace(/\/$/, '')
         const key = `${item.id}-${item.path}`
@@ -278,7 +283,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
           title: <span className="whitespace-nowrap">{t('directoryTree.loadMore')}</span>,
           key: `${key}///load-more`,
           isLeaf: true,
-          icon: <ArrowDownOutlined />,
+          icon: treeLoading ? <LoadingOutlined spin /> : <ArrowDownOutlined />,
           raw: item,
         }
 
@@ -300,7 +305,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
     }
 
     return convertTree(treeDataMap['s3://']?.data || [], 0, 's3://')
-  }, [path, treeDataMap])
+  }, [path, treeDataMap, treeLoading])
 
   if (loading) {
     return <Skeleton className={styles.tree} active />

@@ -1,11 +1,12 @@
 import ToolboxSvg from '@/assets/toolbox.svg?react'
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/kit'
 import { Button, Popover } from 'antd'
 import { useMemo } from 'react'
 
 import styles from './index.module.css'
 import LabelLLM from './labelllm.svg?react'
+import LabelU from './labelu.svg?react'
 import MinerU from './mineru.svg?react'
 import OpenDataLab from './opendatalab.svg?react'
 
@@ -37,6 +38,10 @@ export default function AppPanel() {
         name: 'LabelLLM',
         links: [
           {
+            name: t('tryOnline'),
+            link: 'https://labelu-llm-demo.shlab.tech/',
+          },
+          {
             name: 'Github',
             link: 'https://github.com/opendatalab/LabelLLM?tab=readme-ov-file#labelllm-the-open-source-data-annotation-platform',
           },
@@ -47,11 +52,20 @@ export default function AppPanel() {
       {
         name: 'MinerU',
         links: [
-          { name: 'Github', link: 'https://github.com/opendatalab/MinerU' },
           { name: t('tryOnline'), link: 'https://opendatalab.com/OpenSourceTools/Extractor/PDF' },
+          { name: 'Github', link: 'https://github.com/opendatalab/MinerU' },
         ],
         icon: <MinerU />,
         description: t('minerUDescription'),
+      },
+      {
+        name: 'Label U',
+        description: t('labelUDescription'),
+        icon: <LabelU />,
+        links: [
+          { name: t('tryOnline'), link: 'https://labelu.shlab.tech/tasks' },
+          { name: 'Github', link: 'https://github.com/opendatalab/labelU' },
+        ],
       },
     ],
     [t],

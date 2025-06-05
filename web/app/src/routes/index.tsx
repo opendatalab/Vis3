@@ -1,83 +1,162 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Button } from 'antd'
+import { ExportOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useRouterState } from '@tanstack/react-router'
+import { useTranslation } from '@vis3/kit'
+import '@vis3/kit/dist/index.css'
+import { Alert, Button, Form, Input, Select, Tooltip } from 'antd'
 import clsx from 'clsx'
-import type { BucketEditModalRef } from '../components/BucketEditModal'
-
-import '@visu/kit/dist/index.css'
 import _ from 'lodash'
-import { useRef } from 'react'
-import { useBucketQueryKey, useCachedBucket } from '../api/bucket.query'
+import { useEffect, useMemo, useRef } from 'react'
+
+
+import { useBucketQueryKey, useCachedBucket, useCreateBucket } from '../api/bucket.query'
 import BlockPreviewer from '../components/BlockPreviewer'
 import BucketHeader from '../components/BlockPreviewer/Header'
+import type { BucketEditModalRef } from '../components/BucketEditModal'
 import BucketEditModal from '../components/BucketEditModal'
-import BucketManager, { openBucketManager } from '../components/BucketManager'
+import BucketManager, { endpointValidator, pathValidator, useKeyOptions } from '../components/BucketManager'
 import DirectoryTree, { DirectoryTreeProvider } from '../components/DirectoryTree'
+
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
-const supportedCloudPlatforms = [
-  {
-    name: '华为云',
-    icon: '/huawei.png',
-  },
-  {
-    name: '腾讯云',
-    icon: '/tencent.png',
-  },
-  {
-    name: '商汤大装置AOS',
-    icon: '/sensetime.png',
-  },
-  {
-    name: 'AWS',
-    icon: '/aws.png',
-  },
-  {
-    name: '阿里云 OSS',
-    icon: '/aliyun.png',
-  },
-  {
-    name: '浪潮云',
-    icon: '/inspur.png',
-  },
-  {
-    name: '微软 Azure',
-    icon: '/microsoft.png',
-  },
-]
-
 function Empty({ className }: { className?: string }) {
-  const showPanel = () => {
-    openBucketManager()
+  const { t } = useTranslation()
+  const [form] = Form.useForm()
+  const { keyOptions, isLoading, keyChainQuery } = useKeyOptions()
+  const { mutateAsync: createBucketMutation, isPending } = useCreateBucket()
+  const queryClient = useQueryClient()
+
+  const onFinish = async (values: any) => {
+    await createBucketMutation(values)
+    queryClient.invalidateQueries({ queryKey: ['bucket'] })
+    form.resetFields()
   }
 
+  const supportedCloudPlatforms = [
+    {
+      name: t('supportedCloudPlatforms.aws'),
+      icon: '/aws.png',
+    },
+    {
+      name: t('supportedCloudPlatforms.aliyun'),
+      icon: '/aliyun.png',
+    },
+    {
+      name: t('supportedCloudPlatforms.huawei'),
+      icon: '/huawei.png',
+    },
+    {
+      name: t('supportedCloudPlatforms.tencent'),
+      icon: '/tencent.png',
+    },
+    {
+      name: t('supportedCloudPlatforms.sensetime'),
+      icon: '/sensetime.png',
+    },
+    {
+      name: t('supportedCloudPlatforms.inspur'),
+      icon: '/inspur.png',
+    },
+  ]
+
   return (
-    <div className={clsx('container mx-auto mt-24', className)}>
+    <div className={clsx('flex flex-col items-center justify-center bg-[url(/bg.png)] bg-cover bg-center fixed inset-0 z-10', className)}>
       {/* 产品标题和描述 */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">VisU – 大模型语料可视化工具</h1>
-        <p className="text-lg text-gray-600">无缝对接主流云存储与本地数据源，深度解析多格式数据内容</p>
+        <h1 className="text-4xl font-bold mb-4">{t('addFirstBucket')}</h1>
+        {/* <p className="text-lg text-gray-600">{t('sloganDescription')}</p> */}
       </div>
 
       {/* 添加路径卡片区域 */}
-      <div className="max-w-2xl mx-auto bg-gray-50 rounded-lg mb-8 flex flex-col items-center">
+      {/* <div className="max-w-2xl mx-auto bg-gray-50 rounded-lg mb-8 flex flex-col items-center">
         <video src="/demo.mp4" autoPlay muted loop className="w-full h-full object-cover rounded-lg" />
-      </div>
+      </div> */}
       {/* 添加路径按钮 */}
-      <div className="flex justify-center items-center space-x-6 mt-6">
-        <Button className="mx-auto" type="primary" size="large" onClick={showPanel}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-2">
-            <path d="M12 4v16m-8-8h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          添加路径
-        </Button>
-      </div>
+      <Form form={form} className='max-w-2xl' layout="vertical" onFinish={onFinish}>
+        <Alert
+          className="!mb-4"
+          type="info"
+          showIcon
+          message={(
+            <div>
+              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!text-[var(--ant-color-primary)] !px-0" href="/keychain">{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
+            </div>
+          )}
+        />
+        <div className="flex flex-col gap-4">
+          <Form.Item
+            className="!mb-0"
+            label={(
+              <div className="flex items-center gap-2">
+                AK&SK
+                <Tooltip title={t('bucketForm.refresh')}>
+                  <Button type="text" size="small" icon={<ReloadOutlined />} loading={keyChainQuery.isFetching} onClick={() => keyChainQuery.refetch()} />
+                </Tooltip>
+              </div>
+            )}
+            required
+            name="keychain_id"
+            rules={[{ required: true, message: t('bucketForm.keychainIdRequired') }]}
+          >
+            <Select
+              className="w-full"
+              loading={isLoading}
+              options={keyOptions}
+              placeholder={t('bucketForm.keychainIdRequired')}
+              optionRender={item => (
+                <div className="flex flex-col gap-1">
+                  {item.label}
+                  <span className="text-gray-400">
+                    {item.data.access_key_id}
+                  </span>
+                </div>
+              )}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Endpoint"
+            required
+            hasFeedback
+            className="!mb-0"
+            name="endpoint"
+            validateDebounce={1000}
+            rules={
+              [
+                { type: 'url', message: t('bucketForm.endpointValidMessage') },
+                endpointValidator,
+              ]
+            }
+          >
+            <Input placeholder={t('bucketForm.endpointPlaceholder')} />
+          </Form.Item>
+          <Form.Item
+            label={t('bucketForm.path')}
+            tooltip={t('bucketForm.pathTooltip')}
+            required
+            hasFeedback
+            className="!mb-0"
+            name="path"
+            validateDebounce={1000}
+            rules={
+              [
+                pathValidator(keyOptions)
+              ]
+            }
+          >
+            <Input placeholder={t('bucketForm.pathPlaceholder')} />
+          </Form.Item>
+          <Form.Item>
+            <Button block type="primary" size="large" loading={isPending} onClick={form.submit}>{t('bucketForm.add')}</Button>
+          </Form.Item>
+        </div>
+      </Form>
 
       {/* 底部说明文字 */}
       <div className="text-center text-gray-600 mt-4">
-        <p>请添加S3存储路径，完成访问授权，目前已支持的兼容S3协议的云存储平台如下：</p>
+        <p>{t('currentSupport')}</p>
 
         {/* 云存储平台图标列表 */}
         <div className="flex justify-center items-center space-x-6 mt-4">
@@ -96,27 +175,40 @@ function RouteComponent() {
   const bodyRef = useRef<HTMLDivElement>(null)
   const bucketEditModalRef = useRef<BucketEditModalRef>(null)
   const [, path] = useBucketQueryKey()
-  const cachedBucket = useCachedBucket()
+  const routerState = useRouterState()
+  const { fetchingCount, data} = useCachedBucket()
+  const { t } = useTranslation()
 
-  const showPlaceholder = cachedBucket?.fetchStatus === 'fetching' && !path
-  const total = _.get(cachedBucket, 'data.total', 0)
+  useEffect(() => {
+    document.title = `Vis3 - ${t('cloud')}`
+  }, [t])
+
+  const total = _.get(data, 'total', 0,)
+  const showEmptyPlaceholder = !!data && !path && total === 0 && fetchingCount === 0 && routerState.status === 'idle'
+  const showBucket = useMemo(() => {
+    if (!!path) {
+      return true
+    }
+
+    return total > 0 && routerState.status === 'idle'
+  }, [path, total, routerState.status])
 
   return (
     <div
       className={clsx('p-4', {
-        'flex flex-1 flex-col': !total,
+        'flex flex-1 flex-col': !showEmptyPlaceholder,
       })}
       ref={bodyRef}
     >
       <Empty className={clsx({
-        block: showPlaceholder,
-        hidden: !showPlaceholder,
+        block: showEmptyPlaceholder,
+        hidden: !showEmptyPlaceholder,
       })}
       />
       <DirectoryTreeProvider>
         <div className={clsx('flex-col gap-4 h-[calc(100vh-88px)]', {
-          hidden: showPlaceholder,
-          flex: !showPlaceholder,
+          hidden: !showBucket,
+          flex: showBucket,
         })}
         >
           <BucketHeader />

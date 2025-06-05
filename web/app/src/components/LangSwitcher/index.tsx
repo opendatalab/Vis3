@@ -1,7 +1,6 @@
-import LangIcon from '@/assets/i18n.svg?react'
-import { useTranslation } from '@visu/i18n';
-
-import { Button, Dropdown } from 'antd'
+import LangIcon from '@/assets/i18n.svg?react';
+import { useTranslation } from '@vis3/kit';
+import { Button, Dropdown } from 'antd';
 import { useMemo } from 'react';
 
 const langOptions = [
@@ -55,7 +54,7 @@ export default function LangSwitcher() {
         ],
       }}
     >
-      <Button type="text" icon={<LangIcon />}>{langLabel}</Button>
+      <Button size="middle" type="text" icon={<LangIcon />}>{langLabel}</Button>
     </Dropdown>
   )
 }

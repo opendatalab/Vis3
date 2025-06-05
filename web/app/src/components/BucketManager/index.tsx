@@ -1,7 +1,6 @@
-import DeleteSvg from '@/assets/delete.svg?react'
-import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import Icon, { ExportOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
-import { i18n, useTranslation } from '@visu/i18n'
+import { i18n, useTranslation } from '@vis3/kit'
 import { Alert, Button, Divider, Form, FormInstance, Input, message, Select, Tooltip } from 'antd'
 import type { FormProps } from 'antd/lib'
 import _ from 'lodash'
@@ -9,12 +8,13 @@ import type { MutableRefObject } from 'react'
 
 import { useEffect, useImperativeHandle, useMemo, useState } from 'react'
 
-import { isBucketAccessible, ping } from '../../api/bucket'
+import DeleteSvg from '@/assets/delete.svg?react'
+import { filterBucket, isBucketAccessible, ping } from '../../api/bucket'
 import { useBatchCreateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import PopPanel from '../PopPanel'
 
-export function pathValidator(keyOptions: any): any {
+export function pathValidator(keyOptions: any, isCreate: boolean = true): any {
   return (form: FormInstance<any>) => ({
     validator: async (_meta: any, value: string) => {
       const values = form.getFieldsValue()
@@ -35,6 +35,23 @@ export function pathValidator(keyOptions: any): any {
 
       if (!value.startsWith('s3://')) {
         return Promise.reject(new Error(i18n.t('bucketForm.pathValidMessage')))
+      }
+
+      // 同一个keychain下，path不能重复
+      let duplicatedPaths = _.filter(values.buckets, (item: any) => item && item.path === value && item.keychain_id === keychain_id)
+      if (duplicatedPaths.length > 1) {
+        return Promise.reject(new Error(i18n.t('bucketForm.pathDuplicated')))
+      }
+
+      
+      if (isCreate) {
+        // 检查服务器有无重复路径
+        const existingBuckets = await filterBucket(value)
+        const duplicatedPath = _.find(existingBuckets.data, (item: any) => item.keychain_id === keychain_id)
+
+        if (duplicatedPath) {
+          return Promise.reject(new Error(i18n.t('bucketForm.duplicatedPathExists')))
+        }
       }
 
       try {
@@ -101,11 +118,31 @@ export interface BucketCreateFormRef {
   close: () => void
 }
 
+export function useKeyOptions() {
+  const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
+
+  const keyOptions = useMemo(() => {
+    return _.map(keyChain, (item) => {
+      return {
+        label: item.name,
+        value: item.id,
+        access_key_id: item.access_key_id,
+      }
+    })
+  }, [keyChain])
+
+  return {
+    keyOptions,
+    isLoading,
+    keyChainQuery,
+  }
+}
+
 export default function BucketManager({ modalRef, className, showTrigger = true }: BucketCreateFormProps) {
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
   const { t } = useTranslation()
-  const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
+  const { keyOptions, isLoading, keyChainQuery } = useKeyOptions()
   const { mutateAsync: batchCreateBucketMutation, isPending } = useBatchCreateBucket()
   const queryClient = useQueryClient()
 
@@ -163,15 +200,17 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
     form.submit()
   }
 
-  const keyOptions = useMemo(() => {
-    return _.map(keyChain, (item) => {
-      return {
-        label: item.name,
-        value: item.id,
-        access_key_id: item.access_key_id,
-      }
-    })
-  }, [keyChain])
+  const initialValues = useMemo(() => {
+    return {
+      buckets: [
+        {
+          keychain_id: keyOptions[0]?.value,
+          endpoint: '',
+          path: '',
+        }
+      ]
+    }
+  }, [keyOptions])
 
   return (
     <>
@@ -194,14 +233,14 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
         )}
       >
         <div className="">
-          <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Form form={form} layout="vertical" onFinish={onFinish} initialValues={initialValues}>
             <Alert
               className="!mb-4"
               type="info"
               showIcon
               message={(
                 <div>
-                  {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')}</Button>
+                  {t('bucketForm.alertMessage')} → <Button type="link" className="!text-[var(--ant-color-primary)] !px-0" target="_blank" size="small" href="/keychain">{t('bucketForm.AS&SKManagement')}<ExportOutlined /></Button>
                 </div>
               )}
             />

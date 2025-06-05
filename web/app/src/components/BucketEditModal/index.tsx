@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from '@vis3/kit'
 import { Form, Input, message, Modal, Select } from 'antd'
 import _ from 'lodash'
 import { useEffect, useImperativeHandle, useState } from 'react'
 
-import { useTranslation } from '@visu/i18n'
 import { useBucket, useUpdateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import { endpointValidator, pathValidator } from '../BucketManager'
@@ -50,8 +50,7 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
   }
 
   const handleOk = async () => {
-    setIsOpen(false)
-    setId(null)
+    await form.validateFields()
     const values = form.getFieldsValue()
     const endpoint = _.get(values, 'endpoint')
     const keychain_id = _.get(values, 'keychain_id')
@@ -70,20 +69,19 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
 
     queryClient.invalidateQueries({ queryKey: ['bucket'] })
     message.success(t('bucketUpdated'))
+    setIsOpen(false)
+    setId(null)
   }
   return (
     <Modal title={t('editBucket')} open={isOpen} onCancel={handleCancel} onOk={handleOk} loading={isLoading}>
       <Form form={form} layout="vertical" name="bucket" initialValues={editingBucket} onFinish={handleOk}>
-        <Form.Item label={t('bucketForm.name')} name="name">
-          <Input placeholder={t('bucketForm.namePlaceholder')} />
-        </Form.Item>
         <Form.Item
           label={t('bucketForm.path')}
           hasFeedback
           name="path"
           required
           validateDebounce={1000}
-          rules={[pathValidator(keychainOptions)]}
+          rules={[pathValidator(keychainOptions, false)]}
         >
           <Input placeholder={t('bucketForm.pathPlaceholder')} />
         </Form.Item>

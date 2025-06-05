@@ -3,12 +3,9 @@ import SiderArrowRight from '@/assets/sider-arrow-right.svg?react'
 import UploadIcon from '@/assets/upload.svg?react'
 import { ClearOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons'
 import { createFileRoute } from '@tanstack/react-router'
-import { useTranslation } from '@visu/i18n'
-import type { BucketParams } from '@visu/kit'
-import { BucketBlock, getBytes, getPathType } from '@visu/kit'
+import { BucketBlock, BucketParams, getBytes, getPathType, useTranslation } from '@vis3/kit'
 import type { UploadProps } from 'antd'
-
-import { Button, List, message, Tooltip, Upload } from 'antd'
+import { Button, List, message, Popconfirm, Tooltip, Upload } from 'antd'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -206,6 +203,10 @@ function RouteComponent() {
   const [fakePath, setFakePath] = useState<string>('')
   const [currentSectionNumber, setCurrentSectionNumber] = useState<number>(0)
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
+
+  useEffect(() => {
+    document.title = `Vis3 - ${t('local')}`
+  }, [t])
 
   useEffect(() => {
     if (selectedFile) {
@@ -462,7 +463,7 @@ function RouteComponent() {
       name: selectedFile.name,
       type,
       content,
-      last_modified: selectedFile.lastModified.toString(),
+      last_modified: selectedFile.lastModified,
       size: selectedFile.content.length,
       created_by: 'local',
       // 模拟range
@@ -481,8 +482,6 @@ function RouteComponent() {
       </Upload.Dragger>
     </div>
   ), [t, props, fileList])
-
-  console.log('datasource', dataSource)
 
   if (fileList.length === 0) {
     return uploader
@@ -503,10 +502,16 @@ function RouteComponent() {
             <div className="flex justify-between px-4">
               <span className="font-bold">{t('fileList')}</span>
               <div className="flex flex-row items-center gap-2">
-                <Upload {...props}>
-                  <Button type="text" size="small" icon={<UploadOutlined />} />
-                </Upload>
-                <Button type="text" size="small" icon={<ClearOutlined />} danger onClick={() => handleDeleteAll()} />
+                <Tooltip title={t('upload.upload')}>
+                  <Upload {...props}>
+                    <Button type="text" size="small" icon={<UploadOutlined />} />
+                  </Upload>
+                </Tooltip>
+                <Popconfirm title={t('deleteAllConfirm')} onConfirm={handleDeleteAll} okText={t('ok')} cancelText={t('cancel')}>
+                  <Tooltip title={t('deleteAll')}>
+                    <Button type="text" size="small" icon={<ClearOutlined />} danger />
+                  </Tooltip>
+                </Popconfirm>
               </div>
             </div>
           )}
@@ -514,7 +519,7 @@ function RouteComponent() {
           renderItem={item => (
             <List.Item
               className={clsx('flex flex-row items-center justify-between !px-4 cursor-pointer hover:bg-gray-100 transition-colors', {
-                'bg-blue-100': selectedFile?.id === item.id,
+                'bg-(--ant-color-primary-bg)': selectedFile?.id === item.id,
               })}
               onClick={() => setSelectedFile(item)}
             >
@@ -528,7 +533,6 @@ function RouteComponent() {
         />
       </div>
 
-      {/* <div className="flex flex-col"> */}
       <div
         onClick={() => setSiderCollapsed(!siderCollapsed)}
         className="fixed left-[242px] top-1/2 transform -translate-y-1/2 z-10 text-gray-300 h-8 w-4 flex items-center justify-center rounded-r-md cursor-pointer hover:text-gray-400 transition-colors"
@@ -539,7 +543,6 @@ function RouteComponent() {
       >
         {siderCollapsed ? <SiderArrowRight /> : <SiderArrowLeft />}
       </div>
-      {/* </div> */}
 
       <div
         className={clsx('flex-1 body-content transition-all h-[calc(100vh-88px)]', {
@@ -553,14 +556,12 @@ function RouteComponent() {
           selectedFile
             ? (
                 <BucketBlock
-                  dataSource={dataSource}
-                  block={{
-                    id: 'original',
-                    path: fakePath,
-                    pathType: dataSource?.type,
-                  }}
+                  id="original"
+                  path={fakePath}
+                  dataSource={dataSource as any}
                   onChange={handleParamsChange}
                   showPagination={false}
+                  showDownload={false}
                 />
               )
             : uploader
