@@ -12,6 +12,7 @@ from ovisu.internal.api import initial_routers
 from ovisu.internal.common.db import init_tables
 from ovisu.internal.common.exceptions import add_exception_handler
 from ovisu.internal.config import settings
+from ovisu.internal.middleware import add_middleware
 
 app = FastAPI(
   title="VisU",
@@ -52,6 +53,7 @@ class NoCacheStaticFiles(StaticFiles):
 initial_routers(app)
 
 add_exception_handler(app)
+# add_middleware(app)
 
 init_tables()
 

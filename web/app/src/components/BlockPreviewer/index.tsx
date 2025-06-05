@@ -55,6 +55,8 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
     return ['bucket']
   }, [path, pageSize, pageNo, bucketId])
 
+  console.log('bucketQueryKey', bucketQueryKey)
+
   useEffect(() => {
     if (id === ROOT_BLOCK_ID) {
       setPageNo(propPageNo)

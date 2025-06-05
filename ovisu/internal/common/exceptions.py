@@ -11,6 +11,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from loguru import logger
 from starlette.exceptions import HTTPException as StarletteHTTPException
+import os
+import pkg_resources
+from fastapi.responses import FileResponse
 
 COMMON = 00000
 AUTH = 10000
@@ -92,6 +95,19 @@ async def http_exception_handler(request: Request, exp: StarletteHTTPException):
     logger.error(exp)
 
     if (
+        isinstance(exp, StarletteHTTPException)
+        and exp.status_code == status.HTTP_404_NOT_FOUND
+        and not request.url.path.startswith("/api")
+    ):
+        return FileResponse(
+            os.path.join(
+                pkg_resources.resource_filename('ovisu.internal', 'statics'),
+                'index.html'
+                ),
+            status_code=200,
+            headers={'Content-Type': 'text/html', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive'}
+        )
+    elif (
         isinstance(exp, StarletteHTTPException)
         and exp.status_code == status.HTTP_403_FORBIDDEN
     ):

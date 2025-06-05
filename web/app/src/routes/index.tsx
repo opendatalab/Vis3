@@ -3,6 +3,7 @@ import { Button } from 'antd'
 import clsx from 'clsx'
 import type { BucketEditModalRef } from '../components/BucketEditModal'
 
+import { useIsFetching } from '@tanstack/react-query'
 import '@visu/kit/dist/index.css'
 import _ from 'lodash'
 import { useRef } from 'react'
@@ -97,14 +98,18 @@ function RouteComponent() {
   const bucketEditModalRef = useRef<BucketEditModalRef>(null)
   const [, path] = useBucketQueryKey()
   const cachedBucket = useCachedBucket()
+  const fetchingCount = useIsFetching({ queryKey: ['bucket'] })
 
-  const showPlaceholder = cachedBucket?.fetchStatus === 'fetching' && !path
   const total = _.get(cachedBucket, 'data.total', 0)
+  const showPlaceholder = fetchingCount === 0 && !path && total === 0
+
+  console.log('cachedBucket', cachedBucket)
+  console.log('isFetching', showPlaceholder, fetchingCount)
 
   return (
     <div
       className={clsx('p-4', {
-        'flex flex-1 flex-col': !total,
+        'flex flex-1 flex-col': !showPlaceholder,
       })}
       ref={bodyRef}
     >

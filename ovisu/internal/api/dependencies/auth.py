@@ -34,6 +34,7 @@ async def get_current_user(
     """
     获取当前用户
     """
+    logger.info(f"\(^o^)/~ get_current_user: {token}")
     if not token:
         logger.warning("未提供认证令牌")
         raise AppEx(

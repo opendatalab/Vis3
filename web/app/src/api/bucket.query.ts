@@ -64,5 +64,7 @@ export function useCachedBucket() {
   const [queryKey] = useBucketQueryKey()
   const queryClient = useQueryClient()
 
+  console.log('queryKey', queryKey)
+
   return queryClient.getQueryState(queryKey as any)
 }
