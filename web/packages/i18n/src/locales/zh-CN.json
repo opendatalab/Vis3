@@ -215,5 +215,16 @@
 
   "codeViewer": {
     "unparsableData": "不可解析成字符串的数据的数据"
+  },
+  "addFirstBucket": "添加第一个 Bucket",
+  "currentSupport": "目前支持的云存储平台：",
+  "supportedCloudPlatforms": {
+    "huawei": "华为云",
+    "tencent": "腾讯云",
+    "sensetime": "商汤大装置AOS",
+    "aws": "AWS",
+    "aliyun": "阿里云 OSS",
+    "inspur": "浪潮云",
+    "microsoft": "微软 Azure"
   }
 }

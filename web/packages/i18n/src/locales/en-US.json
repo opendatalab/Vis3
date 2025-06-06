@@ -214,5 +214,16 @@
 
   "codeViewer": {
     "unparsableData": "Unparsable data type"
+  },
+  "addFirstBucket": "Add your first bucket",
+  "currentSupport": "Currently supported cloud storage platforms:",
+  "supportedCloudPlatforms": {
+    "huawei": "Huawei Cloud",
+    "tencent": "Tencent Cloud",
+    "sensetime": "SenseTime AOS",
+    "aws": "AWS",
+    "aliyun": "Aliyun OSS",
+    "inspur": "Inspur Cloud",
+    "microsoft": "Microsoft Azure"
   }
 }

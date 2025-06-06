@@ -1,4 +1,3 @@
-import DeleteSvg from '@/assets/delete.svg?react'
 import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { i18n, useTranslation } from '@vis3/i18n'
@@ -9,6 +8,7 @@ import type { MutableRefObject } from 'react'
 
 import { useEffect, useImperativeHandle, useMemo, useState } from 'react'
 
+import DeleteSvg from '@/assets/delete.svg?react'
 import { isBucketAccessible, ping } from '../../api/bucket'
 import { useBatchCreateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
@@ -101,11 +101,31 @@ export interface BucketCreateFormRef {
   close: () => void
 }
 
+export function useKeyOptions() {
+  const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
+
+  const keyOptions = useMemo(() => {
+    return _.map(keyChain, (item) => {
+      return {
+        label: item.name,
+        value: item.id,
+        access_key_id: item.access_key_id,
+      }
+    })
+  }, [keyChain])
+
+  return {
+    keyOptions,
+    isLoading,
+    keyChainQuery,
+  }
+}
+
 export default function BucketManager({ modalRef, className, showTrigger = true }: BucketCreateFormProps) {
   const [open, setOpen] = useState(false)
   const [form] = Form.useForm()
   const { t } = useTranslation()
-  const { data: keyChain, isLoading, ...keyChainQuery } = useAllKeychains()
+  const { keyOptions, isLoading, keyChainQuery } = useKeyOptions()
   const { mutateAsync: batchCreateBucketMutation, isPending } = useBatchCreateBucket()
   const queryClient = useQueryClient()
 
@@ -162,16 +182,6 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
   const handleSave = () => {
     form.submit()
   }
-
-  const keyOptions = useMemo(() => {
-    return _.map(keyChain, (item) => {
-      return {
-        label: item.name,
-        value: item.id,
-        access_key_id: item.access_key_id,
-      }
-    })
-  }, [keyChain])
 
   return (
     <>

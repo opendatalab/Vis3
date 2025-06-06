@@ -1,1 +1,1 @@
-(function() { window.__CONFIG__ = { ENABLE_AUTH: false, VERSION: '1.0.0-alpha.11' }; })();
+(function() { window.__CONFIG__ = { ENABLE_AUTH: false, VERSION: '1.0.0-alpha.12' }; })();
