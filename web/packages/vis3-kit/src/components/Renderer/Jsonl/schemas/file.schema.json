@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "文件类数据格式标准",
+  "properties": {
+    "track_id": {
+      "type": "string",
+      "description": "全局唯一id，不随获取、清洗方法的变化而变化。可以是uuid，也可以是hash值"
+    },
+    "url": {
+      "type": "string",
+      "description": "文件的URL，通常适用于从互联网上获取的PDF/电子书，可为空。",
+      "default": ""
+    },
+    "path": {
+      "type": "string",
+      "description": "文件的存储路径，通常为S3路径。",
+      "default": ""
+    },
+    "date": {
+      "type": "integer",
+      "description": "采集的爬取时间"
+    },
+    "content_length": {
+      "type": "integer",
+      "description": "文件大小，字节数"
+    },
+    "content_type": {
+      "type": "string",
+      "description": "文件类型"
+    },
+    "title": {
+      "type": "string",
+      "description": "网页的标题"
+    },
+    "body_bytes": {
+      "type": "string",
+      "description": "文件的字节流采用base64编码表示"
+    },
+    "remark": {
+      "type": "object",
+      "description": "备注信息，例如：点赞数，爬取时的主机名等。key-value结构体，key不要求在文档之间对其。"
+    },
+    "doc_loc": {
+      "type": "string",
+      "description": "数据的唯一S3路径"
+    },
+    "track_loc": {
+      "type": "array",
+      "description": "数据之前的S3路径列表",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["track_id", "path", "body_bytes"]
+}
