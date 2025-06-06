@@ -10,11 +10,12 @@ from vis3.internal.api import initial_routers
 from vis3.internal.common.db import init_tables
 from vis3.internal.common.exceptions import add_exception_handler
 from vis3.internal.config import settings
+from vis3.version import version
 
 app = FastAPI(
   title="VisU",
   description="Visualize s3 data",
-  version="0.1.0",
+  version=version,
   terms_of_service="",
   contact={
       "name": "VisU",
@@ -59,12 +60,16 @@ cli = Typer()
 
 @cli.callback(invoke_without_command=True)
 def main(
-    host: str = "localhost", port: int = 8000
+    host: str = "localhost", 
+    port: int = 8000,
+    auth: bool = False
 ):
     if port:
         settings.PORT = str(port)  # 确保PORT是字符串
     if host:
         settings.HOST = host
+    
+    settings.ENABLE_AUTH = auth
         
     logger.info(f"Start server: http://{settings.HOST}:{settings.PORT}")
     uvicorn.run(app=app, host=settings.HOST, port=int(settings.PORT))
