@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "ovisu"
+name = "vis3"
 version = '1.0.0-alpha.8'
 description = "Visualize s3 data"
 authors = [
@@ -9,7 +9,7 @@ repository = "https://github.com/OpenDataLab/VisU"
 readme = "README.md"
 license = "Apache 2.0"
 
-packages = [{include = "ovisu"}]
+packages = [{include = "vis3"}]
 
 [tool.poetry.dependencies]
 python = "==3.11.*"
@@ -38,7 +38,7 @@ typer = {extras = ["all"], version = "^0.15.3"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 [tool.poetry.scripts]
-ovisu = "ovisu.main:cli"
+vis3 = "vis3.main:cli"
 
 
 [build-system]
