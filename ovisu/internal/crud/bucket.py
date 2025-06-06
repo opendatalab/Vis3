@@ -1,6 +1,8 @@
-from typing import List
+from typing import List, Tuple
 
 from fastapi import status
+from sqlalchemy import func
+from sqlalchemy.future import select
 from sqlalchemy.orm import Session
 
 from ovisu.internal.api.v1.schema.request.bucket import (
@@ -22,8 +24,12 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         else:
             return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.state == State.ENABLED).first()
     
-    async def get_by_user_id(self, db: Session, *, user_id: int) -> List[Bucket]:
-        return db.query(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED).all()
+    async def get_by_user_id(self, db: Session, *, user_id: int) -> Tuple[List[Bucket], int]:
+        query = select(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED)
+        count_query = select(func.count()).select_from(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED)
+        result = db.execute(query).scalars().all()
+        total = db.scalar(count_query)
+        return result, total
     
     async def list_by_path(self, db: Session, *, path: str) -> List[Bucket]:
         return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.state == State.ENABLED).all()

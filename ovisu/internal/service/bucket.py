@@ -217,7 +217,7 @@ async def get_buckets_or_objects(
     result = None
     # 获取所有bucket列表
     if path is None or path == "" or path == "/":
-        buckets = await bucket_crud.get_by_user_id(db, user_id=user_id) if user_id else await bucket_crud.get_multi(db)
+        buckets, total = await bucket_crud.get_by_user_id(db, user_id=user_id) if user_id else await bucket_crud.get_multi(db)
         result = [
             BucketResponse(
                 id=bucket.id,
@@ -235,7 +235,7 @@ async def get_buckets_or_objects(
             for bucket in buckets
         ]
 
-        return ListResponse[BucketResponse](data=result, total=len(result))
+        return ListResponse[BucketResponse](data=result, total=total)
     
     _, s3_reader = await get_bucket(path, db, id)
 
