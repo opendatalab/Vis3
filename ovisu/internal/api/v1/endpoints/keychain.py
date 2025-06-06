@@ -85,7 +85,7 @@ async def get_all_keychains(
         )
     
     # 否则只获取当前用户的钥匙串
-    keychains = await keychain_crud.get_all_by_user(
+    keychains, total = await keychain_crud.get_all_by_user(
         db, user_id=current_user.id
     )
     return ListResponse(
@@ -93,7 +93,7 @@ async def get_all_keychains(
             make_keychain_response(keychain)
             for keychain in keychains
         ],
-        total=len(keychains),
+        total=total,
     )
 
 

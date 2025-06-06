@@ -53,7 +53,6 @@ class NoCacheStaticFiles(StaticFiles):
 initial_routers(app)
 
 add_exception_handler(app)
-# add_middleware(app)
 
 init_tables()
 

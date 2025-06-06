@@ -30,25 +30,29 @@ class BaseCrud(Generic[T, CreateSchemaType, UpdateSchemaType]):
         result = db.execute(select(self.model).filter(self.model.id == id, self.model.created_by == user_id))
         return result.scalars().first()
     
-    async def get_all(self, db: AsyncSession) -> List[T]:
+    async def get_all(self, db: AsyncSession) -> Tuple[List[T], int]:
         """
         获取所有对象
         """
         query = select(self.model).filter(self.model.state == State.ENABLED)
+        count_query = select(func.count()).select_from(self.model).filter(self.model.state == State.ENABLED)
         if hasattr(self.model, "created_at"):
             query = query.order_by(self.model.created_at.desc())
-        result = db.execute(query)
-        return result.scalars().all()
+        result = db.execute(query).scalars().all()
+        total = db.scalar(count_query)
+        return result, total
     
-    async def get_all_by_user(self, db: AsyncSession, user_id: int) -> List[T]:
+    async def get_all_by_user(self, db: AsyncSession, user_id: int) -> Tuple[List[T], int]:
         """
         获取所有对象
         """
         query = select(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED)
+        count_query = select(func.count()).select_from(self.model).filter(self.model.created_by == user_id, self.model.state == State.ENABLED)
         if hasattr(self.model, "created_at"):
             query = query.order_by(self.model.created_at.desc())
-        result = db.execute(query)
-        return result.scalars().all()
+        result = db.execute(query).scalars().all()
+        total = db.scalar(count_query)
+        return result, total
 
     async def get_multi(
         self, db: AsyncSession, *, skip: int = 0, limit: int = 100
