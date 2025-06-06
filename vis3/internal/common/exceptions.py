@@ -128,7 +128,7 @@ async def http_exception_handler(request: Request, exp: StarletteHTTPException):
         detail = str(exp)
 
     return JSONResponse(
-        status_code=500,
+        status_code=hasattr(exp, "status_code") and exp.status_code or 500,
         content={
             "err_code": ErrorCode.CODE_00003_CLIENT_ERROR.value[0],
             "detail": detail,

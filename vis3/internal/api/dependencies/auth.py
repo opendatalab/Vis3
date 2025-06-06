@@ -27,16 +27,13 @@ async def get_token_from_request(request: Request, token: str | None = Depends(o
     if access_token:
         return access_token
     
-    raise AppEx(
-        code=ErrorCode.AUTH_10001_NOT_AUTHENTICATED,
-        status_code=status.HTTP_401_UNAUTHORIZED,
-    )
+    return None
 
 
 async def get_current_user(
     request: Request,
     db: Session = Depends(get_db), 
-    token: str = Depends(get_token_from_request)
+    token: str | None = Depends(get_token_from_request)
 ) -> User:
     """
     获取当前用户

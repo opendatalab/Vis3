@@ -24,8 +24,9 @@ export function useRegister() {
   })
 }
 
-export function useMe() {
+export function useMe(enabled: boolean) {
   return useQuery({
+    enabled,
     queryKey: ['me'],
     staleTime: Infinity,
     queryFn: getUserInfo,

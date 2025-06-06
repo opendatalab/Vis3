@@ -12,9 +12,10 @@ import Avatar from '../Avatar'
 import LangSwitcher from '../LangSwitcher'
 
 export default function Header() {
+  const enableAuth = window.__CONFIG__.ENABLE_AUTH
   const location = useLocation()
   const { t } = useTranslation()
-  const { data: me } = useMe()
+  const { data: me } = useMe(enableAuth)
   const navigate = useNavigate()
   const { mutateAsync: logoutAsync } = useLogout()
 
@@ -67,30 +68,32 @@ export default function Header() {
           </Button>
 
           {/* 用户头像 */}
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  label: t('bucketForm.AS&SKManagement'),
-                  key: 'keychain',
-                  onClick: () => {
-                    navigate({ to: '/keychain' })
+          {enableAuth && (
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    label: t('bucketForm.AS&SKManagement'),
+                    key: 'keychain',
+                    onClick: () => {
+                      navigate({ to: '/keychain' })
+                    },
                   },
-                },
-                {
-                  label: t('logout'),
-                  key: 'logout',
-                  onClick: () => {
-                    logoutAsync().then(() => {
-                      navigate({ to: '/login' })
-                    })
+                  {
+                    label: t('logout'),
+                    key: 'logout',
+                    onClick: () => {
+                      logoutAsync().then(() => {
+                        navigate({ to: '/login' })
+                      })
+                    },
                   },
-                },
-              ],
-            }}
-          >
-            <Avatar className="cursor-pointer" alt={me?.username} size="sm" />
-          </Dropdown>
+                ],
+              }}
+            >
+              <Avatar className="cursor-pointer" alt={me?.username} size="sm" />
+            </Dropdown>
+          )}
         </div>
       </div>
     </header>

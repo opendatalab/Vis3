@@ -5,6 +5,7 @@ from typing import Any
 import pkg_resources
 from loguru import logger
 from pydantic_settings import BaseSettings
+
 from vis3.internal.common.io import get_data_dir
 from vis3.version import version
 
