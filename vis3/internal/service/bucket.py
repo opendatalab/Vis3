@@ -5,6 +5,7 @@ from fastapi import status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from loguru import logger
 from sqlalchemy.orm import Session
+
 from vis3.internal.api.v1.schema.response import ItemResponse, ListResponse
 from vis3.internal.api.v1.schema.response.bucket import BucketResponse, PathType
 from vis3.internal.client.s3_reader import S3Reader
@@ -226,7 +227,7 @@ async def get_buckets_or_objects(
                 if bucket.path.endswith("/")
                 else PathType.File,
                 path=bucket.path,
-                owner=bucket.user.username,
+                owner=bucket.user.username if bucket.user else None,
                 endpoint=bucket.endpoint,
                 last_modified=None,
                 size=None,

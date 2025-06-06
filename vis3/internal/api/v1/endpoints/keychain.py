@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
+
 from vis3.internal.api.dependencies.auth import get_auth_user_or_error
 from vis3.internal.api.v1.schema.request.keychain import (
     KeychainCreateBody,
@@ -23,7 +24,7 @@ def make_keychain_response(keychain: KeyChain) -> KeyChainResponse:
         access_key_id=keychain.access_key_id,
         secret_key_id=keychain.secret_key_id,
         created_at=keychain.created_at,
-        created_by=keychain.user.username,
+        created_by=keychain.user.username if keychain.user else None,
         updated_at=keychain.updated_at,
     )
 

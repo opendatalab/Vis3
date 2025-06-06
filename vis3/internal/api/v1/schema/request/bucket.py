@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+
 from vis3.internal.schema.state import State
 
 
@@ -22,4 +23,4 @@ class BucketUpdateBody(BaseModel):
     state: State | None = None
 
 class BucketUpdatePayload(BucketUpdateBody):
-    updated_by: int
+    updated_by: int | None = None

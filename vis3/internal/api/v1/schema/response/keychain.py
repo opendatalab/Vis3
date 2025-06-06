@@ -7,7 +7,7 @@ class KeyChainResponse(KeyChainBase):
     id: int
     created_at: datetime
     updated_at: datetime
-    created_by: str
+    created_by: str | None
 
     class Config:
         from_attributes = True 
