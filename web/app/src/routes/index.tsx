@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Alert, Button, Form, Input, Select, Tooltip } from 'antd'
 import clsx from 'clsx'
 
-import { useIsFetching } from '@tanstack/react-query'
+import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from '@vis3/i18n'
 import '@vis3/kit/dist/index.css'
 import _ from 'lodash'
@@ -10,12 +10,12 @@ import { useRef } from 'react'
 
 
 import { ReloadOutlined } from '@ant-design/icons'
-import { useBucketQueryKey, useCachedBucket } from '../api/bucket.query'
+import { useBucketQueryKey, useCachedBucket, useCreateBucket } from '../api/bucket.query'
 import BlockPreviewer from '../components/BlockPreviewer'
 import BucketHeader from '../components/BlockPreviewer/Header'
 import type { BucketEditModalRef } from '../components/BucketEditModal'
 import BucketEditModal from '../components/BucketEditModal'
-import BucketManager, { endpointValidator, openBucketManager, pathValidator, useKeyOptions } from '../components/BucketManager'
+import BucketManager, { endpointValidator, pathValidator, useKeyOptions } from '../components/BucketManager'
 import DirectoryTree, { DirectoryTreeProvider } from '../components/DirectoryTree'
 
 
@@ -27,13 +27,13 @@ function Empty({ className }: { className?: string }) {
   const { t } = useTranslation()
   const [form] = Form.useForm()
   const { keyOptions, isLoading, keyChainQuery } = useKeyOptions()
+  const { mutateAsync: createBucketMutation, isPending } = useCreateBucket()
+  const queryClient = useQueryClient()
 
-  const onFinish = (values: any) => {
-    console.log('values', values)
-  }
-
-  const showPanel = () => {
-    openBucketManager()
+  const onFinish = async (values: any) => {
+    await createBucketMutation(values)
+    queryClient.invalidateQueries({ queryKey: ['bucket'] })
+    form.resetFields()
   }
 
   const supportedCloudPlatforms = [
@@ -68,7 +68,7 @@ function Empty({ className }: { className?: string }) {
   ]
 
   return (
-    <div className={clsx('container mx-auto mt-24 flex flex-col items-center', className)}>
+    <div className={clsx('container mx-auto mt-18 flex flex-col items-center', className)}>
       {/* 产品标题和描述 */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">{t('addFirstBucket')}</h1>
@@ -92,6 +92,13 @@ function Empty({ className }: { className?: string }) {
           )}
         />
         <div className="flex flex-col gap-4">
+          <Form.Item
+            label={t('bucketForm.name')}
+            className="!mb-0"
+            name="name"
+          >
+            <Input placeholder={t('bucketForm.namePlaceholder')} />
+          </Form.Item>
           <Form.Item
             className="!mb-0"
             label={(
@@ -154,7 +161,7 @@ function Empty({ className }: { className?: string }) {
             <Input placeholder={t('bucketForm.pathPlaceholder')} />
           </Form.Item>
           <Form.Item>
-            <Button block type="primary" size="large" onClick={showPanel}>{t('bucketForm.add')}</Button>
+            <Button block type="primary" size="large" loading={isPending} onClick={form.submit}>{t('bucketForm.add')}</Button>
           </Form.Item>
         </div>
       </Form>
