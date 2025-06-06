@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from loguru import logger
 from sqlalchemy.orm import Session
+
 from vis3.internal.common.db import get_db
 from vis3.internal.common.exceptions import AppEx, ErrorCode
 from vis3.internal.config import settings
@@ -22,25 +23,26 @@ async def get_token_from_request(request: Request, token: str | None = Depends(o
         return token
     
     # 如果Authorization头中没有token，尝试从cookie中获取
-    return request.cookies.get("access_token")
+    access_token = request.cookies.get("access_token")
+    if access_token:
+        return access_token
+    
+    raise AppEx(
+        code=ErrorCode.AUTH_10001_NOT_AUTHENTICATED,
+        status_code=status.HTTP_401_UNAUTHORIZED,
+    )
 
 
 async def get_current_user(
     request: Request,
     db: Session = Depends(get_db), 
-    token: str | None = Depends(get_token_from_request)
+    token: str = Depends(get_token_from_request)
 ) -> User:
     """
     获取当前用户
     """
     logger.info(f"\(^o^)/~ get_current_user: {token}")
-    if not token:
-        logger.warning("未提供认证令牌")
-        raise AppEx(
-            code=ErrorCode.AUTH_10001_NOT_AUTHENTICATED,
-            status_code=status.HTTP_401_UNAUTHORIZED,
-        )
-        
+    
     try:
         payload = jwt.decode(
             token, settings.PASSWORD_SECRET_KEY, algorithms=[settings.TOKEN_GENERATE_ALGORITHM]
