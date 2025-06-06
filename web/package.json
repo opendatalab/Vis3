@@ -1,17 +1,17 @@
 {
-  "name": "visu-web",
+  "name": "vis3-web",
   "version": "1.0.0",
-  "description": "visu web workspace",
+  "description": "vis3 web workspace",
   "workspaces": [
     "app",
     "packages/*"
   ],
   "author": {
-    "name": "visu",
-    "email": "visu@visu.com"
+    "name": "vis3",
+    "email": "vis3@vis3.com"
   },
   "scripts": {
-    "build": "pnpm --filter @visu/i18n --filter @visu/kit --filter visu-web-app build"
+    "build": "pnpm --filter @vis3/i18n --filter @vis3/kit --filter vis3-web-app build"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.12.0",
