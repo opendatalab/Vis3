@@ -1,5 +1,5 @@
 import { CopyOutlined } from '@ant-design/icons'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Tooltip } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 

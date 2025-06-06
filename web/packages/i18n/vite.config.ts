@@ -10,7 +10,7 @@ export default defineConfig({
   build: {
     lib: {
       entry: 'src/index.ts',
-      name: 'VisuI18n',
+      name: 'Vis3I18n',
       formats: ['es', 'umd'],
       fileName: 'index',
     },

@@ -2,7 +2,7 @@ import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { python } from '@codemirror/lang-python'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { useMemo } from 'react'
 
 import { useCodeViewerContext } from './context'

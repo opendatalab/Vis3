@@ -2,7 +2,7 @@ import {
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Space, Tooltip } from 'antd'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'

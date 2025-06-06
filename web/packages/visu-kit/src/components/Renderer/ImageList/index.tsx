@@ -1,5 +1,5 @@
 import styled from '@emotion/styled'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Image } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 

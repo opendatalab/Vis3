@@ -1,4 +1,4 @@
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { useMemo, useState } from 'react'
 
 import LineWrapIcon from '../../../assets/line-wrap.svg?react'

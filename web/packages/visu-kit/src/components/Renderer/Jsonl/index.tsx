@@ -1,6 +1,6 @@
 import { CloseOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Tooltip } from 'antd'
 import { Draft07 } from 'json-schema-library'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'

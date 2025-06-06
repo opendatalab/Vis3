@@ -10,7 +10,7 @@ export default defineConfig({
     target: 'esnext',
     lib: {
       entry: 'src/index.ts',
-      name: 'VisuKit',
+      name: 'Vis3Kit',
       formats: ['es', 'umd'],
       fileName: 'index',
     },

@@ -1,4 +1,4 @@
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { useCallback, useMemo, useState } from 'react'
 
 import EyeCloseIcon from '../../../assets/eye-close.svg?react'

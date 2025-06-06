@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react'
 import FullscreenIn from '../../assets/full-screen-in.svg?react'
 import FullscreenOut from '../../assets/full-screen-out.svg?react'
 
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import BinaryButton from '../BinaryButton'
 
 export interface FullScreenButtonProps {

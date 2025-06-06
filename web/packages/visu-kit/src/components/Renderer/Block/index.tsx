@@ -1,7 +1,7 @@
 import { ArrowUpOutlined, CloseOutlined, DownloadOutlined, ExportOutlined, InfoCircleOutlined, LeftOutlined, LoadingOutlined, RightOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -22,8 +22,8 @@ function formatBucketList(bucketList: BucketItem[], parentPath: string) {
   }))
 }
 
-export const PAGENATION_CHANGE_EVENT = 'visu-pagenation-change'
-export const PATH_CORRECTION_EVENT = 'visu-path-correction'
+export const PAGENATION_CHANGE_EVENT = 'vis3-pagenation-change'
+export const PATH_CORRECTION_EVENT = 'vis3-path-correction'
 
 const StyledBlockWrapper = styled.div`
   height: 100%;

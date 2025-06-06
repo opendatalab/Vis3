@@ -1,7 +1,7 @@
 {
-  "name": "@visu/i18n",
+  "name": "@vis3/i18n",
   "version": "1.0.6",
-  "description": "i18n for visu",
+  "description": "i18n for vis3",
   "scripts": {
     "build": "vite build && tsc -d --emitDeclarationOnly",
     "clean": "rimraf ./node_modules",
@@ -19,14 +19,14 @@
   "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/opendatalab/visu.git"
+    "url": "git+https://github.com/opendatalab/vis3.git"
   },
   "author": "garyshen",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/opendatalab/visu/issues"
+    "url": "https://github.com/opendatalab/vis3/issues"
   },
-  "homepage": "https://github.com/opendatalab/visu#readme",
+  "homepage": "https://github.com/opendatalab/vis3#readme",
   "dependencies": {
     "i18next": "^23.2.3",
     "i18next-browser-languagedetector": "^8.0.2",
