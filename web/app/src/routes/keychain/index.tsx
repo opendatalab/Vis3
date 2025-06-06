@@ -1,7 +1,7 @@
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Alert, Button, Card, Empty, message, Popconfirm } from 'antd'
 import dayjs from 'dayjs'
 import _ from 'lodash'

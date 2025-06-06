@@ -2,7 +2,7 @@ import CloudSvg from '@/assets/cloud.svg?react'
 import HelpSvg from '@/assets/help.svg?react'
 import LocalSvg from '@/assets/local.svg?react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Dropdown } from 'antd'
 import clsx from 'clsx'
 

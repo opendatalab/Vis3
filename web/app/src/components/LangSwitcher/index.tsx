@@ -1,7 +1,7 @@
-import LangIcon from '@/assets/i18n.svg?react'
-import { useTranslation } from '@visu/i18n';
+import LangIcon from '@/assets/i18n.svg?react';
+import { useTranslation } from '@vis3/i18n';
 
-import { Button, Dropdown } from 'antd'
+import { Button, Dropdown } from 'antd';
 import { useMemo } from 'react';
 
 const langOptions = [

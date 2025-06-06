@@ -1,4 +1,4 @@
-import { BucketItem, FileIcon } from "@visu/kit";
+import { BucketItem, FileIcon } from "@vis3/kit";
 import { Button, Skeleton, Tooltip, Tree, TreeDataNode } from "antd";
 import { createContext, MutableRefObject, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import styles from './index.module.css';
@@ -9,7 +9,7 @@ import FolderIcon from '@/assets/folder.svg?react';
 import { ArrowDownOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { useTranslation } from "@visu/i18n";
+import { useTranslation } from "@vis3/i18n";
 import clsx from "clsx";
 import _ from "lodash";
 import { digBucket } from "../../api/bucket";

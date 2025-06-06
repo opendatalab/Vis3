@@ -3,7 +3,7 @@ import { Form, Input, message, Modal, Select } from 'antd'
 import _ from 'lodash'
 import { useEffect, useImperativeHandle, useState } from 'react'
 
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { useBucket, useUpdateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import { endpointValidator, pathValidator } from '../BucketManager'

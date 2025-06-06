@@ -3,7 +3,7 @@ import type { Ref } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Form, Input, message, Modal } from 'antd'
 
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { useImperativeHandle, useState } from 'react'
 import type { KeychainCreateBody } from '../../../api/keychain'
 import { useCreateKeychain } from '../../../api/keychain.query'

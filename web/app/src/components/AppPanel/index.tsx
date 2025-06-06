@@ -1,6 +1,6 @@
 import ToolboxSvg from '@/assets/toolbox.svg?react'
 import { ArrowRightOutlined } from '@ant-design/icons'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Popover } from 'antd'
 import { useMemo } from 'react'
 

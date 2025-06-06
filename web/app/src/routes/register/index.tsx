@@ -1,6 +1,6 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { Button, Form, Input, message } from 'antd'
 import type { RegisterPayload } from '../../api/user'
 import { getUserInfo } from '../../api/user'

@@ -1,5 +1,5 @@
-import type { BlockInfo, BucketBlockProps, BucketItem, BucketParams } from '@visu/kit'
-import { BucketBlock, getBasename, getPathType } from '@visu/kit'
+import type { BlockInfo, BucketBlockProps, BucketItem, BucketParams } from '@vis3/kit'
+import { BucketBlock, getBasename, getPathType } from '@vis3/kit'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -11,7 +11,7 @@ import { correctPath } from './Header'
 
 import BucketIcon from '@/assets/bucket.svg?react'
 import DeleteSvg from '@/assets/delete.svg?react'
-import { useTranslation } from '@visu/i18n'
+import { useTranslation } from '@vis3/i18n'
 import { deleteBucket, digBucket, filterBucket } from '../../api/bucket'
 import { ROOT_BLOCK_ID } from '../../constant'
 import { download, gid } from '../../utils'

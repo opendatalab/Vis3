@@ -4,7 +4,7 @@ import clsx from 'clsx'
 import type { BucketEditModalRef } from '../components/BucketEditModal'
 
 import { useIsFetching } from '@tanstack/react-query'
-import '@visu/kit/dist/index.css'
+import '@vis3/kit/dist/index.css'
 import _ from 'lodash'
 import { useRef } from 'react'
 import { useBucketQueryKey, useCachedBucket } from '../api/bucket.query'
