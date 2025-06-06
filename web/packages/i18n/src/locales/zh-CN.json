@@ -72,6 +72,7 @@
     "loginNow": "立即登录"
   },
   "slogan": "大模型语料可视化工具",
+  "sloganDescription": "无缝对接主流云存储与本地数据源，深度解析多格式数据内容",
   "fileList": "文件列表",
   "bucketUpdated": "Bucket 更新",
   "editBucket": "编辑 Bucket",

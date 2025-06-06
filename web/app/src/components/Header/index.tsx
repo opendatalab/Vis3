@@ -37,7 +37,7 @@ export default function Header() {
         <div className="flex items-center space-x-2">
           <Link to="/" className="text-2xl flex items-center">
             <img src="/logo.svg" alt="logo" className="w-8 h-8" />
-            <span className="ml-2">VisU</span>
+            <span className="ml-2">Vis3</span>
           </Link>
 
           {/* 功能导航 */}

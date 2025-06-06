@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import type { BucketEditModalRef } from '../components/BucketEditModal'
 
 import { useIsFetching } from '@tanstack/react-query'
+import { useTranslation } from '@vis3/i18n'
 import '@vis3/kit/dist/index.css'
 import _ from 'lodash'
 import { useRef } from 'react'
@@ -50,6 +51,8 @@ const supportedCloudPlatforms = [
 ]
 
 function Empty({ className }: { className?: string }) {
+  const { t } = useTranslation()
+  
   const showPanel = () => {
     openBucketManager()
   }
@@ -58,8 +61,8 @@ function Empty({ className }: { className?: string }) {
     <div className={clsx('container mx-auto mt-24', className)}>
       {/* 产品标题和描述 */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">VisU – 大模型语料可视化工具</h1>
-        <p className="text-lg text-gray-600">无缝对接主流云存储与本地数据源，深度解析多格式数据内容</p>
+        <h1 className="text-4xl font-bold mb-4">Vis3 – {t('slogan')}</h1>
+        <p className="text-lg text-gray-600">{t('sloganDescription')}</p>
       </div>
 
       {/* 添加路径卡片区域 */}
