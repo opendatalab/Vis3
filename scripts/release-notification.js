@@ -31,7 +31,7 @@ async function main() {
 
   try {
     const payload = makeLarkMessage(
-      `可视化工具（名字待定）@v${releaseTag}`,
+      `Vis3@v${releaseTag}`,
       `${format(releaseNotes)}${frontendContent}`,
       '点击访问',
       pypiUrl,

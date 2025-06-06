@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 from typing import Any
 
 import uvicorn
@@ -7,11 +5,11 @@ from fastapi import FastAPI, Response
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from typer import Typer
+
 from vis3.internal.api import initial_routers
 from vis3.internal.common.db import init_tables
 from vis3.internal.common.exceptions import add_exception_handler
 from vis3.internal.config import settings
-from vis3.internal.middleware import add_middleware
 
 app = FastAPI(
   title="VisU",

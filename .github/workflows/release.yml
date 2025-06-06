@@ -146,13 +146,13 @@ jobs:
 
       # ====================== post release ======================
       
-      # - name: Send release notification
-      #   env:
-      #     CHANGELOG: ${{ github.event.inputs.changelog != '' && format('## Frontend changelog👇🏻 \n\n{0}\n\n\n', github.event.inputs.changelog) || '' }}
-      #     WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      #     RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
-      #     NEXT_VERSION: ${{ env.NEXT_VERSION }}
-      #     PYPI_URL: ${{ env.PYPI_URL }}
-      #   run: |
-      #     node ./scripts/release-notification.js
+      - name: Send release notification
+        env:
+          CHANGELOG: ${{ github.event.inputs.changelog != '' && format('## Frontend changelog👇🏻 \n\n{0}\n\n\n', github.event.inputs.changelog) || '' }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
+          NEXT_VERSION: ${{ env.NEXT_VERSION }}
+          PYPI_URL: ${{ env.PYPI_URL }}
+        run: |
+          node ./scripts/release-notification.js
           
