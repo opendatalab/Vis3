@@ -138,6 +138,8 @@ jobs:
           poetry publish --build --skip-existing
 
       - name: Semantic Release
+        # only release main branch
+        if: ${{ github.ref_name == 'main'}}
         run: |
           npm i -g semantic-release @semantic-release/git @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec @semantic-release/github
           semantic-release --yes
