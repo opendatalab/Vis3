@@ -315,7 +315,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                   <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
                     <div className="flex items-center gap-2">
                       <BucketIcon />
-                      <Link className="!hover:underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
+                      <Link className="hover:!underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
                       {item.name && <Tag>{item.name}</Tag>}
                     </div>
                     <div className="flex gap-2">

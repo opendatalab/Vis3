@@ -15,14 +15,12 @@ function RootComponent() {
   const isLoginOrRegister = pathname.includes('login') || pathname.includes('register')
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen css-var-r1">
       {!isLoginOrRegister && <Header />}
 
       <main className="flex-grow flex flex-col items-stretch">
         <Outlet />
       </main>
-
-      {/* <TanStackRouterDevtools /> */}
     </div>
   )
 }

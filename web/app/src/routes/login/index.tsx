@@ -101,14 +101,16 @@ function RouteComponent() {
             </Button>
           </Form.Item>
 
-          <div className="text-center">
-            <a
-              onClick={() => navigate({ to: '/register' })}
-              className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer"
+          <Form.Item className="text-center">
+            <Button
+              type="link"
+              className="!px-0"
+              size="small"
+              href="/register"
             >
               {t('account.register')}
-            </a>
-          </div>
+            </Button>
+          </Form.Item>
         </Form>
       </div>
     </div>

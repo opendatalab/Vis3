@@ -1,0 +1,17 @@
+{
+  "cssVar": true,
+  "hashed": false,
+  "token": {
+    "colorPrimary": "rgba(45, 87, 255, 1)",
+    "colorLink": "#333",
+    "colorSuccess": "#00b365",
+    "colorWarning": "#ff8800",
+    "colorError": "#f5483b"
+  },
+  "components": {
+    "Tree": {
+      "indentSize": 12,
+      "directoryNodeSelectedBg": "rgb(0 0 0 / 9%)"
+    }
+  }
+}

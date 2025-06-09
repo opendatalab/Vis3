@@ -4,8 +4,8 @@ import LocalSvg from '@/assets/local.svg?react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/i18n'
 import { Button, Dropdown } from 'antd'
-import clsx from 'clsx'
 
+import clsx from 'clsx'
 import { useLogout, useMe } from '../../api/user.query'
 import AppPanel from '../AppPanel'
 import Avatar from '../Avatar'
@@ -47,8 +47,8 @@ export default function Header() {
                 <Link
                   to={link.to}
                   className={clsx('flex items-center px-3 py-1 rounded transition-colors', {
-                    'hover:bg-gray-100': location.pathname !== link.to,
-                    'text-blue-600': location.pathname === link.to,
+                    'hover:!bg-gray-100': location.pathname !== link.to,
+                    '!text-[var(--ant-color-primary)]': location.pathname === link.to,
                   })}
                 >
                   <link.icon />

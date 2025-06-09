@@ -139,12 +139,14 @@ function RouteComponent() {
 
           <div className="text-center">
             <span className="text-gray-600">{t('account.haveAccount')}</span>
-            <a
-              onClick={() => navigate({ to: '/login' })}
-              className="text-blue-600 hover:text-blue-800 ml-1 cursor-pointer"
+            <Button
+              type="link"
+              className="!px-0"
+              size="small"
+              href="/login"
             >
               {t('account.loginNow')}
-            </a>
+            </Button>
           </div>
         </Form>
       </div>

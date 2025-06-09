@@ -1,4 +1,4 @@
-import Icon, { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
+import Icon, { ExportOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { i18n, useTranslation } from '@vis3/i18n'
 import { Alert, Button, Divider, Form, FormInstance, Input, message, Select, Tooltip } from 'antd'
@@ -223,7 +223,7 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
               showIcon
               message={(
                 <div>
-                  {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')}</Button>
+                  {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')}<ExportOutlined /></Button>
                 </div>
               )}
             />

@@ -520,7 +520,7 @@ function RouteComponent() {
           renderItem={item => (
             <List.Item
               className={clsx('flex flex-row items-center justify-between !px-4 cursor-pointer hover:bg-gray-100 transition-colors', {
-                'bg-blue-100': selectedFile?.id === item.id,
+                'bg-(--ant-color-primary-bg)': selectedFile?.id === item.id,
               })}
               onClick={() => setSelectedFile(item)}
             >

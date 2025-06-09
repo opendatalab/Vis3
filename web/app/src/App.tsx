@@ -9,6 +9,7 @@ import queryClient, { QueryProvider } from './api/queriClient';
 import CustomEmpty from './components/CustomEmpty';
 import './global.css';
 import { routeTree } from './routeTree.gen';
+import themeToken from './theme.json';
 
 const router = createRouter({
   routeTree,
@@ -47,14 +48,7 @@ function App() {
     <QueryProvider>
       <ConfigProvider
         locale={getAntdLocale()}
-        theme={{
-          components: {
-            Tree: {
-              indentSize: 12,
-              directoryNodeSelectedBg: 'rgb(0 0 0 / 9%)',
-            },
-          },
-        }}
+        theme={themeToken}
         renderEmpty={() => <CustomEmpty />}
       >
         <RouterProvider router={router} />
