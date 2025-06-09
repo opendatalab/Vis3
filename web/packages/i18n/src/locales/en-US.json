@@ -40,6 +40,10 @@
   "exitPreview": "Exit preview",
   "copy": "Copy",
   "copied": "Copied",
+  "deleteAll": "Delete all files",
+  "deleteAllConfirm": "Are you sure you want to delete all files?",
+  "cancel": "Cancel",
+  "ok": "OK",
   "account": {
     "username": "Username",
     "usernamePlaceholder": "Please enter your username",
@@ -76,7 +80,9 @@
   "fileList": "File List",
   "bucketUpdated": "Bucket updated",
   "editBucket": "Edit Bucket",
+  "noData": "No data",
   "bucketForm": {
+    "deleteConfirm": "Are you sure you want to delete this bucket?",
     "triggerTooltipMessage": "Add Bucket or Object path",
     "addBucket": "Add Bucket",
     "addPath": "Add S3 path",
@@ -131,6 +137,7 @@
   },
 
   "upload": {
+    "upload": "Upload",
     "unzipError": "Unzip file failed",
     "warcError": "Parse WARC file failed",
     "readError": "Read file failed",

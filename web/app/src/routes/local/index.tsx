@@ -8,7 +8,7 @@ import type { BucketParams } from '@vis3/kit'
 import { BucketBlock, getBytes, getPathType } from '@vis3/kit'
 import type { UploadProps } from 'antd'
 
-import { Button, List, message, Tooltip, Upload } from 'antd'
+import { Button, List, message, Popconfirm, Tooltip, Upload } from 'antd'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
@@ -503,10 +503,16 @@ function RouteComponent() {
             <div className="flex justify-between px-4">
               <span className="font-bold">{t('fileList')}</span>
               <div className="flex flex-row items-center gap-2">
-                <Upload {...props}>
-                  <Button type="text" size="small" icon={<UploadOutlined />} />
-                </Upload>
-                <Button type="text" size="small" icon={<ClearOutlined />} danger onClick={() => handleDeleteAll()} />
+                <Tooltip title={t('upload.upload')}>
+                  <Upload {...props}>
+                    <Button type="text" size="small" icon={<UploadOutlined />} />
+                  </Upload>
+                </Tooltip>
+                <Popconfirm title={t('deleteAllConfirm')} onConfirm={handleDeleteAll} okText={t('ok')} cancelText={t('cancel')}>
+                  <Tooltip title={t('deleteAll')}>
+                    <Button type="text" size="small" icon={<ClearOutlined />} danger />
+                  </Tooltip>
+                </Popconfirm>
               </div>
             </div>
           )}
@@ -528,7 +534,6 @@ function RouteComponent() {
         />
       </div>
 
-      {/* <div className="flex flex-col"> */}
       <div
         onClick={() => setSiderCollapsed(!siderCollapsed)}
         className="fixed left-[242px] top-1/2 transform -translate-y-1/2 z-10 text-gray-300 h-8 w-4 flex items-center justify-center rounded-r-md cursor-pointer hover:text-gray-400 transition-colors"
@@ -539,7 +544,6 @@ function RouteComponent() {
       >
         {siderCollapsed ? <SiderArrowRight /> : <SiderArrowLeft />}
       </div>
-      {/* </div> */}
 
       <div
         className={clsx('flex-1 body-content transition-all h-[calc(100vh-88px)]', {

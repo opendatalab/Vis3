@@ -183,6 +183,18 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
     form.submit()
   }
 
+  const initialValues = useMemo(() => {
+    return {
+      buckets: [
+        {
+          keychain_id: keyOptions[0]?.value,
+          endpoint: '',
+          path: '',
+        }
+      ]
+    }
+  }, [keyOptions])
+
   return (
     <>
       {showTrigger && <Tooltip title={t('bucketForm.triggerTooltipMessage')} placement="bottomLeft"><Button className={className} onClick={() => setOpen(true)} type="primary" icon={<PlusOutlined />}>{t('bucketForm.addBucket')}</Button></Tooltip>}
@@ -204,7 +216,7 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
         )}
       >
         <div className="">
-          <Form form={form} layout="vertical" onFinish={onFinish}>
+          <Form form={form} layout="vertical" onFinish={onFinish} initialValues={initialValues}>
             <Alert
               className="!mb-4"
               type="info"

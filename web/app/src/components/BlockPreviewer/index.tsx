@@ -320,7 +320,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                     </div>
                     <div className="flex gap-2">
                       <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id)} />
-                      <Popconfirm title={t('bucketForm.deleteConfirm')} onConfirm={() => handleDeleteBucket(item.id)}>
+                      <Popconfirm title={t('bucketForm.deleteConfirm')} onConfirm={() => handleDeleteBucket(item.id)} okText={t('ok')} cancelText={t('cancel')}>
                         <Button danger type="text" size="small" icon={<DeleteSvg />} />
                       </Popconfirm>
                     </div>

@@ -351,7 +351,7 @@ export function BucketBlock({
           )
         }
         {
-          block.pathType !== 'folder' && !dataSource && (
+          block.pathType !== 'folder' && (
             <Tooltip title={t('renderer.downloadFile')}>
               <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => onDownload?.(pathWithoutQuery)} />
             </Tooltip>

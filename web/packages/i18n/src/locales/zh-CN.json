@@ -41,6 +41,10 @@
   "exitPreview": "退出预览",
   "copy": "复制",
   "copied": "已复制",
+  "deleteAll": "删除所有文件",
+  "deleteAllConfirm": "确定删除所有文件？",
+  "cancel": "取消",
+  "ok": "确定",
   "account": {
     "username": "用户名",
     "usernamePlaceholder": "请输入用户名",
@@ -77,7 +81,9 @@
   "fileList": "文件列表",
   "bucketUpdated": "Bucket 更新",
   "editBucket": "编辑 Bucket",
+  "noData": "暂无数据",
   "bucketForm": {
+    "deleteConfirm": "确定删除此 Bucket？",
     "triggerTooltipMessage": "添加 Bucket 或 Object 路径",
     "addBucket": "添加 Bucket",
     "addPath": "添加 S3 路径",
@@ -123,7 +129,7 @@
     "addAS&SKTips": "要获取 Bucket 或 Object 地址的访问权限，请添加 S3 集群的 AK&SK",
     "noAK&SK": "没有 AK&SK",
     "name": "名称",
-    "namePlaceholder": "给 AK&SK 添加标签",
+    "namePlaceholder": "请输入 AK&SK 别名",
     "accessKeyId": "Access Key ID",
     "accessKeyIdPlaceholder": "请输入 Access Key ID",
     "secretKeyId": "Secret Key ID",
@@ -132,6 +138,7 @@
   },
 
   "upload": {
+    "upload": "上传",
     "unzipError": "解压文件失败",
     "warcError": "解析 WARC 文件失败",
     "readError": "读取文件失败",
