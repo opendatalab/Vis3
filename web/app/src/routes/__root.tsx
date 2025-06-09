@@ -15,7 +15,7 @@ function RootComponent() {
   const isLoginOrRegister = pathname.includes('login') || pathname.includes('register')
 
   return (
-    <div className="flex flex-col min-h-screen css-var-r1">
+    <div className="flex flex-col min-h-screen css-var-r0">
       {!isLoginOrRegister && <Header />}
 
       <main className="flex-grow flex flex-col items-stretch">
