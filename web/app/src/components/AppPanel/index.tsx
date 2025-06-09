@@ -6,6 +6,7 @@ import { useMemo } from 'react'
 
 import styles from './index.module.css'
 import LabelLLM from './labelllm.svg?react'
+import LabelU from './labelu.svg?react'
 import MinerU from './mineru.svg?react'
 import OpenDataLab from './opendatalab.svg?react'
 
@@ -52,6 +53,15 @@ export default function AppPanel() {
         ],
         icon: <MinerU />,
         description: t('minerUDescription'),
+      },
+      {
+        name: 'Label U',
+        description: t('labelUDescription'),
+        icon: <LabelU />,
+        links: [
+          { name: t('tryOnline'), link: 'https://labelu.shlab.tech/tasks' },
+          { name: 'Github', link: 'https://github.com/opendatalab/labelU' },
+        ],
       },
     ],
     [t],

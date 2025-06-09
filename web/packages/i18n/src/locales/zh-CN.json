@@ -27,6 +27,7 @@
   "opendatalabDescription": "一个引领 AI 大模型时代的开放数据平台，提供了海量的、多模态的优质数据集，助力 AI 开发落地",
   "labelllmDescription": "专业致力于 LLM 对话标注，通过灵活的工具配置与多种数据模态的广泛兼容，为大模型打造高质量数据",
   "minerUDescription": "一站式开源高质量数据提取工具，支持多格式（PDF/网页/电子书），智能萃取，生成高质量语料",
+  "labelUDescription": "一款轻量级开源标注工具，自由组合多样工具，无缝兼容多格式数据，同时支持载入预标注，加速标注效率",
   "status": "状态",
   "createdBy": "创建者",
   "download": "下载",
