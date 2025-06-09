@@ -397,12 +397,13 @@ export function BucketBlock({
       mediaUrl = path
     }
 
-    if ('content' in (dataSource as BucketItem)) {
+    if (dataSource && 'content' in (dataSource as BucketItem) && (dataSource as BucketItem).content) {
       mediaUrl = (dataSource as BucketItem).content!
     }
 
     return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType} extraTail={extra} titleExtra={extraTitle} />
   }, [basename, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType, dataSource])
+
 
   return (
     <PreviewBlockContext.Provider value={contextValue}>
