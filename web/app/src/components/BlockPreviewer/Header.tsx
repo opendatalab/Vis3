@@ -407,7 +407,7 @@ export default function BucketHeader() {
         </Tooltip>
         <PathContainer containerRef={pathContainerRef} />
         <Tooltip title={t('bucket.searchPath')}>
-          <Button disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.toggleFocus(true)} />
+          <Button disabled={isFetching > 0} icon={<SearchOutlined />} onClick={() => pathContainerRef.current?.form.submit()} />
         </Tooltip>
         <Tooltip title={t('bucket.copyPath')}>
           <Button disabled={!path} icon={<CopyOutlined />} onClick={handleCopy} />

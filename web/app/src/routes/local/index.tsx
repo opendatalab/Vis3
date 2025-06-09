@@ -565,6 +565,7 @@ function RouteComponent() {
                   }}
                   onChange={handleParamsChange}
                   showPagination={false}
+                  showDownload={false}
                 />
               )
             : uploader

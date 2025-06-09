@@ -115,8 +115,9 @@ export interface BucketBlockProps {
   onPathCorrection?: (path: string) => void
   showGoParent?: boolean
   showPagination?: boolean
-  closeable?: boolean
   showOpenInNewTab?: boolean
+  showDownload?: boolean
+  closeable?: boolean
   onChange?: (params: Partial<BucketParams>) => void
   renderBucketItem?: (item: BucketItem) => React.ReactNode,
   previewUrl?: string,
@@ -143,6 +144,7 @@ export function BucketBlock({
   onOpenInNewTab,
   renderBucketItem,
   previewUrl,
+  showDownload = true,
 }: BucketBlockProps) {
   const { id, path, pathType } = block
   const basename = getBasename(path)
@@ -351,7 +353,7 @@ export function BucketBlock({
           )
         }
         {
-          block.pathType !== 'folder' && (
+          block.pathType !== 'folder' && showDownload && (
             <Tooltip title={t('renderer.downloadFile')}>
               <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => onDownload?.(pathWithoutQuery)} />
             </Tooltip>
@@ -369,7 +371,7 @@ export function BucketBlock({
         }
       </>
     )
-  }, [block.pathType, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t, onDownload])
+  }, [block.pathType, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t, onDownload, showDownload])
 
   const content = useMemo(() => {
     if (pathWithoutQuery.endsWith('/') || !path) {
