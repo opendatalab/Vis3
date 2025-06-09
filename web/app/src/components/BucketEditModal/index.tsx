@@ -74,9 +74,6 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
   return (
     <Modal title={t('editBucket')} open={isOpen} onCancel={handleCancel} onOk={handleOk} loading={isLoading}>
       <Form form={form} layout="vertical" name="bucket" initialValues={editingBucket} onFinish={handleOk}>
-        <Form.Item label={t('bucketForm.name')} name="name">
-          <Input placeholder={t('bucketForm.namePlaceholder')} />
-        </Form.Item>
         <Form.Item
           label={t('bucketForm.path')}
           hasFeedback

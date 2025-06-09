@@ -14,6 +14,9 @@ export interface BucketData {
   id?: number
   type: 'directory' | 'file' | 'bucket'
   path: string
+  
+  keychain_name: string | null
+  keychain_id: number | null
 
   fullPath?: string
   content: string | null

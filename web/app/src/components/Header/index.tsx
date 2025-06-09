@@ -18,6 +18,7 @@ export default function Header() {
   const { data: me } = useMe(enableAuth)
   const navigate = useNavigate()
   const { mutateAsync: logoutAsync } = useLogout()
+  const isHome = location.pathname === '/'
 
   const links = [
     {
@@ -32,7 +33,7 @@ export default function Header() {
     },
   ]
   return (
-    <header className="bg-white shadow-sm" id="header">
+    <header className={clsx({ "shadow-sm": !isHome }, "z-20")} id="header">
       <div className="mx-auto flex items-center justify-between py-3 px-4">
         <div className="flex items-center space-x-2">
           <Link to="/" className="text-2xl flex items-center">

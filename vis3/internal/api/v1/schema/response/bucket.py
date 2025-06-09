@@ -25,3 +25,4 @@ class BucketResponse(BaseModel):
     content: str | None = None
     last_modified: datetime | None = None
     keychain_id: int | None = None
+    keychain_name: str | None = None

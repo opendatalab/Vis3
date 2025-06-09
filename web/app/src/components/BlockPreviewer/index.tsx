@@ -3,7 +3,7 @@ import { BucketBlock, getBasename, getPathType } from '@vis3/kit'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { EditOutlined } from '@ant-design/icons'
+import { EditOutlined, KeyOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { Button, List, message, Modal, Popconfirm, Tag } from 'antd'
@@ -17,6 +17,8 @@ import { ROOT_BLOCK_ID } from '../../constant'
 import { download, gid } from '../../utils'
 import BucketEditModal, { BucketEditModalRef } from '../BucketEditModal'
 
+import _ from 'lodash'
+import { useCachedBucket } from '../../api/bucket.query'
 import styles from './index.module.css'
 
 interface ExtendedInfoItem extends BlockInfo {
@@ -295,7 +297,11 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
     })
   }, [deleteBucket, queryClient])
 
-  // s3://llm-users-phdd2/jinzhenj2/demo_data_output/part-675bf9ba2e22-000000.jsonl
+  const cachedBucket = useCachedBucket()
+  const isDuplicate = useCallback((path: string) => {
+    const data = _.get(cachedBucket, 'data.data', [])
+    return data.filter((item: any) => item.path === path).length > 1
+  }, [cachedBucket])
 
   return (
     <div ref={containerRef} className={clsx(className, 'block-previewer', 'flex', 'items-start', 'gap-4', 'overflow-x-auto', 'h-full relative')}>
@@ -316,7 +322,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                     <div className="flex items-center gap-2">
                       <BucketIcon />
                       <Link className="hover:!underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
-                      {item.name && <Tag>{item.name}</Tag>}
+                      {isDuplicate(item.path) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
                     </div>
                     <div className="flex gap-2">
                       <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id)} />

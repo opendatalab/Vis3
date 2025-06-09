@@ -9,7 +9,7 @@ import _ from 'lodash'
 import { useRef } from 'react'
 
 
-import { ReloadOutlined } from '@ant-design/icons'
+import { ExportOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useBucketQueryKey, useCachedBucket, useCreateBucket } from '../api/bucket.query'
 import BlockPreviewer from '../components/BlockPreviewer'
 import BucketHeader from '../components/BlockPreviewer/Header'
@@ -68,7 +68,7 @@ function Empty({ className }: { className?: string }) {
   ]
 
   return (
-    <div className={clsx('container mx-auto mt-18 flex flex-col items-center', className)}>
+    <div className={clsx('flex flex-col items-center justify-center bg-[url(/bg.png)] bg-cover bg-center fixed inset-0 z-10', className)}>
       {/* 产品标题和描述 */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">{t('addFirstBucket')}</h1>
@@ -87,18 +87,11 @@ function Empty({ className }: { className?: string }) {
           showIcon
           message={(
             <div>
-              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')}</Button>
+              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
             </div>
           )}
         />
         <div className="flex flex-col gap-4">
-          <Form.Item
-            label={t('bucketForm.name')}
-            className="!mb-0"
-            name="name"
-          >
-            <Input placeholder={t('bucketForm.namePlaceholder')} />
-          </Form.Item>
           <Form.Item
             className="!mb-0"
             label={(

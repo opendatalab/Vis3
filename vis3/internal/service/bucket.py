@@ -223,6 +223,7 @@ async def get_buckets_or_objects(
                 id=bucket.id,
                 keychain_id=bucket.keychain_id,
                 name=bucket.name,
+                keychain_name=bucket.keychain.name,
                 type=PathType.Bucket
                 if bucket.path.endswith("/")
                 else PathType.File,

@@ -11,7 +11,7 @@ import {
   WidgetType,
 } from '@codemirror/view'
 
-const newWindowIcon = `<span style="display: inline-block; vertical-align: middle; font-size: 18px"><svg t="1725879696156" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1786" width="1em" height="1em"><path d="M597.333333 213.333333a42.666667 42.666667 0 1 1 0-85.333333h256a42.666667 42.666667 0 0 1 42.666667 42.666667v256a42.666667 42.666667 0 1 1-85.333333 0V273.664l-396.501334 396.501333a42.666667 42.666667 0 0 1-60.330666-60.330666L750.336 213.333333H597.333333zM128 298.666667a85.333333 85.333333 0 0 1 85.333333-85.333334h213.333334a42.666667 42.666667 0 1 1 0 85.333334H213.333333v512h512v-213.333334a42.666667 42.666667 0 1 1 85.333334 0v213.333334a85.333333 85.333333 0 0 1-85.333334 85.333333H213.333333a85.333333 85.333333 0 0 1-85.333333-85.333333V298.666667z" fill="currentColor" p-id="1787"></path></svg></span>`
+const newWindowIcon = `<span style="display: inline-block; vertical-align: middle; font-size: 14px"><svg fill-rule="evenodd" viewBox="64 64 896 896" focusable="false" data-icon="export" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M880 912H144c-17.7 0-32-14.3-32-32V144c0-17.7 14.3-32 32-32h360c4.4 0 8 3.6 8 8v56c0 4.4-3.6 8-8 8H184v656h656V520c0-4.4 3.6-8 8-8h56c4.4 0 8 3.6 8 8v360c0 17.7-14.3 32-32 32zM770.87 199.13l-52.2-52.2a8.01 8.01 0 014.7-13.6l179.4-21c5.1-.6 9.5 3.7 8.9 8.9l-21 179.4c-.8 6.6-8.9 9.4-13.6 4.7l-52.4-52.4-256.2 256.2a8.03 8.03 0 01-11.3 0l-42.4-42.4a8.03 8.03 0 010-11.3l256.1-256.3z"></path></svg></span>`
 const defaultRegexp = /"((?:https?:\/\/|s3:\/\/)[^"]+)"/gi
 
 export interface HyperLinkState {
