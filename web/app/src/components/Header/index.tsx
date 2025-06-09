@@ -6,6 +6,8 @@ import { useTranslation } from '@vis3/i18n'
 import { Button, Dropdown, Tag } from 'antd'
 
 import clsx from 'clsx'
+import _ from 'lodash'
+import { useCachedBucket } from '../../api/bucket.query'
 import { useLogout, useMe } from '../../api/user.query'
 import AppPanel from '../AppPanel'
 import Avatar from '../Avatar'
@@ -19,6 +21,8 @@ export default function Header() {
   const navigate = useNavigate()
   const { mutateAsync: logoutAsync } = useLogout()
   const isHome = location.pathname === '/'
+  const cachedBucket = useCachedBucket()
+  const total = _.get(cachedBucket, 'data.total', 0)
 
   const links = [
     {
@@ -33,7 +37,7 @@ export default function Header() {
     },
   ]
   return (
-    <header className={clsx({ "shadow-sm": !isHome }, "z-20")} id="header">
+    <header className={clsx({ "shadow-sm": isHome ? total > 0 : true }, "z-20")} id="header">
       <div className="mx-auto flex items-center justify-between py-3 px-4">
         <div className="flex items-center space-x-2">
           <Link to="/" className="text-2xl flex items-center">

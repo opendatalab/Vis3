@@ -2,7 +2,7 @@ import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/i18n'
-import { Alert, Button, Card, Empty, message, Popconfirm } from 'antd'
+import { Alert, Button, Card, message, Popconfirm } from 'antd'
 import dayjs from 'dayjs'
 import _ from 'lodash'
 import { useRef, useState } from 'react'
@@ -10,6 +10,7 @@ import type { KeychainResponse } from '../../api/keychain'
 import { useDeleteKeychain, useMyKeychains, useUpdateKeychain } from '../../api/keychain.query'
 import CopySvg from '../../assets/copy.svg?react'
 import DeleteSvg from '../../assets/delete.svg?react'
+import CustomEmpty from '../../components/CustomEmpty'
 import EditableText from '../../components/EditableText'
 import type { KeyChainFormRef } from './-components/Form'
 import KeyChainForm from './-components/Form'
@@ -109,7 +110,7 @@ function RouteComponent() {
       <Alert type="info" message={t('keychain.addAS&SKTips')} showIcon />
       {
         _.isEmpty(data?.data) && (
-          <Empty description={t('keychain.noAK&SK')} />
+          <CustomEmpty description={t('keychain.noAK&SK')} />
         )
       }
       <div className="flex flex-wrap gap-4 items-stretch">
