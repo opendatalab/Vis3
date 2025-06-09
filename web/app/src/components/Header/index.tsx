@@ -3,7 +3,7 @@ import HelpSvg from '@/assets/help.svg?react'
 import LocalSvg from '@/assets/local.svg?react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/i18n'
-import { Button, Dropdown } from 'antd'
+import { Button, Dropdown, Tag } from 'antd'
 
 import clsx from 'clsx'
 import { useLogout, useMe } from '../../api/user.query'
@@ -38,7 +38,8 @@ export default function Header() {
         <div className="flex items-center space-x-2">
           <Link to="/" className="text-2xl flex items-center">
             <img src="/logo.svg" alt="logo" className="w-8 h-8" />
-            <span className="ml-2">Vis3</span>
+            <span className="mx-2">Vis3</span>
+            <Tag>v{window.__CONFIG__.VERSION}</Tag>
           </Link>
 
           {/* 功能导航 */}
