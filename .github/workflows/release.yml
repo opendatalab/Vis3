@@ -37,7 +37,7 @@ jobs:
   prepare-vis3-kit:
     runs-on: ubuntu-latest
     outputs:
-      KIT_NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
+      NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -181,7 +181,7 @@ jobs:
           
   release-vis3-kit:
     needs: prepare-vis3-kit
-    if: ${{ needs.prepare-vis3-kit.outputs.KIT_NEXT_VERSION != '' }}
+    if: ${{ github.event.head_commit.modified_files == 'web' && needs.prepare-vis3-kit.outputs.NEXT_VERSION != '' && (github.ref_name == 'main' || github.ref_name == 'alpha') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -191,7 +191,7 @@ jobs:
       - name: Get next version
         id: get-next-version
         run: |
-          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.KIT_NEXT_VERSION }}")" >> $GITHUB_ENV
+          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
 
 
       - name: update vis3-kit version
