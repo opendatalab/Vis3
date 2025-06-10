@@ -76,11 +76,7 @@ pnpm build
 uvicorn vis3.main:app --reload
 ```
 
-## Web React Components
-
-TODO
-
-## Technical Communication
+## Community
 
 Welcome to join the Opendatalab official WeChat group!
 

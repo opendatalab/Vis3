@@ -76,10 +76,6 @@ pnpm build
 uvicorn vis3.main:app --reload
 ```
 
-## Web React 组件
-
-TODO
-
 ## 技术交流
 
 欢迎加入 Opendatalab 官方微信群！
