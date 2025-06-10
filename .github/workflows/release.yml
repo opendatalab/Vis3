@@ -50,7 +50,7 @@ jobs:
       - name: Vis3-kit Semantic Release dry-run
         id: dry-run
         run: |
-          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git semantic-release
+          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git @semantic-release/npm semantic-release
           cd web/packages/vis3-kit
           semantic-release --dry-run --yes
         env:
