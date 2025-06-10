@@ -19,7 +19,7 @@
 ## 开始使用
 
 ```bash
-# python >= 3.8.0
+# python >= 3.9.2
 pip install vis3
 ```
 
@@ -77,6 +77,8 @@ uvicorn vis3.main:app --reload
 ```
 
 ## Web React 组件
+
+TODO
 
 ## 技术交流
 

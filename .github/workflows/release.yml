@@ -145,7 +145,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release vis3-kit
-        if: ${{ github.ref_name == 'main' || github.ref_name == 'alpha' }}
+        # 只有web目录有变更再触发
+        if: ${{ github.event.head_commit.modified_files == 'web' && github.ref_name == 'main' || github.ref_name == 'alpha' }}
         run: |
           cd web
           pnpm run release
