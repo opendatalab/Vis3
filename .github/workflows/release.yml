@@ -56,8 +56,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release-vis3:
-    needs: prepare
-    if: ${{ needs.prepare.outputs.NEXT_VERSION != '' }}
+    needs: prepare-vis3
+    if: ${{ needs.prepare-vis3.outputs.NEXT_VERSION != '' }}
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +74,7 @@ jobs:
       - name: Get next version
         id: get-next-version
         run: |
-          echo "NEXT_VERSION=$(echo "${{ needs.prepare.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
+          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v4
         with:
