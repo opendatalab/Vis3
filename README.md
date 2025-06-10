@@ -10,7 +10,7 @@
 
 > OSS browser based on s3
 
-A visualization tool designed for large language models and machine learning data. It supports cloud storage platforms with S3 protocol (AWS, Alibaba Cloud) and handles various data formats (json, jsonl.gz, warc.gz, md, etc.). Features intelligent data structure recognition and interactive visualization through web, Markdown, and image views for efficient data analysis.
+A visualization tool designed for large language models and machine learning data. It supports cloud storage platforms with S3 protocol (AWS, Alibaba Cloud) and handles various data formats (json, jsonl.gz, warc.gz, md, etc.). Interactive visualization through JSON, Html, Markdown, and image views for efficient data analysis.
 
 ## Features
 
