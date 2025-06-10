@@ -47,10 +47,11 @@ jobs:
         with:
           node-version: 20.8.1
 
-      - name: Vis3 Semantic Release dry-run
+      - name: Vis3-kit Semantic Release dry-run
         id: dry-run
         run: |
           npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git semantic-release
+          cd web/packages/vis3-kit
           semantic-release --dry-run --yes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -190,6 +191,13 @@ jobs:
         id: get-next-version
         run: |
           echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.KIT_NEXT_VERSION }}")" >> $GITHUB_ENV
+
+
+      - name: update vis3-kit version
+        run: |
+          cd web/app
+          # update vis3-kit version in package.json
+          sed -i "s/\"@vis3\/kit\": \"[^\"]*\"/\"@vis3\/kit\": \"${NEXT_VERSION}\"/" package.json
 
       - uses: pnpm/action-setup@v2
         name: Install pnpm
