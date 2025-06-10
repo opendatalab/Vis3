@@ -186,39 +186,17 @@ jobs:
         run: |
           echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
 
-
       - name: update vis3-kit version
         run: |
           cd web/app
           # update vis3-kit version in package.json
           sed -i "s/\"@vis3\/kit\": \"[^\"]*\"/\"@vis3\/kit\": \"${NEXT_VERSION}\"/" package.json
 
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 7
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Release vis3-kit
         run: |
           cd web/packages/vis3-kit
-          pnpm install
-          pnpm run release
+          npm install
+          npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
