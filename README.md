@@ -4,5 +4,6 @@
 
 ## TODO
 
-- [ ] 流水线发布
+- [ ] BucketItem类型整理
+- [ ] Alembic 数据迁移配置
 - [ ] Readme文档

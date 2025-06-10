@@ -41,6 +41,10 @@ export default function AppPanel() {
             name: 'Github',
             link: 'https://github.com/opendatalab/LabelLLM?tab=readme-ov-file#labelllm-the-open-source-data-annotation-platform',
           },
+          {
+            name: 'Demo',
+            link: 'https://labelu-llm-demo.shlab.tech/',
+          },
         ],
         icon: <LabelLLM />,
         description: t('labelllmDescription'),

@@ -87,7 +87,7 @@ function Empty({ className }: { className?: string }) {
           showIcon
           message={(
             <div>
-              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!px-0" href="/keychain">{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
+              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!text-[var(--ant-color-primary)] !px-0" href="/keychain">{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
             </div>
           )}
         />
@@ -184,27 +184,24 @@ function RouteComponent() {
   const fetchingCount = useIsFetching({ queryKey: ['bucket'] })
 
   const total = _.get(cachedBucket, 'data.total', 0)
-  const showPlaceholder = fetchingCount === 0 && !path && total === 0
-
-  console.log('cachedBucket', cachedBucket)
-  console.log('isFetching', showPlaceholder, fetchingCount)
+  const showEmptyPlaceholder = !!cachedBucket && !path && total === 0 && fetchingCount === 0
 
   return (
     <div
       className={clsx('p-4', {
-        'flex flex-1 flex-col': !showPlaceholder,
+        'flex flex-1 flex-col': !showEmptyPlaceholder,
       })}
       ref={bodyRef}
     >
       <Empty className={clsx({
-        block: showPlaceholder,
-        hidden: !showPlaceholder,
+        block: showEmptyPlaceholder,
+        hidden: !showEmptyPlaceholder,
       })}
       />
       <DirectoryTreeProvider>
         <div className={clsx('flex-col gap-4 h-[calc(100vh-88px)]', {
-          hidden: showPlaceholder,
-          flex: !showPlaceholder,
+          hidden: showEmptyPlaceholder,
+          flex: !showEmptyPlaceholder,
         })}
         >
           <BucketHeader />

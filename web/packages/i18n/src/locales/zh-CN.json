@@ -127,7 +127,7 @@
     "deleteConfirm": "确定删除此 AK&SK",
     "encrypted": "已加密",
     "addAS&SKTips": "要获取 Bucket 或 Object 地址的访问权限，请添加 S3 集群的 AK&SK",
-    "noAK&SK": "没有 AK&SK",
+    "noAK&SK": "暂无数据",
     "name": "名称",
     "namePlaceholder": "请输入 AK&SK 别名",
     "accessKeyId": "Access Key ID",

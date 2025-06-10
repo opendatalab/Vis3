@@ -72,7 +72,7 @@ export default function PopPanel({
         style={{ opacity: isAnimating ? 1 : 0 }}
       />
       <div
-        className="absolute right-0 bg-white shadow-lg rounded-lg flex flex-col"
+        className="absolute right-0 bg-white shadow-lg rounded-[var(--ant-border-radius)] flex flex-col"
         style={{
           width: typeof width === 'number' ? `${width}px` : width,
           transform: isAnimating ? 'translateX(0) scale(1)' : 'translateX(100%) scale(0.9)',
