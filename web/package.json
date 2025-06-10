@@ -2,10 +2,6 @@
   "name": "vis3-web",
   "version": "1.0.0",
   "description": "vis3 web workspace",
-  "workspaces": [
-    "app",
-    "packages/*"
-  ],
   "author": {
     "name": "garyshen",
     "email": "shenguanlin@pjlab.org.cn"
