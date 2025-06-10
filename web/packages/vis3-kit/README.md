@@ -1,4 +1,4 @@
-# Rspack project
+# vis3/kit
 
 ## Setup
 
