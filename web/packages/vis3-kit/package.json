@@ -4,6 +4,7 @@
   "scripts": {
     "build": "vite build && tsc -d --emitDeclarationOnly",
     "clean": "rimraf ./node_modules",
+    "release": "semantic-release",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "publishConfig": {
