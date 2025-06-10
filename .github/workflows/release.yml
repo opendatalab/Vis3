@@ -174,7 +174,7 @@ jobs:
           
   release-vis3-kit:
     needs: prepare-vis3-kit
-    if: ${{ github.event.head_commit.modified_files == 'web' && needs.prepare-vis3-kit.outputs.NEXT_VERSION != '' && (github.ref_name == 'main' || github.ref_name == 'alpha') }}
+    if: ${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION != '' && (github.ref_name == 'main' || github.ref_name == 'alpha') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
