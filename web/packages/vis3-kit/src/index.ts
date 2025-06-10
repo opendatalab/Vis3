@@ -1,7 +1,6 @@
 export * from './components/FileIcon'
 export * from './components/Renderer/Block'
+export * from './components/Renderer/contexts/types'
 export * from './theme'
 export { default as ThemeProvider } from './theme'
-export * from './types'
 export * from './utils'
-

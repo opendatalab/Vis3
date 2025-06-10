@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Alert, Button, Form, Input, Select, Tooltip } from 'antd'
 import clsx from 'clsx'
 
-import { useIsFetching, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from '@vis3/i18n'
 import '@vis3/kit/dist/index.css'
 import _ from 'lodash'
@@ -180,11 +180,10 @@ function RouteComponent() {
   const bodyRef = useRef<HTMLDivElement>(null)
   const bucketEditModalRef = useRef<BucketEditModalRef>(null)
   const [, path] = useBucketQueryKey()
-  const cachedBucket = useCachedBucket()
-  const fetchingCount = useIsFetching({ queryKey: ['bucket'] })
+  const { fetchingCount, data } = useCachedBucket()
 
-  const total = _.get(cachedBucket, 'data.total', 0)
-  const showEmptyPlaceholder = !!cachedBucket && !path && total === 0 && fetchingCount === 0
+  const total = _.get(data, 'total', 0)
+  const showEmptyPlaceholder = !!data && !path && total === 0 && fetchingCount === 0
 
   return (
     <div

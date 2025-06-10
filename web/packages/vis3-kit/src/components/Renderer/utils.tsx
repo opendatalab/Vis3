@@ -1,6 +1,6 @@
 
-import { BucketItem } from '../../types'
 import { isAudio, isImage, isVideo, isZip } from '../../utils'
+import { BaseBucketType } from './contexts/types'
 
 export function getPathType(path: string) {
   let type
@@ -93,7 +93,7 @@ export function getBasename(path: string) {
   return lastPath?.split('?')[0] ?? ''
 }
 
-export function getFullPath(input: BucketItem, path: string) {
+export function getFullPath(input: BaseBucketType, path: string) {
   let fullPath = input.path
 
   // 1. abc

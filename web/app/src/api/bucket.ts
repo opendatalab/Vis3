@@ -1,5 +1,6 @@
 import type { AxiosRequestConfig } from 'axios'
 
+import { BaseBucketType } from '@vis3/kit'
 import request from '../utils/request'
 
 export interface BucketParams {
@@ -9,20 +10,16 @@ export interface BucketParams {
   id?: number
 }
 
-export interface BucketData {
+export interface BucketDataWithFullPath extends BucketData {
+  fullPath: string
+}
+
+export interface BucketData extends BaseBucketType {
   name: string
   id?: number
-  type: 'directory' | 'file' | 'bucket'
-  path: string
-  
+
   keychain_name: string | null
   keychain_id: number | null
-
-  fullPath?: string
-  content: string | null
-  size: number | null
-  last_modified: string | null
-  created_by: string | null
 }
 
 export interface BucketCreateBody {

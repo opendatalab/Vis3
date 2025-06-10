@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsFetching, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import type { BatchBucketCreateBody, BucketCreateBody, BucketUpdateBody } from './bucket';
@@ -70,7 +70,10 @@ export function useCachedBucket() {
   const [queryKey] = useBucketQueryKey()
   const queryClient = useQueryClient()
 
-  console.log('queryKey', queryKey)
+  const isFetching = useIsFetching({ queryKey })
 
-  return queryClient.getQueryState(queryKey as any)
+  return {
+    ...queryClient.getQueryState(queryKey as any),
+    fetchingCount: isFetching,
+  }
 }

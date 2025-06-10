@@ -5,16 +5,16 @@ import { useTranslation } from '@vis3/i18n'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import type { BucketItem, BucketParams } from '../../../types'
 import { getBasename, getBytes, getNextUrl } from '../../../utils'
 import TextLikePreviewer from '../../TextLikePreviewer'
 import { getPathType } from '../utils'
 
-import { PreviewBlockContext } from '../contexts/preview.context'
+import { PreviewBlockContext, RenderBlockContextType } from '../contexts/preview.context'
+import { BaseBucketType, BucketParams } from '../contexts/types'
 import FolderRenderer from '../Folder'
 import MediaCard from '../Media'
 
-function formatBucketList(bucketList: BucketItem[], parentPath: string) {
+function formatBucketList(bucketList: BaseBucketType[], parentPath: string) {
   return bucketList.map(item => ({
     ...item,
     path: item.path.replace(parentPath, '').replace(/\/$/, ''),
@@ -101,11 +101,11 @@ function extractRenderAs(mimeType: string) {
   }
 }
 
-export interface BucketBlockProps {
+export interface BucketBlockProps<BucketType extends BaseBucketType> {
   block: BlockInfo
   // updateBlock: (id: string, values: Partial<BlockInfo>) => void
   onClose?: () => void
-  dataSource?: BucketItem | BucketItem[]
+  dataSource?: BucketType | BucketType[]
   style?: React.CSSProperties
   className?: string
   loading?: boolean
@@ -119,12 +119,12 @@ export interface BucketBlockProps {
   showDownload?: boolean
   closeable?: boolean
   onChange?: (params: Partial<BucketParams>) => void
-  renderBucketItem?: (item: BucketItem) => React.ReactNode,
+  renderBucketItem?: (item: BucketType) => React.ReactNode,
   previewUrl?: string,
   onOpenInNewTab?: (path: string) => void
 }
 
-export function BucketBlock({
+export function BucketBlock<T extends BaseBucketType>({
   block,
   // updateBlock,
   onClose,
@@ -145,7 +145,7 @@ export function BucketBlock({
   renderBucketItem,
   previewUrl,
   showDownload = true,
-}: BucketBlockProps) {
+}: BucketBlockProps<T>) {
   const { id, path, pathType } = block
   const basename = getBasename(path)
   const { t } = useTranslation()
@@ -164,7 +164,7 @@ export function BucketBlock({
   }, [dataSource, pathWithoutQuery])
 
   useEffect(() => {
-    const mimeType = (dataSource as BucketItem)?.mimetype
+    const mimeType = (dataSource as BaseBucketType)?.mimetype
     if (mimeType && unkonwnFileType) {
       setRenderAs(extractRenderAs(mimeType))
     }
@@ -172,7 +172,7 @@ export function BucketBlock({
 
   const [prevBytes, setPrevBytes] = useState<number[]>([])
   const hasPrev = prevBytes.length > 0
-  const fileObject = dataSource as unknown as BucketItem
+  const fileObject = dataSource as unknown as BaseBucketType
   const url = fileObject?.path ?? ''
   const totalSize = fileObject?.size ?? 0
   const range = getBytes(url.split('?')[1])
@@ -250,7 +250,7 @@ export function BucketBlock({
 
   const contextValue = useMemo(() => ({
     ...block,
-    data: fileObject,
+    data: fileObject as T,
     basename,
     nextable: hasNext && !!nextUrl,
     prevable: hasPrev,
@@ -263,7 +263,7 @@ export function BucketBlock({
     onDownload,
     dataSource,
     previewUrl,
-  }), [block, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl])
+  } as RenderBlockContextType<T> as unknown as RenderBlockContextType<BaseBucketType>), [block, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl])
 
   const extraTitle = useMemo(() => {
     return (
@@ -399,8 +399,8 @@ export function BucketBlock({
       mediaUrl = path
     }
 
-    if (dataSource && 'content' in (dataSource as BucketItem) && (dataSource as BucketItem).content) {
-      mediaUrl = (dataSource as BucketItem).content!
+    if (dataSource && 'content' in (dataSource as BaseBucketType) && (dataSource as BaseBucketType).content) {
+      mediaUrl = (dataSource as BaseBucketType).content!
     }
 
     return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType} extraTail={extra} titleExtra={extraTitle} />

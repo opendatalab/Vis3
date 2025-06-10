@@ -1,4 +1,4 @@
-import type { BlockInfo, BucketBlockProps, BucketItem, BucketParams } from '@vis3/kit'
+import type { BlockInfo, BucketBlockProps } from '@vis3/kit'
 import { BucketBlock, getBasename, getPathType } from '@vis3/kit'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -12,7 +12,7 @@ import { correctPath } from './Header'
 import BucketIcon from '@/assets/bucket.svg?react'
 import DeleteSvg from '@/assets/delete.svg?react'
 import { useTranslation } from '@vis3/i18n'
-import { deleteBucket, digBucket, filterBucket } from '../../api/bucket'
+import { BucketDataWithFullPath, deleteBucket, digBucket, filterBucket } from '../../api/bucket'
 import { ROOT_BLOCK_ID } from '../../constant'
 import { download, gid } from '../../utils'
 import BucketEditModal, { BucketEditModalRef } from '../BucketEditModal'
@@ -29,7 +29,7 @@ export interface BlockPreviewerProps {
   className?: string
 }
 
-export interface BucketBlockWrapperProps extends BucketBlockProps {
+export interface BucketBlockWrapperProps extends BucketBlockProps<BucketDataWithFullPath> {
   pageSize?: number
   pageNo?: number
   block: ExtendedInfoItem
@@ -57,8 +57,6 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
     return ['bucket']
   }, [path, pageSize, pageNo, bucketId])
 
-  console.log('bucketQueryKey', bucketQueryKey)
-
   useEffect(() => {
     if (id === ROOT_BLOCK_ID) {
       setPageNo(propPageNo)
@@ -81,7 +79,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
 
       return result
     },
-    select: (data: any) => data.data as BucketItem[],
+    select: (data: any) => data.data as BucketDataWithFullPath[],
   }), [bucketQueryKey])
 
   const { data, isLoading } = useQuery(bucketQueryOptions)
@@ -92,7 +90,11 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
     }
   }, [id])
 
-  const handleOnChange = useCallback((params: Partial<BucketParams>) => {
+  const handleOnChange = useCallback((params: Partial<{
+    pageSize?: number
+    pageNo?: number
+    path?: string
+  }>) => {
     if (id === ROOT_BLOCK_ID) {
       const { path, ...restParams } = params
       const newSearch = {} as Record<string, string | number>
@@ -325,8 +327,8 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                       {isDuplicate(item.path) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
                     </div>
                     <div className="flex gap-2">
-                      <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id)} />
-                      <Popconfirm title={t('bucketForm.deleteConfirm')} onConfirm={() => handleDeleteBucket(item.id)} okText={t('ok')} cancelText={t('cancel')}>
+                      <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id!)} />
+                      <Popconfirm title={t('bucketForm.deleteConfirm')} onConfirm={() => handleDeleteBucket(item.id!)} okText={t('ok')} cancelText={t('cancel')}>
                         <Button danger type="text" size="small" icon={<DeleteSvg />} />
                       </Popconfirm>
                     </div>

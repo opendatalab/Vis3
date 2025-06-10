@@ -5,15 +5,15 @@ import { useTranslation } from '@vis3/i18n'
 import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback, useMemo, useRef } from 'react'
 
-import { BucketItem } from '../../../types'
 import { FileIcon } from '../../FileIcon'
 import FullScreenButton from '../../FullscreenButton'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { usePreviewBlockContext } from '../contexts/preview.context'
+import { BaseBucketType } from '../contexts/types'
 import { getFullPath } from '../utils'
 
-export interface BucketItemWrapper extends BucketItem {
+export interface BucketItemWrapper extends BaseBucketType {
   fullPath: string
 }
 

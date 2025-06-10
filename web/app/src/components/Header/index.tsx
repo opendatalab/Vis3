@@ -5,7 +5,6 @@ import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/i18n'
 import { Button, Dropdown, Tag } from 'antd'
 
-import { useIsFetching } from '@tanstack/react-query'
 import clsx from 'clsx'
 import _ from 'lodash'
 import { useCachedBucket } from '../../api/bucket.query'
@@ -24,7 +23,6 @@ export default function Header() {
   const { mutateAsync: logoutAsync } = useLogout()
   const isHome = location.pathname === '/' && !(location.search as any).path
   const cachedBucket = useCachedBucket()
-  useIsFetching({ queryKey: ['bucket'] })
   const total = _.get(cachedBucket, 'data.total', 0)
 
   const links = [
