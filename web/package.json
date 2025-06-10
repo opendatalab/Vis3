@@ -11,7 +11,9 @@
     "email": "vis3@vis3.com"
   },
   "scripts": {
-    "build": "pnpm --filter @vis3/i18n --filter @vis3/kit --filter vis3-web-app build"
+    "build": "pnpm --filter @vis3/i18n --filter @vis3/kit --filter vis3-web-app build",
+    "release-dry": "multi-semantic-release --dry-run --ignore-private-packages --no-ci",
+    "release": "multi-semantic-release --ignore-private-packages"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^4.12.0",

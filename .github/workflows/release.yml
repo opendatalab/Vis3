@@ -137,10 +137,18 @@ jobs:
           poetry config pypi-token.pypi $PYPI_TOKEN
           poetry publish --build --skip-existing
 
-      - name: Semantic Release
+      - name: Release vis3
         run: |
           npm i -g semantic-release @semantic-release/git @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec @semantic-release/github
           semantic-release --yes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release vis3-kit
+        if: ${{ github.ref_name == 'main' || github.ref_name == 'alpha' }}
+        run: |
+          cd web
+          pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
