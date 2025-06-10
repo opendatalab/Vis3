@@ -1,4 +1,4 @@
-import { FileIcon } from "@vis3/kit";
+import { FileIcon, useTranslation } from "@vis3/kit";
 import { Button, Skeleton, Tooltip, Tree, TreeDataNode } from "antd";
 import { createContext, MutableRefObject, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import styles from './index.module.css';
@@ -9,7 +9,6 @@ import FolderIcon from '@/assets/folder.svg?react';
 import { ArrowDownOutlined, LoadingOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { useTranslation } from "@vis3/i18n";
 import clsx from "clsx";
 import _ from "lodash";
 import { BucketData, digBucket } from "../../api/bucket";
@@ -227,7 +226,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         if (treeLoading) {
           return
         }
-        
+
         const _key = `${raw.id}-${raw.path}`
         const pageNo = _.get(treeDataMap, [_key, 'pageNo'], 1) + 1
         setTreeLoading(true)

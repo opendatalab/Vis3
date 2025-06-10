@@ -1,7 +1,8 @@
 import { CopyOutlined } from '@ant-design/icons'
-import { useTranslation } from '@vis3/i18n'
 import { Button, Tooltip } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
+
+import { useTranslation } from '../../../i18n'
 
 export default function useCopy(value: string): [React.ReactNode] {
   const { t } = useTranslation()

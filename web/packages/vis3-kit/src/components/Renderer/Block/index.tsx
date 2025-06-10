@@ -1,10 +1,10 @@
 import { ArrowUpOutlined, CloseOutlined, DownloadOutlined, ExportOutlined, InfoCircleOutlined, LeftOutlined, LoadingOutlined, RightOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
-import { useTranslation } from '@vis3/i18n'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { useTranslation } from '../../../i18n'
 import { getBasename, getBytes, getNextUrl } from '../../../utils'
 import TextLikePreviewer from '../../TextLikePreviewer'
 import { getPathType } from '../utils'

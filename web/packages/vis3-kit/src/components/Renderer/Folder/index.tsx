@@ -1,10 +1,10 @@
 import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
-import { useTranslation } from '@vis3/i18n'
 import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback, useMemo, useRef } from 'react'
 
+import { useTranslation } from '../../../i18n'
 import { FileIcon } from '../../FileIcon'
 import FullScreenButton from '../../FullscreenButton'
 import type { RendererProps } from '../Card'

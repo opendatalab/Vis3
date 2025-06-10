@@ -1,10 +1,10 @@
 import { LinkOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
-import { useTranslation } from '@vis3/i18n'
 import type { FormInstance } from 'antd'
 import { Button, Form, Input, Popover } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { useTranslation } from '../../../i18n'
 import type { BinaryButtonRef } from '../../BinaryButton'
 import BinaryButton from '../../BinaryButton'
 

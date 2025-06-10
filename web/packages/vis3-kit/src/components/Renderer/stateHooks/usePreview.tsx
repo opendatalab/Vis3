@@ -1,8 +1,8 @@
-import { useTranslation } from '@vis3/i18n'
 import { useCallback, useMemo, useState } from 'react'
 
 import EyeCloseIcon from '../../../assets/eye-close.svg?react'
 import EyeOpenIcon from '../../../assets/eye-open.svg?react'
+import { useTranslation } from '../../../i18n'
 import BinaryButton from '../../BinaryButton'
 
 export default function usePreview(initialPreview = true, onPreview?: (changedValue: boolean) => void): [React.ReactNode, { preview: boolean }, (preview: boolean) => void] {

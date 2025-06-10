@@ -1,9 +1,10 @@
 import { DownOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
-import { i18n } from '@vis3/i18n'
 import { Divider, Dropdown, type MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
 export type RenderType = 'raw' | 'image' | 'html' | 'json' | 'markdown' | 'content_list' | 'img_list'
+
+import { i18n } from '../../../i18n'
 
 const renderOptions = [
   {

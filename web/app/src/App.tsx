@@ -1,5 +1,5 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router';
-import { useTranslation } from '@vis3/i18n';
+import { useTranslation } from '@vis3/kit';
 import { ConfigProvider } from 'antd';
 import enUS from 'antd/es/locale/en_US';
 import zhCN from 'antd/es/locale/zh_CN';

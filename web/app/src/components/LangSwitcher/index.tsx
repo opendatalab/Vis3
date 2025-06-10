@@ -1,6 +1,5 @@
 import LangIcon from '@/assets/i18n.svg?react';
-import { useTranslation } from '@vis3/i18n';
-
+import { useTranslation } from '@vis3/kit';
 import { Button, Dropdown } from 'antd';
 import { useMemo } from 'react';
 

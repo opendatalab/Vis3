@@ -1,4 +1,5 @@
 {
+  "tagFormat": "@vis3/kit@v${version}",
   "branches": ["main", { "name": "alpha", "prerelease": true }],
   "plugins": [
     [

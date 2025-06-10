@@ -1,7 +1,7 @@
 import React from 'react'
 
 import EmptyElement from '@/assets/empty.svg?react'
-import { useTranslation } from '@vis3/i18n'
+import { useTranslation } from '@vis3/kit'
 
 export default function CustomEmpty({ description }: {
   description?: React.ReactNode

@@ -1,6 +1,6 @@
 import Icon, { ExportOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
-import { i18n, useTranslation } from '@vis3/i18n'
+import { i18n, useTranslation } from '@vis3/kit'
 import { Alert, Button, Divider, Form, FormInstance, Input, message, Select, Tooltip } from 'antd'
 import type { FormProps } from 'antd/lib'
 import _ from 'lodash'

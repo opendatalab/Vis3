@@ -1,9 +1,9 @@
 import { DownloadOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
-import { useTranslation } from '@vis3/i18n'
 import { Button, Image } from 'antd'
 import { useMemo, useRef } from 'react'
 
+import { useTranslation } from '../../../i18n'
 import FullScreenButton from '../../FullscreenButton'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'

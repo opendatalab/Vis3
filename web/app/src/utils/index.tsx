@@ -1,4 +1,4 @@
-import { i18n } from "@vis3/i18n"
+import { i18n } from "@vis3/kit"
 import { Button, Modal } from "antd"
 import { AxiosError } from "axios"
 

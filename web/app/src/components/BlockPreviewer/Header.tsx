@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate } from '@tanstack/react-router';
-import { useTranslation } from '@vis3/i18n';
+import { useTranslation } from '@vis3/kit';
 import type { FormInstance, FormProps, MenuProps } from 'antd';
 import { Button, Dropdown, Form, Input, message, Space, Tooltip } from 'antd';
 import clsx from 'clsx';

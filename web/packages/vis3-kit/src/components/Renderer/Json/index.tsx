@@ -1,10 +1,10 @@
 import { CloseOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
-import { useTranslation } from '@vis3/i18n'
 import { Button, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import ReactGridLayout from 'react-grid-layout'
 
+import { useTranslation } from '../../../i18n'
 import { get, gid } from '../../../utils'
 import { JsonViewer } from '../../CodeViewer'
 import { CodeViewerContext, useCodeViewerContext } from '../../CodeViewer/context'

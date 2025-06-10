@@ -2,11 +2,11 @@ import {
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons'
-import { useTranslation } from '@vis3/i18n'
 import { Button, Space, Tooltip } from 'antd'
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 
+import { useTranslation } from '../../i18n'
 import type { RendererProps } from '../Renderer/Card'
 import { usePreviewBlockContext } from '../Renderer/contexts/preview.context'
 import renders from '../Renderer/index'

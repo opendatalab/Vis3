@@ -1,8 +1,8 @@
 import styled from '@emotion/styled'
-import { useTranslation } from '@vis3/i18n'
 import { Image } from 'antd'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
+import { useTranslation } from '../../../i18n'
 import { JsonViewer } from '../../CodeViewer'
 import { CodeViewerContext } from '../../CodeViewer/context'
 import FullScreenButton from '../../FullscreenButton'

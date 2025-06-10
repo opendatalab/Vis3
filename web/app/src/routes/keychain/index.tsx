@@ -1,11 +1,12 @@
 import { ClockCircleOutlined, PlusOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { useTranslation } from '@vis3/i18n'
+import { useTranslation } from '@vis3/kit'
 import { Alert, Button, Card, message, Popconfirm } from 'antd'
 import dayjs from 'dayjs'
 import _ from 'lodash'
 import { useRef, useState } from 'react'
+
 import type { KeychainResponse } from '../../api/keychain'
 import { useDeleteKeychain, useMyKeychains, useUpdateKeychain } from '../../api/keychain.query'
 import CopySvg from '../../assets/copy.svg?react'
