@@ -16,7 +16,6 @@ class BucketResponse(BaseModel):
     path: str
     type: PathType
     # bucket only
-    name: str | None = None
     endpoint: str | None = None
     created_by: str | None = None
     # file only

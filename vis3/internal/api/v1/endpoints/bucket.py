@@ -2,6 +2,7 @@ from typing import List, Union
 
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
+
 from vis3.internal.api.dependencies.auth import get_auth_user_or_error
 from vis3.internal.api.v1.schema.request.bucket import (
     BucketCreateBody,
@@ -67,7 +68,6 @@ async def create_bucket_request(
     result = await bucket_crud.create(db, obj_in=bucket_in, created_by=current_user.id if current_user else None)
     return BucketResponse(
         id=result.id,
-        name=result.name,
         path=result.path,
         endpoint=result.endpoint,
         keychain_id=result.keychain_id,
@@ -87,7 +87,6 @@ async def create_batch_bucket_request(
     result = await bucket_crud.create_batch(db, obj_in=bucket_in, created_by=current_user.id if current_user else None)
     return [BucketResponse(
         id=bucket.id,
-        name=bucket.name,
         path=bucket.path,
         endpoint=bucket.endpoint,
         keychain_id=bucket.keychain_id,
@@ -111,7 +110,6 @@ async def update_bucket_request(
     ))
     return BucketResponse(
         id=result.id,
-        name=result.name,
         path=result.path,
         endpoint=result.endpoint,
         created_by=current_user.username if current_user else None,
@@ -135,7 +133,6 @@ async def filter_bucket_request(
     return ListResponse[BucketResponse](
         data=[BucketResponse(
             id=bucket.id,
-            name=bucket.name,
             path=bucket.path,
             type=PathType.Bucket,
             endpoint=bucket.endpoint,
@@ -234,7 +231,6 @@ async def get_bucket_request(
 
     return BucketResponse(
         id=result.id,
-        name=result.name,
         path=result.path,
         endpoint=result.endpoint,
         keychain_id=result.keychain_id,

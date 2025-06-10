@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from loguru import logger
 from typer import Typer
 
+from vis3.alembic_vis3.run_migrate import run_db_migrations
 from vis3.internal.api import initial_routers
 from vis3.internal.common.db import init_tables
 from vis3.internal.common.exceptions import add_exception_handler
@@ -49,9 +50,8 @@ class NoCacheStaticFiles(StaticFiles):
 
 
 initial_routers(app)
-
+run_db_migrations()
 add_exception_handler(app)
-
 init_tables()
 
 app.mount("", NoCacheStaticFiles(packages=["vis3.internal"], html=True))
