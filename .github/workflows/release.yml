@@ -1,13 +1,6 @@
 name: 'release'
 
 on:
-  workflow_dispatch:
-    inputs:
-      changelog:
-        type: string
-        description: 'The frontend changelog'
-        required: true
-
   push:
     branches:
       - 'main'
