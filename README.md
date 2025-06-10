@@ -22,8 +22,6 @@ A visualization tool designed for large language models and machine learning dat
 
 https://github.com/user-attachments/assets/493f199b-4bf9-49e3-b132-9ccd07fd203a
 
-
-
 ## Getting Started
 
 ```bash
