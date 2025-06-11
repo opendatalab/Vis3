@@ -85,7 +85,7 @@ export default function PopPanel({
           overflowY: 'auto',
           maxHeight: `calc(100vh - ${finalOffset.top + finalOffset.bottom}px)`,
           boxShadow: '-4px 0 15px rgba(0, 0, 0, 0.1)',
-          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: 'transform 0.2s ease-in-out',
         }}
       >
         <div className="flex justify-between items-center p-4 border-b border-gray-200">

@@ -193,7 +193,7 @@ export function parseCsv(content: string) {
 }
 
 export function isImage(path: string) {
-  return /\.(?:jpg|jpeg|png|gif|bmp|webp)$/.test(path) && !path.endsWith('/')
+  return /\.(?:jpg|jpeg|png|gif|bmp|tiff|svg|webp)$/.test(path) && !path.endsWith('/')
 }
 
 export function isVideo(path: string) {

@@ -90,28 +90,40 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
       return
     }
 
-    const observer = new ResizeObserver(() => {
-      const wrapRect = wrapper.getBoundingClientRect()
-      let height = window.innerHeight - wrapRect.top - 1
-  
-      if (bucketContainer) {
-        const bucketContainerStyle = window.getComputedStyle(bucketContainer?.parentElement!)
-  
-        height -= Number.parseInt(bucketContainerStyle.paddingBottom)
-      } else {
-        height = wrapper.parentElement!.clientHeight
-      }
-  
-      setSize({
-        width: wrapRect.width,
-        height,
-      })
-    })
+    let timeoutId: number | undefined
 
+    const updateSize = () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
+
+      timeoutId = window.setTimeout(() => {
+        const wrapRect = wrapper.getBoundingClientRect()
+        let height = window.innerHeight - wrapRect.top - 1
+    
+        if (bucketContainer) {
+          const bucketContainerStyle = window.getComputedStyle(bucketContainer?.parentElement!)
+    
+          height -= Number.parseInt(bucketContainerStyle.paddingBottom)
+        } else {
+          height = wrapper.parentElement!.clientHeight
+        }
+    
+        setSize({
+          width: wrapRect.width,
+          height,
+        })
+      }, 200) // 200ms的防抖延迟
+    }
+
+    const observer = new ResizeObserver(updateSize)
     observer.observe(wrapper)
 
     return () => {
       observer.disconnect()
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+      }
     }
   }, [wrapper])
 

@@ -459,7 +459,7 @@ function RouteComponent() {
       name: selectedFile.name,
       type,
       content,
-      last_modified: selectedFile.lastModified.toString(),
+      last_modified: selectedFile.lastModified,
       size: selectedFile.content.length,
       created_by: 'local',
       // 模拟range
