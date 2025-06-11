@@ -38,12 +38,12 @@ export default function AppPanel() {
         name: 'LabelLLM',
         links: [
           {
-            name: 'Github',
-            link: 'https://github.com/opendatalab/LabelLLM?tab=readme-ov-file#labelllm-the-open-source-data-annotation-platform',
+            name: t('tryOnline'),
+            link: 'https://labelu-llm-demo.shlab.tech/',
           },
           {
-            name: 'Demo',
-            link: 'https://labelu-llm-demo.shlab.tech/',
+            name: 'Github',
+            link: 'https://github.com/opendatalab/LabelLLM?tab=readme-ov-file#labelllm-the-open-source-data-annotation-platform',
           },
         ],
         icon: <LabelLLM />,

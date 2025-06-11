@@ -20,6 +20,8 @@
 
 - 无缝对接主流云存储平台（阿里云、AWS、腾讯云等支持S3协议的云存储平台），支持本地文件解析，轻松实现数据接入。
 
+https://github.com/user-attachments/assets/6bf58c28-9d18-4b9e-80bf-2449dde43e8e
+
 ## 开始使用
 
 ```bash
