@@ -28,6 +28,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   prepare-vis3-kit:
+    needs: release-vis3
     runs-on: ubuntu-latest
     outputs:
       NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
