@@ -46,13 +46,13 @@ vis3
 
 # ----------------
 
-# Default launch doesn't require login, if you want to enable login to distinguish users
+# Default launch doesn't require authentication, if you want to enable authentication to distinguish users
 vis3 --auth
 
 # Specify database (sqlite) directory
 BASE_DATA_DIR=your/database/path vis3
 
-# Enable login through ENABLE_AUTH
+# Enable authentication through ENABLE_AUTH
 ENABLE_AUTH=true vis3
 ```
 
@@ -79,6 +79,10 @@ pnpm build
 # Start vis3
 uvicorn vis3.main:app --reload
 ```
+
+## React Component
+
+We provide a [standalone React component](./web/packages/vis3-kit/) via npm for customizing your data preview ui.
 
 ## Community
 

@@ -80,6 +80,10 @@ pnpm build
 uvicorn vis3.main:app --reload
 ```
 
+## React Component
+
+我们通过 npm 提供了[单独的 React 组件](./web/packages/vis3-kit/)，方便自定义数据预览界面。
+
 ## 技术交流
 
 欢迎加入 Opendatalab 官方微信群！
