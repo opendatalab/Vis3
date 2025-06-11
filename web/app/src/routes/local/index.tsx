@@ -479,8 +479,6 @@ function RouteComponent() {
     </div>
   ), [t, props, fileList])
 
-  console.log('datasource', dataSource)
-
   if (fileList.length === 0) {
     return uploader
   }
@@ -554,12 +552,9 @@ function RouteComponent() {
           selectedFile
             ? (
                 <BucketBlock
+                  id="original"
+                  path={fakePath}
                   dataSource={dataSource}
-                  block={{
-                    id: 'original',
-                    path: fakePath,
-                    pathType: dataSource?.type,
-                  }}
                   onChange={handleParamsChange}
                   showPagination={false}
                   showDownload={false}

@@ -196,6 +196,7 @@ jobs:
         run: |
           cd web/packages/vis3-kit
           npm install
+          npm run build
           npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

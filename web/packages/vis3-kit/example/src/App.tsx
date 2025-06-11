@@ -1,17 +1,4 @@
-# @vis3/kit
-[![npm](https://img.shields.io/npm/v/%40vis3/kit.svg)](https://www.npmjs.com/package/@vis3/kit)
-
-## Install
-
-```bash
-npm i @vis3/kit
-# or pnpm add @vis3/kit
-```
-
-## Usage
-
-```tsx
-import { BucketBlock } from '@vis3/kit'
+import { BucketBlock } from '@vis3/kit';
 
 export default function App() {
   const handleParamsChange = (params) => {
@@ -38,4 +25,3 @@ export default function App() {
     />
   )
 }
-```

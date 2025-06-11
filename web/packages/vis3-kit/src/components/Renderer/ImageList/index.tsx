@@ -60,6 +60,10 @@ function WrappedImage({ url, data }: {
   const renderUrl = useMemo(() => {
     const s3Path = data?.raw_path ?? ''
 
+    if (!url) {
+      return ''
+    }
+
     if (isError) {
       return `${previewUrl}?path=${s3Path}`
     }

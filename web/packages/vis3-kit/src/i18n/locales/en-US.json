@@ -124,7 +124,6 @@
     "updated": "AK&SK updated",
     "add": "Add AK&SK",
     "deleteConfirm": "Are you sure you want to delete this AK&SK?",
-    "encrypted": "Encrypted",
     "addAS&SKTips": "To get access permission to Bucket or Object address, please add AK&SK of S3 cluster",
     "noAK&SK": "No Data",
     "name": "Name",

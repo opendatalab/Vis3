@@ -125,7 +125,6 @@
     "updated": "AK&SK 已更新",
     "add": "添加 AK&SK",
     "deleteConfirm": "确定删除此 AK&SK",
-    "encrypted": "已加密",
     "addAS&SKTips": "要获取 Bucket 或 Object 地址的访问权限，请添加 S3 集群的 AK&SK",
     "noAK&SK": "暂无数据",
     "name": "名称",

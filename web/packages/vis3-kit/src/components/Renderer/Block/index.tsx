@@ -59,12 +59,6 @@ const StyledMediaCard = styled(MediaCard)`
   height: 100%;
 `
 
-export interface BlockInfo {
-  id: string
-  path: string
-  pathType: string
-}
-
 function extractRenderAs(mimeType: string) {
   if (mimeType.startsWith('image/')) {
     return 'image'
@@ -102,8 +96,8 @@ function extractRenderAs(mimeType: string) {
 }
 
 export interface BucketBlockProps<BucketType extends BaseBucketType> {
-  block: BlockInfo
-  // updateBlock: (id: string, values: Partial<BlockInfo>) => void
+  id: string
+  path: string
   onClose?: () => void
   dataSource?: BucketType | BucketType[]
   style?: React.CSSProperties
@@ -125,8 +119,8 @@ export interface BucketBlockProps<BucketType extends BaseBucketType> {
 }
 
 export function BucketBlock<T extends BaseBucketType>({
-  block,
-  // updateBlock,
+  id,
+  path,
   onClose,
   dataSource,
   style,
@@ -146,7 +140,6 @@ export function BucketBlock<T extends BaseBucketType>({
   previewUrl,
   showDownload = true,
 }: BucketBlockProps<T>) {
-  const { id, path, pathType } = block
   const basename = getBasename(path)
   const { t } = useTranslation()
   
@@ -180,6 +173,10 @@ export function BucketBlock<T extends BaseBucketType>({
   const nextUrl = getNextUrl(url)
   const hasNext = currentSize < (totalSize || 0)
 
+  const s3PathType = useMemo(() => {
+    return renderAs || getPathType(path)
+  }, [path, renderAs])
+
   useEffect(() => {
     // 解析url中的bytes参数
     const range = getBytes(url)
@@ -189,12 +186,12 @@ export function BucketBlock<T extends BaseBucketType>({
       newUrl = url.split('?')[0]
     }
 
-    if (!pathType || !url || !['jsonl', 'csv', 'txt'].includes(pathType)) {
+    if (!s3PathType || !url || !['jsonl', 'csv', 'txt'].includes(s3PathType)) {
       return
     }
 
     onPathCorrection?.(newUrl)
-  }, [pathType, url, onPathCorrection])
+  }, [s3PathType, url, onPathCorrection])
 
   const handlePageNoChange = useCallback((pageNo: number) => {
     onChange?.({ pageNo })
@@ -205,9 +202,7 @@ export function BucketBlock<T extends BaseBucketType>({
     setPrevBytes([])
   }, [basename])
 
-  const s3PathType = useMemo(() => {
-    return renderAs || pathType || getPathType(path)
-  }, [path, pathType, renderAs])
+  
   const isTextLike = !s3PathType || !['image', 'video', 'audio', 'zip', 'jsonl', 'pdf', 'epub', 'mobi'].includes(s3PathType)
 
   const handleNextLine = useCallback(async () => {
@@ -249,7 +244,9 @@ export function BucketBlock<T extends BaseBucketType>({
   }, [path, id, onChange])
 
   const contextValue = useMemo(() => ({
-    ...block,
+    id,
+    path,
+    pathType: s3PathType,
     data: fileObject as T,
     basename,
     nextable: hasNext && !!nextUrl,
@@ -263,13 +260,13 @@ export function BucketBlock<T extends BaseBucketType>({
     onDownload,
     dataSource,
     previewUrl,
-  } as RenderBlockContextType<T> as unknown as RenderBlockContextType<BaseBucketType>), [block, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl])
+  } as RenderBlockContextType<T> as unknown as RenderBlockContextType<BaseBucketType>), [id, path, s3PathType, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl])
 
   const extraTitle = useMemo(() => {
     return (
       <>
         {
-          block.pathType !== 'folder' && !!path && (
+          s3PathType !== 'folder' && !!path && (
             <Popover
               title={t('renderer.fileInfo')}
               content={(
@@ -340,7 +337,7 @@ export function BucketBlock<T extends BaseBucketType>({
         }
       </>
     )
-  }, [block.pathType, path, totalSize, fileObject, id, handleGoParent, pageNo, loading, folders.length, pageSize, handlePageNoChange, t, dataSource])
+  }, [s3PathType, path, totalSize, fileObject, id, handleGoParent, pageNo, loading, folders.length, pageSize, handlePageNoChange, t, dataSource])
 
   const extra = useMemo(() => {
     return (
@@ -353,7 +350,7 @@ export function BucketBlock<T extends BaseBucketType>({
           )
         }
         {
-          block.pathType !== 'folder' && showDownload && (
+          s3PathType !== 'folder' && showDownload && (
             <Tooltip title={t('renderer.downloadFile')}>
               <Button size="small" type="text" icon={<DownloadOutlined />} onClick={() => onDownload?.(pathWithoutQuery)} />
             </Tooltip>
@@ -371,7 +368,7 @@ export function BucketBlock<T extends BaseBucketType>({
         }
       </>
     )
-  }, [block.pathType, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t, onDownload, showDownload])
+  }, [s3PathType, id, onClose, pageNo, pageSize, path, pathWithoutQuery, t, onDownload, showDownload])
 
   const content = useMemo(() => {
     if (pathWithoutQuery.endsWith('/') || !path) {
@@ -409,7 +406,7 @@ export function BucketBlock<T extends BaseBucketType>({
 
   return (
     <PreviewBlockContext.Provider value={contextValue}>
-      <StyledBlockWrapper data-block-id={block.id} style={style} className={className}>
+      <StyledBlockWrapper data-block-id={id} style={style} className={className}>
         {content}
         <StyledSpin
           spinning

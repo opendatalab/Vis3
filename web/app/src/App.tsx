@@ -1,5 +1,5 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router';
-import { useTranslation } from '@vis3/kit';
+import { I18nProvider, useTranslation } from '@vis3/kit';
 import { ConfigProvider } from 'antd';
 import enUS from 'antd/es/locale/en_US';
 import zhCN from 'antd/es/locale/zh_CN';
@@ -45,15 +45,17 @@ function App() {
   };
 
   return (
-    <QueryProvider>
-      <ConfigProvider
-        locale={getAntdLocale()}
-        theme={themeToken}
-        renderEmpty={() => <CustomEmpty />}
-      >
-        <RouterProvider router={router} />
-      </ConfigProvider>
-    </QueryProvider>
+    <I18nProvider>
+      <QueryProvider>
+        <ConfigProvider
+          locale={getAntdLocale()}
+          theme={themeToken}
+          renderEmpty={() => <CustomEmpty />}
+        >
+          <RouterProvider router={router} />
+        </ConfigProvider>
+      </QueryProvider>
+    </I18nProvider>
   )
 }
 

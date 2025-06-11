@@ -1,4 +1,4 @@
-import type { BlockInfo, BucketBlockProps } from '@vis3/kit'
+import type { BucketBlockProps } from '@vis3/kit'
 import { BucketBlock, getBasename, getPathType, useTranslation } from '@vis3/kit'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -20,7 +20,9 @@ import _ from 'lodash'
 import { useCachedBucket } from '../../api/bucket.query'
 import styles from './index.module.css'
 
-interface ExtendedInfoItem extends BlockInfo {
+interface ExtendedInfoItem  {
+  id: string
+  path: string
   bucketId: number
 }
 
@@ -28,7 +30,7 @@ export interface BlockPreviewerProps {
   className?: string
 }
 
-export interface BucketBlockWrapperProps extends BucketBlockProps<BucketDataWithFullPath> {
+export interface BucketBlockWrapperProps extends Omit<BucketBlockProps<BucketDataWithFullPath>, 'id' | 'path' | 'pathType'> {
   pageSize?: number
   pageNo?: number
   block: ExtendedInfoItem
@@ -126,7 +128,6 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
 
     updateBlock?.(id, {
       path: params.path,
-      pathType: getPathType(params.path ?? ''),
     })
   }, [id, search, updateBlock])
   
@@ -135,10 +136,12 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
   }, [pageSize, pageNo, bucketId])
 
   const isRootBlock = id === ROOT_BLOCK_ID
+  const pathType = getPathType(path)
 
   return (
     <BucketBlock
-      block={block}
+      id={block.id}
+      path={block.path}
       loading={isLoading}
       dataSource={data}
       onClose={onClose}
@@ -146,7 +149,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
       onDownload={download}
       previewUrl="/api/v1/bucket/preview"
       showGoParent={!isRootBlock && !!path}
-      showPagination={!isRootBlock && block.pathType === 'folder'}
+      showPagination={!isRootBlock && pathType === 'folder'}
       onChange={handleOnChange}
       closeable={!isRootBlock}
       onOpenInNewTab={handleOpenInNewTab}
@@ -172,7 +175,6 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
   const [blocks, setBlocks] = useState<ExtendedInfoItem[]>([{
     id: ROOT_BLOCK_ID,
     path,
-    pathType,
     bucketId,
   }])
 
@@ -242,7 +244,6 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                         {
                           id: gid(),
                           path: item.path,
-                          pathType: getPathType(item.path),
                           bucketId: item.id,
                         } as ExtendedInfoItem,
                       ]))
@@ -263,7 +264,6 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
           {
             id: gid(),
             path: inputPath,
-            pathType: getPathType(inputPath),
             bucketId: resp.data[0].id,
           } as ExtendedInfoItem,
         ]))

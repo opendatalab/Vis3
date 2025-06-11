@@ -78,7 +78,7 @@ function KeyChainCard({ data, className }: {
           </div>
         </div>
         <div className="flex items-start gap-2">
-          <span className="text-nowrap">Secret Key({t('keychain.encrypted')}): </span>
+          <span className="text-nowrap">Secret Key: </span>
           <div className="flex items-center gap-2">
             <span className="text-ellipsis max-w-[200px] overflow-hidden" title={data.secret_key_id}>***</span>
           </div>
