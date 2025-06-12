@@ -8,12 +8,12 @@ from typing import AsyncIterator, Optional, Tuple, Union
 
 import boto3
 import httpx
-import magic
 from botocore.client import Config
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import HTTPException, status
 from fastapi.responses import StreamingResponse
 from loguru import logger
+
 from vis3.internal.common.exceptions import AppEx, ErrorCode
 from vis3.internal.models.bucket import Bucket
 from vis3.internal.schema import JsonRow
@@ -76,6 +76,56 @@ def _try_decode(body_bytes: bytes, http_charset: Union[str, None]):
 
 
 class S3Reader:
+    # 添加文件签名映射
+    FILE_SIGNATURES = {
+        # ZIP 文件
+        b'PK\x03\x04': 'application/zip',
+        # PDF 文件
+        b'%PDF': 'application/pdf',
+        # GIF 文件
+        b'GIF87a': 'image/gif',
+        b'GIF89a': 'image/gif',
+        # JPEG 文件
+        b'\xFF\xD8\xFF': 'image/jpeg',
+        # PNG 文件
+        b'\x89PNG\r\n\x1a\n': 'image/png',
+        # GZIP 文件
+        b'\x1F\x8B\x08': 'application/gzip',
+        # XML 文件 (UTF-8)
+        b'<?xml': 'application/xml',
+        # UTF-8 文本文件的 BOM
+        b'\xEF\xBB\xBF': 'text/plain',
+        # UTF-16 LE 文本文件的 BOM
+        b'\xFF\xFE': 'text/plain',
+        # UTF-16 BE 文本文件的 BOM
+        b'\xFE\xFF': 'text/plain',
+    }
+
+    # 保持现有的 MIME_TYPES 映射
+    MIME_TYPES = {
+        '.txt': 'text/plain',
+        '.html': 'text/html',
+        '.htm': 'text/html',
+        '.json': 'application/json',
+        '.jsonl': 'application/json',
+        '.csv': 'text/csv',
+        '.xml': 'application/xml',
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.zip': 'application/zip',
+        '.gz': 'application/gzip',
+        '.warc': 'application/warc',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.js': 'application/javascript',
+        '.css': 'text/css',
+    }
+
     def __init__(
         self,
         key: str,
@@ -193,51 +243,65 @@ class S3Reader:
                 )
             raise
 
-    async def mime_type(self) -> str:
+    async def _detect_mime_by_content(self) -> str:
         """
-        通过 magic 获取 S3 对象的 MIME 类型。
-
-        Returns:
-            str: 文件的 MIME 类型
-
-        Raises:
-            ValueError: 当 bucket 不存在时
-            PermissionError: 当没有访问权限时
-            ClientError: 其他 S3 客户端错误
+        通过文件内容的签名来检测 MIME 类型
         """
         try:
-            # 获取文件的前 2048 字节用于 MIME 类型检测
+            # 获取文件的前32个字节用于类型检测
             response = await S3Reader._run_in_executor(
                 self.client.get_object,
                 Bucket=self.bucket_name,
                 Key=self.key_without_query,
-                Range="bytes=0-2047",
+                Range="bytes=0-31",
             )
-            stream = response["Body"]
+            content = await S3Reader._run_in_executor(response["Body"].read)
 
-            # 读取文件内容
-            content = bytearray()
-            for chunk in stream:
-                content.extend(chunk)
-                if len(content) >= 2048:
-                    break
+            # 检查文件签名
+            for signature, mime_type in self.FILE_SIGNATURES.items():
+                if content.startswith(signature):
+                    return mime_type
 
-            # 使用 python-magic 检测 MIME 类型
-            mime = magic.Magic(mime=True)
-            return mime.from_buffer(bytes(content))
+            # 检查是否是文本文件
+            # 检查前32个字节是否都是可打印字符或常见控制字符
+            is_text = all(byte in b' \t\n\r' or 32 <= byte <= 126 for byte in content)
+            if is_text:
+                # 如果内容以 { [ " 开头，可能是 JSON
+                if content.lstrip().startswith(b'{') or content.lstrip().startswith(b'['):
+                    return 'application/json'
+                return 'text/plain'
 
-        except ClientError as e:
-            error_code = e.response["Error"]["Code"]
-            if error_code == "NoSuchBucket":
-                raise ValueError(f"Bucket {self.bucket_name} does not exist")
-            elif error_code == "AccessDenied":
-                raise PermissionError(f"Access denied to bucket {self.bucket_name}")
-            elif error_code == "404":
-                raise ValueError(
-                    f"Object {self.key_without_query} does not exist in bucket {self.bucket_name}"
-                )
-            else:
-                raise
+            return 'application/octet-stream'
+
+        except Exception as e:
+            logger.error(f"Error detecting MIME type from content: {e}")
+            return 'application/octet-stream'
+
+    async def mime_type(self) -> str:
+        """
+        获取文件的 MIME 类型。优先使用文件扩展名，如果没有扩展名则通过内容检测。
+
+        Returns:
+            str: 文件的 MIME 类型
+        """
+        try:
+            # 处理特殊情况：.warc.gz
+            if self.key_without_query.endswith('.warc.gz'):
+                return 'application/warc+gzip'
+
+            # 尝试从文件扩展名获取 MIME 类型
+            if '.' in self.key_without_query:
+                file_ext = '.' + self.key_without_query.split('.')[-1].lower()
+                mime_type = self.MIME_TYPES.get(file_ext)
+                if mime_type:
+                    return mime_type
+
+            # 如果没有扩展名或扩展名未知，通过内容检测
+            return await self._detect_mime_by_content()
+
+        except Exception as e:
+            logger.error(f"Error determining MIME type: {e}")
+            return 'application/octet-stream'
 
     async def list_objects(
         self,

@@ -49,10 +49,10 @@ class NoCacheStaticFiles(StaticFiles):
         return resp
 
 
-initial_routers(app)
-run_db_migrations()
-add_exception_handler(app)
 init_tables()
+run_db_migrations()
+initial_routers(app)
+add_exception_handler(app)
 
 app.mount("", NoCacheStaticFiles(packages=["vis3.internal"], html=True))
 
