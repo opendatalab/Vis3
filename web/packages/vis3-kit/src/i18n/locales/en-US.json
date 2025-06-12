@@ -23,7 +23,7 @@
   "goTo": "Go to",
   "toolboxWelcome": "Welcome to OpenDataLab open source tools 🎉",
   "tryOnline": "Try online",
-  "opendatalabDescription": "An open data platform that leads the AI big model era, providing a large amount of multi-modal high-quality data sets to help AI 落地",
+  "opendatalabDescription": "An open data platform leading the era of large AI models, providing massive, multimodal high-quality datasets to help AI development land",
   "labelllmDescription": "Professional LLM dialogue annotation, through flexible tool configuration and wide compatibility with various data modalities, to create high-quality data for large models",
   "minerUDescription": "One-stop open source high-quality data extraction tool, supports multiple formats (PDF/webpage/ebook), intelligent extraction, generating high-quality data",
   "labelUDescription": "A lightweight open source annotation tool, freely combining various tools, seamlessly compatible with multiple data formats, and supporting loading of pre-annotation to accelerate annotation efficiency",
