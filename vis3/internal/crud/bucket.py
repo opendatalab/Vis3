@@ -4,6 +4,7 @@ from fastapi import status
 from sqlalchemy import func
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
+
 from vis3.internal.api.v1.schema.request.bucket import (
     BucketCreateBody,
     BucketCreatePayload,
@@ -49,7 +50,6 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
             )
 
         db_obj = Bucket(
-            name=obj_in.name,
             path=obj_in.path,
             endpoint=obj_in.endpoint,
             created_by=created_by,
@@ -66,7 +66,6 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         
         for bucket in obj_in:
             db_obj = Bucket(
-                name=bucket.name,
                 path=bucket.path,
                 endpoint=bucket.endpoint,
                 created_by=created_by,

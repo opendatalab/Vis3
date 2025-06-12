@@ -9,12 +9,12 @@ import type { MutableRefObject } from 'react'
 import { useEffect, useImperativeHandle, useMemo, useState } from 'react'
 
 import DeleteSvg from '@/assets/delete.svg?react'
-import { isBucketAccessible, ping } from '../../api/bucket'
+import { filterBucket, isBucketAccessible, ping } from '../../api/bucket'
 import { useBatchCreateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
 import PopPanel from '../PopPanel'
 
-export function pathValidator(keyOptions: any): any {
+export function pathValidator(keyOptions: any, isCreate: boolean = true): any {
   return (form: FormInstance<any>) => ({
     validator: async (_meta: any, value: string) => {
       const values = form.getFieldsValue()
@@ -35,6 +35,23 @@ export function pathValidator(keyOptions: any): any {
 
       if (!value.startsWith('s3://')) {
         return Promise.reject(new Error(i18n.t('bucketForm.pathValidMessage')))
+      }
+
+      // 同一个keychain下，path不能重复
+      let duplicatedPaths = _.filter(values.buckets, (item: any) => item.path === value && item.keychain_id === keychain_id)
+      if (duplicatedPaths.length > 1) {
+        return Promise.reject(new Error(i18n.t('bucketForm.pathDuplicated')))
+      }
+
+      
+      if (isCreate) {
+        // 检查服务器有无重复路径
+        const existingBuckets = await filterBucket(value)
+        const duplicatedPath = _.find(existingBuckets.data, (item: any) => item.keychain_id === keychain_id)
+
+        if (duplicatedPath) {
+          return Promise.reject(new Error(i18n.t('bucketForm.duplicatedPathExists')))
+        }
       }
 
       try {

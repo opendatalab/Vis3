@@ -111,7 +111,9 @@
     "keychainId": "AK&SK",
     "keychainIdRequired": "请选择 AK&SK",
     "noPermission": "选择的 AK&SK 没有权限访问此路径",
-    "AS&SKManagement": "AK&SK 管理"
+    "AS&SKManagement": "AK&SK 管理",
+    "pathDuplicated": "相同 AK&SK 下，路径不能重复",
+    "duplicatedPathExists": "相同 AK&SK 和路径已存在"
   },
 
   "directoryTree": {

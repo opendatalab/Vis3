@@ -110,7 +110,9 @@
     "keychainId": "AK&SK",
     "keychainIdRequired": "Please select AK&SK",
     "noPermission": "The selected AK&SK does not have permission to access this path",
-    "AS&SKManagement": "AK&SK"
+    "AS&SKManagement": "AK&SK",
+    "pathDuplicated": "The same AK&SK cannot have the same path",
+    "duplicatedPathExists": "The same AK&SK and path already exists"
   },
 
   "directoryTree": {

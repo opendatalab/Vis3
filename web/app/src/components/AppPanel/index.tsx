@@ -52,8 +52,8 @@ export default function AppPanel() {
       {
         name: 'MinerU',
         links: [
-          { name: 'Github', link: 'https://github.com/opendatalab/MinerU' },
           { name: t('tryOnline'), link: 'https://opendatalab.com/OpenSourceTools/Extractor/PDF' },
+          { name: 'Github', link: 'https://github.com/opendatalab/MinerU' },
         ],
         icon: <MinerU />,
         description: t('minerUDescription'),

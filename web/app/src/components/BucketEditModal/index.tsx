@@ -50,8 +50,7 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
   }
 
   const handleOk = async () => {
-    setIsOpen(false)
-    setId(null)
+    await form.validateFields()
     const values = form.getFieldsValue()
     const endpoint = _.get(values, 'endpoint')
     const keychain_id = _.get(values, 'keychain_id')
@@ -70,6 +69,8 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
 
     queryClient.invalidateQueries({ queryKey: ['bucket'] })
     message.success(t('bucketUpdated'))
+    setIsOpen(false)
+    setId(null)
   }
   return (
     <Modal title={t('editBucket')} open={isOpen} onCancel={handleCancel} onOk={handleOk} loading={isLoading}>
@@ -80,7 +81,7 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
           name="path"
           required
           validateDebounce={1000}
-          rules={[pathValidator(keychainOptions)]}
+          rules={[pathValidator(keychainOptions, false)]}
         >
           <Input placeholder={t('bucketForm.pathPlaceholder')} />
         </Form.Item>
