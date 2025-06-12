@@ -38,7 +38,7 @@ export function pathValidator(keyOptions: any, isCreate: boolean = true): any {
       }
 
       // 同一个keychain下，path不能重复
-      let duplicatedPaths = _.filter(values.buckets, (item: any) => item.path === value && item.keychain_id === keychain_id)
+      let duplicatedPaths = _.filter(values.buckets, (item: any) => item && item.path === value && item.keychain_id === keychain_id)
       if (duplicatedPaths.length > 1) {
         return Promise.reject(new Error(i18n.t('bucketForm.pathDuplicated')))
       }

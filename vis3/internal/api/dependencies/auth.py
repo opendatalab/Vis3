@@ -27,6 +27,12 @@ async def get_token_from_request(request: Request, token: str | None = Depends(o
     if access_token:
         return access_token
     
+    if settings.ENABLE_AUTH:
+        raise AppEx(
+            code=ErrorCode.AUTH_10001_NOT_AUTHENTICATED,
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+    
     return None
 
 
