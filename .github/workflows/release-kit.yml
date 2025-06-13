@@ -1,0 +1,65 @@
+name: 'release-kit'
+
+on:
+  workflow_run:
+    workflows: ["release"]
+    branches:
+      - 'main'
+      - 'alpha'
+    types:
+      - completed
+
+jobs:
+  prepare-vis3-kit:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.8.1
+
+      - name: Vis3-kit Semantic Release dry-run
+        id: dry-run
+        run: |
+          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git @semantic-release/npm semantic-release
+          cd web/packages/vis3-kit
+          semantic-release --dry-run --yes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  release-vis3-kit:
+    needs: prepare-vis3-kit
+    if: ${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION != '' && (github.ref_name == 'main' || github.ref_name == 'alpha') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Get next version
+        id: get-next-version
+        run: |
+          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
+
+      - name: update vis3-kit version
+        run: |
+          cd web/app
+          # update vis3-kit version in package.json
+          sed -i "s/\"@vis3\/kit\": \"[^\"]*\"/\"@vis3\/kit\": \"${NEXT_VERSION}\"/" package.json
+
+      - name: Release vis3-kit
+        run: |
+          cd web/packages/vis3-kit
+          npm install
+          npm run build
+          npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }} 
