@@ -23,7 +23,7 @@ export interface ImageListProps {
   name: string
 }
 
-const ErrorContainer = styled.div`
+export const ErrorContainer = styled.div`
   background-color: #fee2e2;
   padding: 0.5rem;
   color: #ef4444;

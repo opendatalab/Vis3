@@ -9,6 +9,7 @@ import MarkdownPreview from '../../Markdown'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
 import { usePreviewBlockContext } from '../contexts/preview.context'
+import { ErrorContainer } from '../ImageList'
 import usePreview from '../stateHooks/usePreview'
 import useWrap from '../stateHooks/useWrap'
 import styles from './index.module.css'
@@ -125,6 +126,10 @@ function ContentList({ name, data }: ContentListProps) {
     }
     return <TextItem key={`${name}-${index}`}>{item.text ?? ''}</TextItem>
   }, [name, previewUrl])
+
+  if (!Array.isArray(data)) {
+    return <ErrorContainer>Invalid data, must be an array</ErrorContainer>
+  }
 
   return (
     <ContentListContainer className={styles.contentList} title={name}>

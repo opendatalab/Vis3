@@ -85,7 +85,6 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
   })
   
   useLayoutEffect(() => {
-    const bucketContainer = document.getElementById('bucketContainer')
     if (!wrapper) {
       return
     }
@@ -99,19 +98,11 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
 
       timeoutId = window.setTimeout(() => {
         const wrapRect = wrapper.getBoundingClientRect()
-        let height = window.innerHeight - wrapRect.top - 1
-    
-        if (bucketContainer) {
-          const bucketContainerStyle = window.getComputedStyle(bucketContainer?.parentElement!)
-    
-          height -= Number.parseInt(bucketContainerStyle.paddingBottom)
-        } else {
-          height = wrapper.parentElement!.clientHeight
-        }
+        const parentRect = wrapper.parentElement?.getBoundingClientRect()
     
         setSize({
           width: wrapRect.width,
-          height,
+          height: parentRect?.height ?? 0,
         })
       }, 200) // 200ms的防抖延迟
     }
