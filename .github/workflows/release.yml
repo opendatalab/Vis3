@@ -27,30 +27,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  prepare-vis3-kit:
-    needs: release-vis3
-    runs-on: ubuntu-latest
-    outputs:
-      NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20.8.1
-
-      - name: Vis3-kit Semantic Release dry-run
-        id: dry-run
-        run: |
-          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git @semantic-release/npm semantic-release
-          cd web/packages/vis3-kit
-          semantic-release --dry-run --yes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   release-vis3:
     needs: prepare-vis3
     if: ${{ needs.prepare-vis3.outputs.NEXT_VERSION != '' }}
@@ -163,16 +139,41 @@ jobs:
 
       # ====================== post release ======================
       
-      - name: Send release notification
-        env:
-          CHANGELOG: ${{ github.event.inputs.changelog != '' && format('## Frontend changelog👇🏻 \n\n{0}\n\n\n', github.event.inputs.changelog) || '' }}
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-          RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
-          NEXT_VERSION: ${{ env.NEXT_VERSION }}
-          PYPI_URL: ${{ env.PYPI_URL }}
-        run: |
-          node ./scripts/release-notification.js
+      # - name: Send release notification
+      #   env:
+      #     CHANGELOG: ${{ github.event.inputs.changelog != '' && format('## Frontend changelog👇🏻 \n\n{0}\n\n\n', github.event.inputs.changelog) || '' }}
+      #     WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+      #     RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
+      #     NEXT_VERSION: ${{ env.NEXT_VERSION }}
+      #     PYPI_URL: ${{ env.PYPI_URL }}
+      #   run: |
+      #     node ./scripts/release-notification.js
           
+  prepare-vis3-kit:
+    needs: release-vis3
+    if: ${{ success() && needs.release-vis3.result == 'success' }}
+    runs-on: ubuntu-latest
+    outputs:
+      NEXT_VERSION: ${{ steps.dry-run.outputs.NEXT_VERSION }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20.8.1
+
+      - name: Vis3-kit Semantic Release dry-run
+        id: dry-run
+        run: |
+          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git @semantic-release/npm semantic-release
+          cd web/packages/vis3-kit
+          semantic-release --dry-run --yes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   release-vis3-kit:
     needs: prepare-vis3-kit
     if: ${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION != '' && (github.ref_name == 'main' || github.ref_name == 'alpha') }}
