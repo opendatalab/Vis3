@@ -3,7 +3,7 @@ import HelpSvg from '@/assets/help.svg?react'
 import LocalSvg from '@/assets/local.svg?react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/kit'
-import { Button, Dropdown, Tag } from 'antd'
+import { Avatar, Button, Dropdown, Tag } from 'antd'
 
 import clsx from 'clsx'
 import _ from 'lodash'
@@ -11,7 +11,6 @@ import { useCachedBucket } from '../../api/bucket.query'
 import { useLogout, useMe } from '../../api/user.query'
 import LogoSvg from '../../assets/logo.svg?react'
 import AppPanel from '../AppPanel'
-import Avatar from '../Avatar'
 import LangSwitcher from '../LangSwitcher'
 
 export default function Header() {
@@ -97,7 +96,7 @@ export default function Header() {
                 ],
               }}
             >
-              <Avatar className="cursor-pointer" alt={me?.username} size="sm" />
+              <Avatar className="!bg-[var(--ant-color-primary)]" alt={me?.username}>{me?.username?.slice(0, 1).toUpperCase()}</Avatar>
             </Dropdown>
           )}
         </div>
