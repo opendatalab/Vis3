@@ -101,11 +101,13 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
         const parentRect = wrapper.parentElement?.getBoundingClientRect()
     
         setSize({
-          width: wrapRect.width,
-          height: parentRect?.height ?? 0,
+          width: wrapRect.width - 1,
+          height: parentRect ? parentRect.height - 1 : 0,
         })
-      }, 200) // 200ms的防抖延迟
+      }, 100) // 100ms的防抖延迟
     }
+
+    // updateSize()
 
     const observer = new ResizeObserver(updateSize)
     observer.observe(wrapper)
