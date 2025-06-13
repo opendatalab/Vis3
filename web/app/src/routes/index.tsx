@@ -1,12 +1,12 @@
 import { ExportOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/kit'
 import '@vis3/kit/dist/index.css'
 import { Alert, Button, Form, Input, Select, Tooltip } from 'antd'
 import clsx from 'clsx'
 import _ from 'lodash'
-import { useRef } from 'react'
+import { useMemo, useRef } from 'react'
 
 
 import { useBucketQueryKey, useCachedBucket, useCreateBucket } from '../api/bucket.query'
@@ -179,10 +179,18 @@ function RouteComponent() {
   const bodyRef = useRef<HTMLDivElement>(null)
   const bucketEditModalRef = useRef<BucketEditModalRef>(null)
   const [, path] = useBucketQueryKey()
-  const { fetchingCount, data } = useCachedBucket()
+  const routerState = useRouterState()
+  const { fetchingCount, data} = useCachedBucket()
 
-  const total = _.get(data, 'total', 0)
-  const showEmptyPlaceholder = !!data && !path && total === 0 && fetchingCount === 0
+  const total = _.get(data, 'total', 0,)
+  const showEmptyPlaceholder = !!data && !path && total === 0 && fetchingCount === 0 && routerState.status === 'idle'
+  const showBucket = useMemo(() => {
+    if (!!path) {
+      return true
+    }
+
+    return total > 0 && routerState.status === 'idle'
+  }, [path, total, routerState.status])
 
   return (
     <div
@@ -198,8 +206,8 @@ function RouteComponent() {
       />
       <DirectoryTreeProvider>
         <div className={clsx('flex-col gap-4 h-[calc(100vh-88px)]', {
-          hidden: showEmptyPlaceholder,
-          flex: !showEmptyPlaceholder,
+          hidden: !showBucket,
+          flex: showBucket,
         })}
         >
           <BucketHeader />

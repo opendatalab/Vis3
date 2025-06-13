@@ -54,7 +54,7 @@ export default function LangSwitcher() {
         ],
       }}
     >
-      <Button type="text" icon={<LangIcon />}>{langLabel}</Button>
+      <Button size="middle" type="text" icon={<LangIcon />}>{langLabel}</Button>
     </Dropdown>
   )
 }

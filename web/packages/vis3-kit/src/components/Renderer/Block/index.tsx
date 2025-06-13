@@ -160,6 +160,8 @@ export function BucketBlock<T extends BaseBucketType>({
     const mimeType = (dataSource as BaseBucketType)?.mimetype
     if (mimeType && unkonwnFileType) {
       setRenderAs(extractRenderAs(mimeType))
+    } else {
+      setRenderAs(undefined)
     }
   }, [dataSource, unkonwnFileType])
 

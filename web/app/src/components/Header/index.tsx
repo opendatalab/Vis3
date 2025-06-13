@@ -69,7 +69,7 @@ export default function Header() {
         <div className="flex items-center space-x-2">
           <LangSwitcher />
           <AppPanel />
-          <Button type="link" className="!no-underline !text-gray-700" icon={<HelpSvg />} target="_blank" href="https://help.visu.com">
+          <Button type="link" className="!no-underline !text-gray-700" icon={<HelpSvg />} target="_blank" href="https://vis3.shlab.tech/docs">
             {t('documentation')}
           </Button>
 
