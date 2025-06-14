@@ -45,6 +45,7 @@
   "deleteAllConfirm": "确定删除所有文件？",
   "cancel": "取消",
   "ok": "确定",
+  "noBucketFound": "未找到 Bucket",
   "account": {
     "username": "用户名",
     "usernamePlaceholder": "请输入用户名",

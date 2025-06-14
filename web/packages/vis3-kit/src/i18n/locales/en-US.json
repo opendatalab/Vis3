@@ -44,6 +44,7 @@
   "deleteAllConfirm": "Are you sure you want to delete all files?",
   "cancel": "Cancel",
   "ok": "OK",
+  "noBucketFound": "No bucket found",
   "account": {
     "username": "Username",
     "usernamePlaceholder": "Please enter your username",
