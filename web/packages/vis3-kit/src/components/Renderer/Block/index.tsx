@@ -116,6 +116,8 @@ export interface BucketBlockProps<BucketType extends BaseBucketType> {
   renderBucketItem?: (item: BucketType) => React.ReactNode,
   previewUrl?: string,
   onOpenInNewTab?: (path: string) => void
+  onLinkClick?: (path: string) => void
+  onKeyClick?: (path: string, value: string) => void
 }
 
 export function BucketBlock<T extends BaseBucketType>({
@@ -139,6 +141,8 @@ export function BucketBlock<T extends BaseBucketType>({
   renderBucketItem,
   previewUrl,
   showDownload = true,
+  onLinkClick,
+  onKeyClick,
 }: BucketBlockProps<T>) {
   const basename = getBasename(path)
   const { t } = useTranslation()
@@ -164,6 +168,19 @@ export function BucketBlock<T extends BaseBucketType>({
       setRenderAs(undefined)
     }
   }, [dataSource, unkonwnFileType])
+
+  useEffect(() => {
+    // 监听s3-path-click事件
+    const handleS3PathClick = (e: any) => {
+      onLinkClick?.(e.detail.path)
+    }
+
+    document.addEventListener('s3-path-click', handleS3PathClick)
+
+    return () => {
+      document.removeEventListener('s3-path-click', handleS3PathClick)
+    }
+  }, [onLinkClick])
 
   const [prevBytes, setPrevBytes] = useState<number[]>([])
   const hasPrev = prevBytes.length > 0
@@ -262,7 +279,10 @@ export function BucketBlock<T extends BaseBucketType>({
     onDownload,
     dataSource,
     previewUrl,
-  } as RenderBlockContextType<T> as unknown as RenderBlockContextType<BaseBucketType>), [id, path, s3PathType, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl])
+    onLinkClick,
+    onKeyClick,
+  } as RenderBlockContextType<T> as unknown as RenderBlockContextType<BaseBucketType>), [
+    id, path, s3PathType, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl, onLinkClick, onKeyClick])
 
   const extraTitle = useMemo(() => {
     return (

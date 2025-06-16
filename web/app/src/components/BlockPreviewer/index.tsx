@@ -35,9 +35,10 @@ export interface BucketBlockWrapperProps extends Omit<BucketBlockProps<BucketDat
   pageNo?: number
   block: ExtendedInfoItem
   updateBlock?: (id: string, values: Partial<ExtendedInfoItem>) => void
+  onLinkClick?: (inputPath: string) => void
 }
 
-function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageNo: propPageNo = 1, updateBlock, ...props }: BucketBlockWrapperProps) {
+function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageNo: propPageNo = 1, updateBlock, onLinkClick, ...props }: BucketBlockWrapperProps) {
   const { path, id, bucketId } = block
   const [pageSize, setPageSize] = useState(propPageSize)
   const [pageNo, setPageNo] = useState(propPageNo)
@@ -154,6 +155,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
       closeable={!isRootBlock}
       onOpenInNewTab={handleOpenInNewTab}
       showOpenInNewTab={!isRootBlock}
+      onLinkClick={onLinkClick}
       {...props}
     />
   )
@@ -215,77 +217,66 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
     ]))
   }, [path, pathType])
 
-  useEffect(() => {
-    const handleS3PathClick = async (e: any) => {
-      const inputPath = e.detail.path
+  const handleS3PathClick = useCallback(async (inputPath: string) => {
+    const resp = await filterBucket(inputPath)
 
-      const resp = await filterBucket(inputPath)
-
-      if (resp.data.length > 1) {
-        Modal.info({
-          title: t('bucket.duplicatedBuckets'),
-          content: (
-            <List
-              size="small"
-              bordered
-              dataSource={resp.data.map(item => ({
-                name: item.name,
-                path: item.path,
-                id: item.id,
-              }))}
-              renderItem={(item) => (
-                <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
-                  <div className="flex items-center gap-2">
-                    <BucketIcon />
-                    <a href="javascript:void(0)" className="!hover:underline" onClick={() => {
-                      setBlocks(pre => ([
-                        ...pre.slice(0, 1),
-                        ...pre.slice(1),
-                        {
-                          id: gid(),
-                          path: item.path,
-                          bucketId: item.id,
-                        } as ExtendedInfoItem,
-                      ]))
-                      Modal.destroyAll()
-                    }}>{`${item.path}/`}</a>
-                    {item.name && <Tag>{item.name}</Tag>}
-                  </div>
-                </List.Item>
-              )}
-            />
-          ),
-        })
-      } else if (resp.data && resp.data.length) {
-        setBlocks(pre => ([
-          ...pre.slice(0, 1),
-          ...pre.slice(1),
-          {
-            id: gid(),
-            path: inputPath,
-            bucketId: resp.data[0].id,
-          } as ExtendedInfoItem,
-        ]))
-      } else {
-        message.error(t('noBucketFound'))
-      }
-
-      setTimeout(() => {
-        // 滚动到最右侧
-        if (containerRef.current) {
-          containerRef.current.scrollTo({
-            left: containerRef.current.scrollWidth,
-            behavior: 'smooth',
-          })
-        }
+    if (resp.data.length > 1) {
+      Modal.info({
+        title: t('bucket.duplicatedBuckets'),
+        content: (
+          <List
+            size="small"
+            bordered
+            dataSource={resp.data.map(item => ({
+              name: item.name,
+              path: item.path,
+              id: item.id,
+            }))}
+            renderItem={(item) => (
+              <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
+                <div className="flex items-center gap-2">
+                  <BucketIcon />
+                  <a href="javascript:void(0)" className="!hover:underline" onClick={() => {
+                    setBlocks(pre => ([
+                      ...pre.slice(0, 1),
+                      ...pre.slice(1),
+                      {
+                        id: gid(),
+                        path: item.path,
+                        bucketId: item.id,
+                      } as ExtendedInfoItem,
+                    ]))
+                    Modal.destroyAll()
+                  }}>{`${item.path}/`}</a>
+                  {item.name && <Tag>{item.name}</Tag>}
+                </div>
+              </List.Item>
+            )}
+          />
+        ),
       })
+      return
+    } else {
+      setBlocks(pre => ([
+        ...pre.slice(0, 1),
+        ...pre.slice(1),
+        {
+          id: gid(),
+          path: inputPath,
+          bucketId: resp.data[0].id,
+        } as ExtendedInfoItem,
+      ]))
     }
-    // 监听s3-path-click事件
-    document.addEventListener('s3-path-click', handleS3PathClick)
 
-    return () => {
-      document.removeEventListener('s3-path-click', handleS3PathClick)
-    }
+    setTimeout(() => {
+      // 滚动到最右侧
+      if (containerRef.current) {
+        containerRef.current.scrollTo({
+          left: containerRef.current.scrollWidth,
+          behavior: 'smooth',
+        })
+      }
+    })
   }, [t])
 
   const handleBlockClose = useCallback((id: string) => {
@@ -318,6 +309,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
               pageSize={block.id === ROOT_BLOCK_ID ? pageSize : undefined}
               pageNo={block.id === ROOT_BLOCK_ID ? pageNo : undefined}
               style={{ width: `calc(100% / ${blocks.length})` }}
+              onLinkClick={handleS3PathClick}
               renderBucketItem={block.id === ROOT_BLOCK_ID ? (item) => {
                 return (
                   <List.Item className={clsx(styles.listItem, "!flex !items-center")}>

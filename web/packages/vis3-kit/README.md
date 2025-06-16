@@ -48,8 +48,8 @@ export default function App() {
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| id | string | - | 组件唯一标识符 |
-| path | string | - | 文件或目录路径 |
+| id | string | - |  |
+| path | string | - | s3 file path |
 | dataSource | BucketType \| BucketType[] | - | 数据源，可以是单个文件/目录对象或数组 |
 | loading | boolean | false | 加载状态 |
 | onClose | () => void | - | 关闭按钮点击回调 |
@@ -63,6 +63,8 @@ export default function App() {
 | showDownload | boolean | true | 是否显示下载按钮 |
 | closeable | boolean | false | 是否可关闭 |
 | onChange | (params: Partial<BucketParams>) => void | - | 参数变更回调 |
+| onLinkClick | (path: string) => void | - | json视图 链接 点击回调 |
+| onKeyClick | (field: string, value: string | number | object) => void | - | json视图 字段键 点击回调|
 | renderBucketItem | (item: BucketType) => React.ReactNode | - | 自定义渲染列表项 |
 | previewUrl | string | - | 预览文件的URL |
 | onOpenInNewTab | (path: string) => void | - | 在新标签页打开回调 |

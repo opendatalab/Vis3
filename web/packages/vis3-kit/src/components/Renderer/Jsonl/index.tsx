@@ -209,7 +209,7 @@ const StyledGridItem = styled.div`
 `
 
 export default function JsonlCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
-  const { id: propsBlockId, basename, path } = usePreviewBlockContext()
+  const { id: propsBlockId, basename, path, onKeyClick } = usePreviewBlockContext()
   const [stateValue, setStateValue] = useState(value)
   const [wrapButton, { wrap }] = useWrap()
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -333,6 +333,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
       }
 
       setPreview(true)
+      onKeyClick?.(fieldChain.fullPath, get(parsedValue, fieldChain.fullPath) ?? '')
     }
     // 监听json-key-click事件
     document.addEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
@@ -340,7 +341,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
     return () => {
       document.removeEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
     }
-  }, [propsBlockId, previewConfig, parsedValue, setPreview])
+  }, [propsBlockId, previewConfig, parsedValue, setPreview, onKeyClick, path])
 
   const size = useContainerSize(wrapperRef.current)
 

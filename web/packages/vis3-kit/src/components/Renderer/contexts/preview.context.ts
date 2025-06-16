@@ -17,6 +17,8 @@ export interface RenderBlockContextType<BucketType extends BaseBucketType> {
   onDownload?: (path: string) => void
   renderBucketItem?: (item: BucketType) => React.ReactNode
   previewUrl?: string
+  onLinkClick?: (path: string) => void
+  onKeyClick?: (path: string, value: string) => void
 }
 
 export const PreviewBlockContext = createContext<RenderBlockContextType<BaseBucketType>>({} as RenderBlockContextType<BaseBucketType>)
