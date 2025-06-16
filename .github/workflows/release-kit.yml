@@ -2,6 +2,13 @@ name: 'release-kit'
 
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ["release"]
+    types:
+      - completed
+    branches:
+      - main
+      - alpha
 
 jobs:
   prepare-vis3-kit:
