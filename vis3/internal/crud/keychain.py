@@ -1,6 +1,7 @@
 from fastapi import status
 from sqlalchemy.future import select
 from sqlalchemy.orm import Session
+
 from vis3.internal.api.v1.schema.request.keychain import (
     KeychainCreateBody,
     KeychainUpdateBody,
@@ -35,7 +36,7 @@ class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
         """
         if await self._get_by_access_key_id(db, access_key_id=obj_in.access_key_id):
             raise AppEx(
-                code=ErrorCode.AUTH_10004_USERNAME_ALREADY_EXISTS,
+                code=ErrorCode.KEYCHAIN_20002_KEYCHAIN_ALREADY_EXISTS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         
@@ -57,7 +58,7 @@ class KeyChainCRUD(BaseCrud[KeyChain, KeychainCreateBody, KeychainUpdateBody]):
         """
         if await self._get_by_access_key_id(db, access_key_id=obj_in.access_key_id):
             raise AppEx(
-                code=ErrorCode.AUTH_10006_KEYCHAIN_ALREADY_EXISTS,
+                code=ErrorCode.KEYCHAIN_20002_KEYCHAIN_ALREADY_EXISTS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
         

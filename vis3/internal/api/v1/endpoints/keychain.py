@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from vis3.internal.api.dependencies.auth import get_auth_user_or_error
+from vis3.internal.api.dependencies.auth import (
+    get_auth_user_or_error,
+)
 from vis3.internal.api.v1.schema.request.keychain import (
     KeychainCreateBody,
     KeychainUpdateBody,
@@ -10,7 +12,6 @@ from vis3.internal.api.v1.schema.response import ListResponse
 from vis3.internal.api.v1.schema.response.keychain import KeyChainResponse
 from vis3.internal.common.db import get_db
 from vis3.internal.common.exceptions import AppEx, ErrorCode
-from vis3.internal.config import settings
 from vis3.internal.crud.keychain import keychain_crud
 from vis3.internal.models.keychain import KeyChain
 from vis3.internal.models.user import User
@@ -39,18 +40,6 @@ async def get_keychains(
     """
     获取当前用户的所有钥匙串
     """
-    # 如果未启用鉴权，获取所有钥匙串
-    if not settings.ENABLE_AUTH:
-        result, total = await keychain_crud.get_multi(db, skip=(page_no - 1) * page_size, limit=page_size)
-        
-        return ListResponse(
-            data=[
-                make_keychain_response(keychain)
-                for keychain in result
-            ],
-            total=total,
-        )
-    
     # 否则只获取当前用户的钥匙串
     keychains, total = await keychain_crud.get_multi_by_user(
         db, user_id=current_user.id, skip=(page_no - 1) * page_size, limit=page_size
@@ -72,19 +61,7 @@ async def get_all_keychains(
     """
     获取当前用户的所有钥匙串
     """
-    # 如果未启用鉴权，获取所有钥匙串
-    if not settings.ENABLE_AUTH:
-        result, total = await keychain_crud.get_all(db)
-        
-        return ListResponse(
-            data=[
-                make_keychain_response(keychain)
-                for keychain in result
-            ],
-            total=total,
-        )
-    
-    # 否则只获取当前用户的钥匙串
+    # 获取当前用户的钥匙串
     keychains, total = await keychain_crud.get_all_by_user(
         db, user_id=current_user.id
     )
@@ -106,12 +83,7 @@ async def create_keychain(
     """
     创建新的钥匙串
     """
-    # 如果未启用鉴权，创建没有用户关联的钥匙串
-    if not settings.ENABLE_AUTH:
-        db_obj = await keychain_crud.create(db, obj_in=keychain_in)
-        return make_keychain_response(db_obj)
-    
-    # 否则创建与用户关联的钥匙串
+    # 创建与用户关联的钥匙串
     keychain = await keychain_crud.create_with_user(
         db, obj_in=keychain_in, user_id=current_user.id
     )
@@ -130,18 +102,15 @@ async def get_keychain(
     keychain = await keychain_crud.get(db, id=keychain_id)
     if not keychain:
         raise AppEx(
-            code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
+            code=ErrorCode.KEYCHAIN_20001_KEYCHAIN_NOT_FOUND,
             status_code=status.HTTP_404_NOT_FOUND,
         )
     
-    # 如果启用了鉴权，检查权限
-    if settings.ENABLE_AUTH and keychain.created_by != current_user.id:
+    if keychain.created_by != current_user.id:
         raise AppEx(
-            code=ErrorCode.AUTH_10007_KEYCHAIN_NOT_OWNER,
+            code=ErrorCode.KEYCHAIN_20003_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
         )
-    
-    
 
     return KeyChainResponse(
         id=keychain.id,
@@ -167,14 +136,14 @@ async def update_keychain(
     keychain = await keychain_crud.get(db, id=keychain_id)
     if not keychain:
         raise AppEx(
-            code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
+            code=ErrorCode.KEYCHAIN_20001_KEYCHAIN_NOT_FOUND,
             status_code=status.HTTP_404_NOT_FOUND,
         )
     
     # 如果启用了鉴权，检查权限
-    if settings.ENABLE_AUTH and keychain.created_by != current_user.id:
+    if keychain.created_by != current_user.id:
         raise AppEx(
-            code=ErrorCode.AUTH_10009_KEYCHAIN_NOT_OWNER,
+            code=ErrorCode.KEYCHAIN_20005_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
         )
     
@@ -194,14 +163,14 @@ async def delete_keychain(
     keychain = await keychain_crud.get(db=db, id=keychain_id)
     if not keychain:
         raise AppEx(
-            code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
+            code=ErrorCode.KEYCHAIN_20001_KEYCHAIN_NOT_FOUND,
             status_code=status.HTTP_404_NOT_FOUND,
         )
     
     # 如果启用了鉴权，检查权限
-    if settings.ENABLE_AUTH and keychain.created_by != current_user.id:
+    if keychain.created_by != current_user.id:
         raise AppEx(
-            code=ErrorCode.AUTH_10008_KEYCHAIN_NOT_OWNER,
+            code=ErrorCode.KEYCHAIN_20004_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
         )
     

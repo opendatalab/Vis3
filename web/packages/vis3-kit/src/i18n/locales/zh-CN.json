@@ -236,5 +236,27 @@
     "aliyun": "阿里云 OSS",
     "inspur": "浪潮云",
     "microsoft": "微软 Azure"
+  },
+  "server": {
+    "Request Validation Error": "请求验证错误",
+    "Invalid Request": "无效请求",
+    "Ping Failed": "Ping 失败",
+    "Server Error": "服务器错误",
+    "Failed to Read File": "读取文件失败",
+    "Invalid Username": "无效用户名",
+    "Invalid Password": "无效密码",
+    "Username Already Exists": "用户名已存在",
+    "Keychain Not Found": "密钥不存在",
+    "Keychain Already Exists": "AK已存在",
+    "No Permission to Access This Keychain": "没有权限访问此密钥",
+    "No Permission to Delete This Keychain": "没有权限删除此密钥",
+    "No Permission to Update This Keychain": "没有权限更新此密钥",
+    "Object Not Found, Please Check the Path": "对象不存在，请检查路径",
+    "Request Size Out of Range, Maximum Size is 40 Mb": "请求大小超出范围，最大大小为 40 Mb",
+    "Invalid S3 Path, Must Start with s3://": "无效的 S3 路径，必须以 s3:// 开头",
+    "S3 Path Cannot Be Empty": "S3 路径不能为空",
+    "Data is Empty": "数据为空",
+    "S3 Config File Not Found": "S3 配置不存在",
+    "Unknown Error": "未知错误"
   }
 }

@@ -107,8 +107,6 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
       }, 100) // 100ms的防抖延迟
     }
 
-    // updateSize()
-
     const observer = new ResizeObserver(updateSize)
     observer.observe(wrapper)
 

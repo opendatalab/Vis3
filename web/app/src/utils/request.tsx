@@ -1,3 +1,4 @@
+import { i18n } from '@vis3/kit'
 import { message } from 'antd'
 import type { AxiosError, AxiosResponse } from 'axios'
 import axios from 'axios'
@@ -18,7 +19,7 @@ function errorHandler(error: AxiosError) {
   const msg = _.get(error, 'response.data.detail', '') || _.get(error, 'response.data.msg', '')
   
   if (msg && !['/login', '/register'].includes(window.location.pathname)) {
-    message.error(msg)
+    message.error(i18n.t(`server.${msg}`, { defaultValue: msg }))
   }
 
   return Promise.reject(error)

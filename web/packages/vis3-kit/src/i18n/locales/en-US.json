@@ -235,5 +235,27 @@
     "aliyun": "Aliyun OSS",
     "inspur": "Inspur Cloud",
     "microsoft": "Microsoft Azure"
+  },
+  "server": {
+    "Request Validation Error": "Request Validation Error",
+    "Invalid Request": "Invalid Request",
+    "Ping Failed": "Ping Failed",
+    "Server Error": "Server Error",
+    "Failed to Read File": "Failed to Read File",
+    "Invalid Username": "Invalid Username",
+    "Invalid Password": "Invalid Password",
+    "Username Already Exists": "Username Already Exists",
+    "Keychain Not Found": "Keychain Not Found",
+    "Keychain Already Exists": "Keychain Already Exists",
+    "No Permission to Access This Keychain": "No Permission to Access This Keychain",
+    "No Permission to Delete This Keychain": "No Permission to Delete This Keychain",
+    "No Permission to Update This Keychain": "No Permission to Update This Keychain",
+    "Object Not Found, Please Check the Path": "Object Not Found, Please Check the Path",
+    "Request Size Out of Range, Maximum Size is 40 Mb": "Request Size Out of Range, Maximum Size is 40 Mb",
+    "Invalid S3 Path, Must Start with s3://": "Invalid S3 Path, Must Start with s3://",
+    "S3 Path Cannot Be Empty": "S3 Path Cannot Be Empty",
+    "Data is Empty": "Data is Empty",
+    "S3 Config File Not Found": "S3 Config File Not Found",
+    "Unknown Error": "Unknown Error"
   }
 }

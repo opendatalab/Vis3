@@ -38,14 +38,14 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         keychain = await keychain_crud.get(db, id=obj_in.keychain_id)
         if not keychain:
             raise AppEx(
-                code=ErrorCode.AUTH_10005_KEYCHAIN_NOT_FOUND,
+                code=ErrorCode.KEYCHAIN_20001_KEYCHAIN_NOT_FOUND,
                 status_code=status.HTTP_404_NOT_FOUND,
             )
         
         # path + keychain_id 唯一
         if await self.get_by_path(db, path=obj_in.path, keychain_id=obj_in.keychain_id):
             raise AppEx(
-                code=ErrorCode.AUTH_10006_KEYCHAIN_ALREADY_EXISTS,
+                code=ErrorCode.KEYCHAIN_20002_KEYCHAIN_ALREADY_EXISTS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 

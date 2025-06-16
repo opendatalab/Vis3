@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
+
 from vis3.internal.api.dependencies.auth import get_auth_user_or_error
 from vis3.internal.api.v1.schema.request.user import UserCreate, UserLogin
 from vis3.internal.api.v1.schema.response.user import UserResponse
