@@ -20,7 +20,8 @@ A visualization tool designed for large language models and machine learning dat
 
 - Seamlessly connects with mainstream cloud storage platforms (Alibaba Cloud, AWS, Tencent Cloud, and other cloud storage platforms that support the S3 protocol), supports local file parsing, making data access easy.
 
-https://github.com/user-attachments/assets/6bf58c28-9d18-4b9e-80bf-2449dde43e8e
+https://github.com/user-attachments/assets/aa8ee5e8-c6d3-4b20-ae9d-2ceeb2eb2c41
+
 
 ## Getting Started
 
