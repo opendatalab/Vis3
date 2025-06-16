@@ -255,8 +255,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
           />
         ),
       })
-      return
-    } else {
+    } else if (resp.data && resp.data.length) {
       setBlocks(pre => ([
         ...pre.slice(0, 1),
         ...pre.slice(1),
@@ -266,6 +265,8 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
           bucketId: resp.data[0].id,
         } as ExtendedInfoItem,
       ]))
+    } else {
+      message.error(t('noBucketFound'))
     }
 
     setTimeout(() => {

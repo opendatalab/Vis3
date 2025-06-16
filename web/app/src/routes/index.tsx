@@ -6,7 +6,7 @@ import '@vis3/kit/dist/index.css'
 import { Alert, Button, Form, Input, Select, Tooltip } from 'antd'
 import clsx from 'clsx'
 import _ from 'lodash'
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 
 
 import { useBucketQueryKey, useCachedBucket, useCreateBucket } from '../api/bucket.query'
@@ -37,6 +37,14 @@ function Empty({ className }: { className?: string }) {
 
   const supportedCloudPlatforms = [
     {
+      name: t('supportedCloudPlatforms.aws'),
+      icon: '/aws.png',
+    },
+    {
+      name: t('supportedCloudPlatforms.aliyun'),
+      icon: '/aliyun.png',
+    },
+    {
       name: t('supportedCloudPlatforms.huawei'),
       icon: '/huawei.png',
     },
@@ -49,20 +57,8 @@ function Empty({ className }: { className?: string }) {
       icon: '/sensetime.png',
     },
     {
-      name: t('supportedCloudPlatforms.aws'),
-      icon: '/aws.png',
-    },
-    {
-      name: t('supportedCloudPlatforms.aliyun'),
-      icon: '/aliyun.png',
-    },
-    {
       name: t('supportedCloudPlatforms.inspur'),
       icon: '/inspur.png',
-    },
-    {
-      name: t('supportedCloudPlatforms.microsoft'),
-      icon: '/microsoft.png',
     },
   ]
 
@@ -181,6 +177,11 @@ function RouteComponent() {
   const [, path] = useBucketQueryKey()
   const routerState = useRouterState()
   const { fetchingCount, data} = useCachedBucket()
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    document.title = `Vis3 - ${t('cloud')}`
+  }, [t])
 
   const total = _.get(data, 'total', 0,)
   const showEmptyPlaceholder = !!data && !path && total === 0 && fetchingCount === 0 && routerState.status === 'idle'

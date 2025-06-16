@@ -205,6 +205,10 @@ function RouteComponent() {
   const [siderCollapsed, setSiderCollapsed] = useState<boolean>(false)
 
   useEffect(() => {
+    document.title = `Vis3 - ${t('local')}`
+  }, [t])
+
+  useEffect(() => {
     if (selectedFile) {
       setFakePath(`http://localhost:3000/local/${selectedFile.name}`)
     }
@@ -554,7 +558,7 @@ function RouteComponent() {
                 <BucketBlock
                   id="original"
                   path={fakePath}
-                  dataSource={dataSource}
+                  dataSource={dataSource as any}
                   onChange={handleParamsChange}
                   showPagination={false}
                   showDownload={false}

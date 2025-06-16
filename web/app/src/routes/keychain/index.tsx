@@ -5,7 +5,7 @@ import { useTranslation } from '@vis3/kit'
 import { Alert, Button, Card, message, Popconfirm } from 'antd'
 import dayjs from 'dayjs'
 import _ from 'lodash'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { KeychainResponse } from '../../api/keychain'
 import { useDeleteKeychain, useMyKeychains, useUpdateKeychain } from '../../api/keychain.query'
@@ -93,6 +93,10 @@ function RouteComponent() {
   const { data } = useMyKeychains(1, 100)
   const queryClient = useQueryClient()
   const { t } = useTranslation()
+
+  useEffect(() => {
+    document.title = `Vis3 - AK&SK`
+  }, [t])
 
   return (
     <div className="flex flex-col gap-4 p-4">
