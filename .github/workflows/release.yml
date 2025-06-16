@@ -5,6 +5,8 @@ on:
     branches:
       - 'main'
       - 'alpha'
+  workflow_dispatch:  # 添加手动触发选项
+
 jobs:
   prepare-vis3:
     runs-on: ubuntu-latest
@@ -135,8 +137,3 @@ jobs:
           PYPI_URL: ${{ env.PYPI_URL }}
         run: |
           node ./scripts/release-notification.js
-
-      - name: Trigger kit workflow
-        uses: benc-uk/workflow-dispatch@v1
-        with:
-          workflow: release-kit
