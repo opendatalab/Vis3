@@ -14,13 +14,13 @@ from vis3.internal.config import settings
 from vis3.version import version
 
 app = FastAPI(
-  title="VisU",
+  title="Vis3",
   description="Visualize s3 data",
   version=version,
   terms_of_service="",
   contact={
-      "name": "VisU",
-      "url": "https://github.com/OpenDataLab/VisU",
+      "name": "Vis3",
+      "url": "https://github.com/OpenDataLab/Vis3",
       "email": "shenguanlin@pjlab.org.cn",
   },
   license_info={
