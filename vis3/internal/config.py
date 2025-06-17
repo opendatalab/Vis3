@@ -4,6 +4,8 @@ from loguru import logger
 from pydantic_settings import BaseSettings
 
 from vis3.internal.common.io import get_data_dir
+from vis3.internal.utils import update_sys_config
+from vis3.version import version
 
 
 class Settings(BaseSettings):
@@ -40,6 +42,11 @@ class Settings(BaseSettings):
         
 
         logger.info(f"DATABASE_URL: {self.DATABASE_URL}")
+
+        update_sys_config({
+            "ENABLE_AUTH": self.ENABLE_AUTH,
+            "VERSION": version,
+        })
 
     class Config:
         env_prefix = ""

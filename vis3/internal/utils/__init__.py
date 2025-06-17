@@ -13,15 +13,11 @@ import orjson
 import pkg_resources
 from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
-from cryptography.fernet import Fernet
 from fastapi import status
 from loguru import logger
 
 from vis3.internal.common.exceptions import AppEx, ErrorCode
-from vis3.internal.config import settings
 from vis3.internal.utils.path import split_s3_path
-
-fernet = Fernet(settings.ENCRYPT_KEY)
 
 
 @contextmanager
@@ -102,11 +98,6 @@ async def validate_path_accessibility(path: str, endpoint: str, ak: str, sk: str
         return False
 
     return True
-
-
-def decrypt_secret_key(encrypted_secret_key: str) -> str:
-    encrypted_bytes = base64.urlsafe_b64decode(encrypted_secret_key.encode())
-    return fernet.decrypt(encrypted_bytes).decode()
 
 
 def convert_mobi_stream_to_html(mobi_content: bytes) -> str:
