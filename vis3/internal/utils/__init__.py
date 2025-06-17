@@ -11,6 +11,7 @@ from contextlib import contextmanager
 import httpx
 import orjson
 import pkg_resources
+
 from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from cryptography.fernet import Fernet

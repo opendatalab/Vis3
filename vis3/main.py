@@ -71,7 +71,7 @@ def main(
         settings.HOST = host
     
     settings.ENABLE_AUTH = auth
-
+    
     update_sys_config({
         "ENABLE_AUTH": settings.ENABLE_AUTH,
         "VERSION": version,
