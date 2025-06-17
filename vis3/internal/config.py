@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
         logger.info(f"DATABASE_URL: {self.DATABASE_URL}")
 
-        # 生成一个sys-config.js文件到statics/sys-config.js，内容只有 ENABLE_AUTH
+        # 生成一个sys-config.js文件到statics/sys-config.js
         frontend_public = os.path.join(
             pkg_resources.resource_filename('vis3.internal', 'statics'),
         )
