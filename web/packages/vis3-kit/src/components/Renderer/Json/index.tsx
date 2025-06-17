@@ -57,7 +57,7 @@ const FullHeightWrapper = styled(FieldRendererWrapper)`
 export default function JsonCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const [stateValue, setStateValue] = useState(value)
   const parentCodeViewerContext = useCodeViewerContext()
-  const { id: propsBlockId, basename } = usePreviewBlockContext()
+  const { id: propsBlockId } = usePreviewBlockContext()
   const [copyButton] = useCopy(stateValue)
   const { t } = useTranslation()
   const cardRef = useRef<HTMLDivElement>(null)
@@ -100,11 +100,6 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   useEffect(() => {
     setStateValue(value)
   }, [value])
-
-  useEffect(() => {
-    subOpendKeys.current.__root__ = new FieldChain('')
-    setPreviewConfig([])
-  }, [basename])
 
   useEffect(() => {
     const handleJsonKeyOnClick = (e: CustomEvent<CustomEventJsonNodeDetail>) => {

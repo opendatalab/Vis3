@@ -207,7 +207,7 @@ const StyledGridItem = styled.div`
 `
 
 export default function JsonlCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
-  const { id: propsBlockId, basename, path, onKeyClick } = usePreviewBlockContext()
+  const { id: propsBlockId, path, onKeyClick } = usePreviewBlockContext()
   const [stateValue, setStateValue] = useState(value)
   const [wrapButton, { wrap }] = useWrap()
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -289,12 +289,6 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
   useEffect(() => {
     setStateValue(value)
   }, [value])
-
-  // 文件切换，清空字段链缓存，初始化预览区块
-  useEffect(() => {
-    subOpendKeys.current.__root__ = new FieldChain('')
-    setPreviewConfig([])
-  }, [basename])
 
   useEffect(() => {
     const handleJsonKeyOnClick = (e: CustomEvent<CustomEventJsonNodeDetail>) => {
