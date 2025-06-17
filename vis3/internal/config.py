@@ -1,13 +1,9 @@
-import json
-import os
 from typing import Any
 
-import pkg_resources
 from loguru import logger
 from pydantic_settings import BaseSettings
 
 from vis3.internal.common.io import get_data_dir
-from vis3.version import version
 
 
 class Settings(BaseSettings):
@@ -44,14 +40,6 @@ class Settings(BaseSettings):
         
 
         logger.info(f"DATABASE_URL: {self.DATABASE_URL}")
-
-        # 生成一个sys-config.js文件到statics/sys-config.js，内容只有 ENABLE_AUTH
-        frontend_public = os.path.join(
-            pkg_resources.resource_filename('vis3.internal', 'statics'),
-        )
-        os.makedirs(frontend_public, exist_ok=True)
-        with open(os.path.join(frontend_public, "sys-config.js"), "w", encoding="utf-8") as f:
-            f.write(f"(function() {{ window.__CONFIG__ = {{ ENABLE_AUTH: {json.dumps(self.ENABLE_AUTH)}, VERSION: '{version}' }}; }})();")
 
     class Config:
         env_prefix = ""

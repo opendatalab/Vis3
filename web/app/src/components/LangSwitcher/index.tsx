@@ -20,7 +20,8 @@ export default function LangSwitcher() {
   const { i18n } = useTranslation()
 
   const lang = useMemo(() => {
-    return ['zh', 'zh_CN', 'zh-CN'].includes(i18n.language) ? 'zh-CN' : 'en-US'
+    // currently not support zh-HK, zh-TW
+    return ['zh', 'zh_CN', 'zh-CN', 'zh-HK', 'zh-TW'].includes(i18n.language) ? 'zh-CN' : 'en-US'
   }, [i18n.language])
 
   const langLabel = useMemo(() => {

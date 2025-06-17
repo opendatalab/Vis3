@@ -1,4 +1,4 @@
-# Rsbuild project
+# vis3 frontend app
 
 ## Setup
 
@@ -20,10 +20,4 @@ Build the app for production:
 
 ```bash
 pnpm build
-```
-
-Preview the production build locally:
-
-```bash
-pnpm preview
 ```
