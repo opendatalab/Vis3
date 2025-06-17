@@ -94,6 +94,7 @@ Welcome to join the Opendatalab official WeChat group!
 
 ## Related Projects
 
+- [LabelU](https://github.com/opendatalab/labelU) Image / Video / Audio annotation tool  
 - [LabelU-kit](https://github.com/opendatalab/labelU-Kit) Web frontend annotation kit (LabelU is developed based on this kit)
 - [LabelLLM](https://github.com/opendatalab/LabelLLM) Open-source LLM dialogue annotation platform
 - [Miner U](https://github.com/opendatalab/MinerU) One-stop high-quality data extraction tool

@@ -93,6 +93,7 @@ uvicorn vis3.main:app --reload
 
 ## 友情链接
 
+- [LabelU](https://github.com/opendatalab/labelU) 音视频、图像标注工具
 - [LabelU-kit](https://github.com/opendatalab/labelU-Kit) Web 前端标注套件（LabelU基于此套件开发）
 - [LabelLLM](https://github.com/opendatalab/LabelLLM) 开源LLM对话标注平台
 - [Miner U](https://github.com/opendatalab/MinerU) 一站式高质量数据提取工具
