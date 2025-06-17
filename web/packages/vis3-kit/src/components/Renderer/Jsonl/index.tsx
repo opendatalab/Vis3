@@ -90,6 +90,7 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
     }
 
     let timeoutId: number | undefined
+    let lastSize = { width: 0, height: 0 }
 
     const updateSize = () => {
       if (timeoutId) {
@@ -99,15 +100,22 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
       timeoutId = window.setTimeout(() => {
         const wrapRect = wrapper.getBoundingClientRect()
         const parentRect = wrapper.parentElement?.getBoundingClientRect()
-    
-        setSize({
-          width: wrapRect.width - 1,
-          height: parentRect ? parentRect.height - 1 : 0,
-        })
-      }, 100) // 100ms的防抖延迟
+        
+        const newWidth = Math.floor(wrapRect.width)
+        const newHeight = Math.floor(parentRect ? parentRect.height : 0)
+        
+        // 只有当尺寸变化超过10像素时才更新状态，防止win上闪烁
+        if (Math.abs(newWidth - lastSize.width) > 10 || Math.abs(newHeight - lastSize.height) > 10) {
+          lastSize = { width: newWidth, height: newHeight }
+          setSize(lastSize)
+        }
+      }, 100)
     }
 
-    const observer = new ResizeObserver(updateSize)
+    const observer = new ResizeObserver(() => {
+      requestAnimationFrame(updateSize)
+    })
+    
     observer.observe(wrapper)
 
     return () => {
