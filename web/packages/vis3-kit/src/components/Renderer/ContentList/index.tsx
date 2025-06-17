@@ -130,7 +130,7 @@ function ContentList({ name, data }: ContentListProps) {
   }, [name, previewUrl])
 
   if (!Array.isArray(data)) {
-    return <ErrorContainer>{t('arrayTypeRequired')}</ErrorContainer>
+    return <ErrorContainer>{t('renderer.arrayTypeRequired')}</ErrorContainer>
   }
 
   return (
