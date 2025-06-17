@@ -1,7 +1,7 @@
-import { CopyOutlined } from '@ant-design/icons'
 import { Button, Tooltip } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 
+import CopySvg from '../../../assets/copy.svg'
 import { useTranslation } from '../../../i18n'
 
 export default function useCopy(value: string): [React.ReactNode] {
@@ -32,7 +32,7 @@ export default function useCopy(value: string): [React.ReactNode] {
 
   const node = useMemo(() => (
     <Tooltip title={title}>
-      <Button size="small" type="text" icon={<CopyOutlined />} onClick={handleCopyRaw} />
+      <Button size="small" type="text" icon={<CopySvg />} onClick={handleCopyRaw} />
     </Tooltip>
   ), [title, handleCopyRaw])
 
