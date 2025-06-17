@@ -2,6 +2,7 @@ import styled from '@emotion/styled'
 import { Image, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { useTranslation } from '../../../i18n'
 import { JsonViewer } from '../../CodeViewer'
 import { CodeViewerContext } from '../../CodeViewer/context'
 import FullScreenButton from '../../FullscreenButton'
@@ -98,6 +99,7 @@ const ExtraContainer = styled.div`
 
 function ContentList({ name, data }: ContentListProps) {
   const { previewUrl } = usePreviewBlockContext()
+  const { t } = useTranslation()
   const renderItem = useCallback((item: ContentItem, index: number) => {
     if (item.text_format === 'md') {
       return <MarkdownPreview inline key={`${name}-${index}`} value={item?.md ?? item?.text ?? ''} />
@@ -128,7 +130,7 @@ function ContentList({ name, data }: ContentListProps) {
   }, [name, previewUrl])
 
   if (!Array.isArray(data)) {
-    return <ErrorContainer>Invalid data, must be an array</ErrorContainer>
+    return <ErrorContainer>{t('arrayTypeRequired')}</ErrorContainer>
   }
 
   return (

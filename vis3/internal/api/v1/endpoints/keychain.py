@@ -64,7 +64,7 @@ async def get_all_keychains(
     # 获取当前用户的钥匙串
     keychains, total = await keychain_crud.get_all_by_user(
         db, user_id=current_user.id
-    )
+    ) if current_user else await keychain_crud.get_all(db)
     return ListResponse(
         data=[
             make_keychain_response(keychain)
@@ -86,7 +86,7 @@ async def create_keychain(
     # 创建与用户关联的钥匙串
     keychain = await keychain_crud.create_with_user(
         db, obj_in=keychain_in, user_id=current_user.id
-    )
+    ) if current_user else await keychain_crud.create(db, obj_in=keychain_in)
     return make_keychain_response(keychain)
 
 
@@ -106,7 +106,7 @@ async def get_keychain(
             status_code=status.HTTP_404_NOT_FOUND,
         )
     
-    if keychain.created_by != current_user.id:
+    if current_user and keychain.created_by != current_user.id:
         raise AppEx(
             code=ErrorCode.KEYCHAIN_20003_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
@@ -118,7 +118,7 @@ async def get_keychain(
         access_key_id=keychain.access_key_id,
         secret_key_id=keychain.secret_key_id,
         created_at=keychain.created_at,
-        created_by=keychain.user.username,
+        created_by=keychain.user.username if keychain.user else None,
         updated_at=keychain.updated_at,
     )
 
@@ -141,7 +141,7 @@ async def update_keychain(
         )
     
     # 如果启用了鉴权，检查权限
-    if keychain.created_by != current_user.id:
+    if current_user and keychain.created_by != current_user.id:
         raise AppEx(
             code=ErrorCode.KEYCHAIN_20005_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
@@ -168,7 +168,7 @@ async def delete_keychain(
         )
     
     # 如果启用了鉴权，检查权限
-    if keychain.created_by != current_user.id:
+    if current_user and keychain.created_by != current_user.id:
         raise AppEx(
             code=ErrorCode.KEYCHAIN_20004_KEYCHAIN_NOT_OWNER,
             status_code=status.HTTP_403_FORBIDDEN,
