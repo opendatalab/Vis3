@@ -1,9 +1,10 @@
-import { CopyOutlined, DownloadOutlined } from '@ant-design/icons'
+import { DownloadOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
 import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback, useMemo, useRef } from 'react'
 
+import CopySvg from '../../../assets/copy.svg'
 import { useTranslation } from '../../../i18n'
 import { FileIcon } from '../../FileIcon'
 import FullScreenButton from '../../FullscreenButton'
@@ -164,7 +165,7 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
                   size="small"
                   type="text"
                   onClick={handleCopy(item)}
-                  icon={<CopyOutlined />}
+                  icon={<CopySvg />}
                 />
               </Tooltip>
               {item.created_by && (
