@@ -1,9 +1,8 @@
 import CloudSvg from '@/assets/cloud.svg?react'
-import HelpSvg from '@/assets/help.svg?react'
 import LocalSvg from '@/assets/local.svg?react'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from '@vis3/kit'
-import { Avatar, Button, Dropdown, Tag } from 'antd'
+import { Avatar, Dropdown, Tag } from 'antd'
 
 import clsx from 'clsx'
 import _ from 'lodash'
@@ -68,9 +67,6 @@ export default function Header() {
         <div className="flex items-center space-x-2">
           <LangSwitcher />
           <AppPanel />
-          <Button type="link" className="!no-underline !text-gray-700" icon={<HelpSvg />} target="_blank" href="https://vis3.shlab.tech/docs">
-            {t('documentation')}
-          </Button>
 
           {/* 用户头像 */}
           {enableAuth && (

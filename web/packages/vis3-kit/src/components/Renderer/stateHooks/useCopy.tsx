@@ -1,7 +1,7 @@
 import { Button, Tooltip } from 'antd'
 import { useCallback, useMemo, useState } from 'react'
 
-import CopySvg from '../../../assets/copy.svg'
+import CopySvg from '../../../assets/copy.svg?react'
 import { useTranslation } from '../../../i18n'
 
 export default function useCopy(value: string): [React.ReactNode] {

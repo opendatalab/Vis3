@@ -1,3 +1,6 @@
+import threading
+import time
+import webbrowser
 from typing import Any
 
 import uvicorn
@@ -11,7 +14,6 @@ from vis3.internal.api import initial_routers
 from vis3.internal.common.db import init_tables
 from vis3.internal.common.exceptions import add_exception_handler
 from vis3.internal.config import settings
-from vis3.internal.utils import update_sys_config
 from vis3.version import version
 
 app = FastAPI(
@@ -63,19 +65,24 @@ cli = Typer()
 def main(
     host: str = "localhost", 
     port: int = 8000,
-    auth: bool = False
+    open: bool = False
 ):
     if port:
         settings.PORT = str(port)  # 确保PORT是字符串
     if host:
         settings.HOST = host
     
-    settings.ENABLE_AUTH = auth
-    
-    update_sys_config({
-        "ENABLE_AUTH": settings.ENABLE_AUTH,
-        "VERSION": version,
-    })
+    if open:
+        def open_browser():
+            time.sleep(2)
+            url = f"http://{settings.HOST}:{settings.PORT}"
+            logger.info(f"Opening browser: {url}")
+            webbrowser.open(url)
+        
+        # 在后台线程中打开浏览器
+        browser_thread = threading.Thread(target=open_browser)
+        browser_thread.daemon = True
+        browser_thread.start()
         
     logger.info(f"Start server: http://{settings.HOST}:{settings.PORT}")
     uvicorn.run(app=app, host=settings.HOST, port=int(settings.PORT))

@@ -4,7 +4,7 @@ import formatter from '@labelu/formatter'
 import { Button, List, Tag, Tooltip, message } from 'antd'
 import { useCallback, useMemo, useRef } from 'react'
 
-import CopySvg from '../../../assets/copy.svg'
+import CopySvg from '../../../assets/copy.svg?react'
 import { useTranslation } from '../../../i18n'
 import { FileIcon } from '../../FileIcon'
 import FullScreenButton from '../../FullscreenButton'

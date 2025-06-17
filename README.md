@@ -49,14 +49,11 @@ vis3
 
 # ----------------
 
-# Default launch doesn't require authentication, if you want to enable authentication to distinguish users
-vis3 --auth
+# Default launch doesn't require authentication, or set ENABLE_AUTH variable to enable authentication.
+ENABLE_AUTH=true vis3
 
 # Specify database (sqlite) directory
 BASE_DATA_DIR=your/database/path vis3
-
-# Enable authentication through ENABLE_AUTH
-ENABLE_AUTH=true vis3
 ```
 
 ## Local Development
@@ -97,6 +94,7 @@ Welcome to join the Opendatalab official WeChat group!
 
 ## Related Projects
 
+- [LabelU](https://github.com/opendatalab/labelU) Image / Video / Audio annotation tool  
 - [LabelU-kit](https://github.com/opendatalab/labelU-Kit) Web frontend annotation kit (LabelU is developed based on this kit)
 - [LabelLLM](https://github.com/opendatalab/LabelLLM) Open-source LLM dialogue annotation platform
 - [Miner U](https://github.com/opendatalab/MinerU) One-stop high-quality data extraction tool

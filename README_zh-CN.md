@@ -44,18 +44,15 @@ conda activate vis3
 pip install vis3
 
 # 4. 启动
-vis3
+vis3 --open
 
 # ----------------
 
-# 默认启动不需要登录，如果希望启用登录用以区分用户
-vis3 --auth
+# 默认启动不需要登录，通过EANBLE_AUTH启用登录
+ENABLE_AUTH=true vis3
 
 # 指定数据库（sqlite）目录
 BASE_DATA_DIR=your/database/path vis3
-
-# 通过EANBLE_AUTH启用登录
-ENABLE_AUTH=true vis3
 ```
 
 ## 本地开发
@@ -96,6 +93,7 @@ uvicorn vis3.main:app --reload
 
 ## 友情链接
 
+- [LabelU](https://github.com/opendatalab/labelU) 音视频、图像标注工具
 - [LabelU-kit](https://github.com/opendatalab/labelU-Kit) Web 前端标注套件（LabelU基于此套件开发）
 - [LabelLLM](https://github.com/opendatalab/LabelLLM) 开源LLM对话标注平台
 - [Miner U](https://github.com/opendatalab/MinerU) 一站式高质量数据提取工具
