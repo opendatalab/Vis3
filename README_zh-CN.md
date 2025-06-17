@@ -44,18 +44,15 @@ conda activate vis3
 pip install vis3
 
 # 4. 启动
-vis3
+vis3 --open
 
 # ----------------
 
-# 默认启动不需要登录，如果希望启用登录用以区分用户
-vis3 --auth
+# 默认启动不需要登录，通过EANBLE_AUTH启用登录
+ENABLE_AUTH=true vis3
 
 # 指定数据库（sqlite）目录
 BASE_DATA_DIR=your/database/path vis3
-
-# 通过EANBLE_AUTH启用登录
-ENABLE_AUTH=true vis3
 ```
 
 ## 本地开发

@@ -49,14 +49,11 @@ vis3
 
 # ----------------
 
-# Default launch doesn't require authentication, if you want to enable authentication to distinguish users
-vis3 --auth
+# Default launch doesn't require authentication, or set ENABLE_AUTH variable to enable authentication.
+ENABLE_AUTH=true vis3
 
 # Specify database (sqlite) directory
 BASE_DATA_DIR=your/database/path vis3
-
-# Enable authentication through ENABLE_AUTH
-ENABLE_AUTH=true vis3
 ```
 
 ## Local Development

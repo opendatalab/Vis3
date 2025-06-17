@@ -2,12 +2,14 @@ from fastapi import Depends, Request
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from vis3.internal.client.s3_reader import S3Reader
 from vis3.internal.common.db import get_db
 from vis3.internal.config import settings
 from vis3.internal.crud.user import user_crud
-from vis3.internal.utils import decrypt_secret_key, timer
+from vis3.internal.utils import timer
 from vis3.internal.utils.path import split_s3_path
+from vis3.internal.utils.security import decrypt_secret_key
 
 
 class UserCredentials(BaseModel):
