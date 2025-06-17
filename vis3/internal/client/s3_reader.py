@@ -180,6 +180,7 @@ class S3Reader:
                 aws_secret_access_key=sk,
                 region_name=region_name,
                 endpoint_url=endpoint,
+                config=Config(s3={"addressing_style": "virtual"})
             )
         except Exception:
             # TODO: 错误类型
