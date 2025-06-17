@@ -10,11 +10,13 @@ from contextlib import contextmanager
 
 import httpx
 import orjson
+import pkg_resources
 from botocore.exceptions import ClientError
 from bs4 import BeautifulSoup
 from cryptography.fernet import Fernet
 from fastapi import status
 from loguru import logger
+
 from vis3.internal.common.exceptions import AppEx, ErrorCode
 from vis3.internal.config import settings
 from vis3.internal.utils.path import split_s3_path
@@ -301,3 +303,12 @@ def json_dumps(d: dict, **kwargs) -> str:
         except Exception:
             pass
     return json.dumps(d, ensure_ascii=False, **kwargs)
+
+def update_sys_config(config: dict):
+    frontend_public = os.path.join(
+        pkg_resources.resource_filename('vis3.internal', 'statics'),
+    )
+    os.makedirs(frontend_public, exist_ok=True)
+
+    with open(os.path.join(frontend_public, "sys-config.js"), "w", encoding="utf-8") as f:
+        f.write(f"(function() {{ window.__CONFIG__ = {json_dumps(config)}; }})();")

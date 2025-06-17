@@ -11,6 +11,7 @@ from vis3.internal.api import initial_routers
 from vis3.internal.common.db import init_tables
 from vis3.internal.common.exceptions import add_exception_handler
 from vis3.internal.config import settings
+from vis3.internal.utils import update_sys_config
 from vis3.version import version
 
 app = FastAPI(
@@ -70,6 +71,11 @@ def main(
         settings.HOST = host
     
     settings.ENABLE_AUTH = auth
+
+    update_sys_config({
+        "ENABLE_AUTH": settings.ENABLE_AUTH,
+        "VERSION": version,
+    })
         
     logger.info(f"Start server: http://{settings.HOST}:{settings.PORT}")
     uvicorn.run(app=app, host=settings.HOST, port=int(settings.PORT))
