@@ -43,7 +43,7 @@ async def get_keychains(
     # 否则只获取当前用户的钥匙串
     keychains, total = await keychain_crud.get_multi_by_user(
         db, user_id=current_user.id, skip=(page_no - 1) * page_size, limit=page_size
-    )
+    ) if current_user else await keychain_crud.get_multi(db, skip=(page_no - 1) * page_size, limit=page_size)
     return ListResponse(
         data=[
             make_keychain_response(keychain)
