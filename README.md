@@ -10,15 +10,13 @@
 
 > OSS browser based on s3
 
-A visualization tool designed for large language models and machine learning data. It supports cloud storage platforms with S3 protocol (AWS, Alibaba Cloud) and handles various data formats (json, jsonl.gz, warc.gz, md, etc.). Interactive visualization through JSON, Html, Markdown, and image views for efficient data analysis.
+Vis3 is a visualization tool for large language models and machine learning data, supporting cloud storage platforms with S3 protocol (AWS, Aliyun OSS, Tencent Cloud) and various data formats (json, jsonl.gz, warc.gz, md, mobi, epub, etc.). It offers interactive visualization through JSON, HTML, Markdown, and image views for efficient data analysis.
 
 ## Features
 
-- Supports multiple formats such as JSON, JSONL, WARC, intelligently recognizes data structures and visually presents key information, making data clear at a glance.
-
-- One-click preview of any field, supports free switching between multiple view modes such as web pages, Markdown, images, simple and intuitive operation.
-
-- Seamlessly connects with mainstream cloud storage platforms (Alibaba Cloud, AWS, Tencent Cloud, and other cloud storage platforms that support the S3 protocol), supports local file parsing, making data access easy.
+- Supports JSON, JSONL, WARC, and more, automatically recognizing data structures for clear, visual insights.
+- One-click field previews with seamless switching between Html, Markdown, and image views for intuitive operation.
+- Integrates with S3-compatible cloud storage (Aliyun OSS, AWS, Tencent Cloud) and local file parsing for easy data access.
 
 https://github.com/user-attachments/assets/aa8ee5e8-c6d3-4b20-ae9d-2ceeb2eb2c41
 
@@ -44,15 +42,31 @@ conda activate vis3
 # 3. Install vis3
 pip install vis3
 
-# 4. Launch
-vis3
+# 4. Launch (no authentication)
+vis3 --open
+```
 
-# ----------------
+### Upgrade to the latest version
 
-# Default launch doesn't require authentication, or set ENABLE_AUTH variable to enable authentication.
-ENABLE_AUTH=true vis3
+```bash
+pip install vis3 -U
+```
 
-# Specify database (sqlite) directory
+## Variables
+
+### `ENABLE_AUTH`
+
+Enable authentication
+
+```bash
+ENABLE_AUTH=1 vis3
+```
+
+### `BASE_DATA_DIR`
+
+Specify database (SQLite) directory
+
+```bash
 BASE_DATA_DIR=your/database/path vis3
 ```
 
@@ -80,9 +94,15 @@ pnpm build
 uvicorn vis3.main:app --reload
 ```
 
-## React Component
+## React Component [![npm](https://img.shields.io/npm/v/%40vis3/kit.svg)](https://www.npmjs.com/package/@vis3/kit)
 
-We provide a [standalone React component](./web/packages/vis3-kit/) via npm for customizing your data preview ui.
+We provide a [React component](./web/packages/vis3-kit/) via npm for customizing your data preview ui.
+
+![](./web/packages/vis3-kit/example/screenshot.png)
+
+```bash
+npm i @vis3/kit
+```
 
 ## Community
 
