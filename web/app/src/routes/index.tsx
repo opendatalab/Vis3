@@ -17,7 +17,6 @@ import BucketEditModal from '../components/BucketEditModal'
 import BucketManager, { endpointValidator, pathValidator, useKeyOptions } from '../components/BucketManager'
 import DirectoryTree, { DirectoryTreeProvider } from '../components/DirectoryTree'
 
-
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
@@ -38,27 +37,27 @@ function Empty({ className }: { className?: string }) {
   const supportedCloudPlatforms = [
     {
       name: t('supportedCloudPlatforms.aws'),
-      icon: '/aws.png',
+      icon: `aws.png`,
     },
     {
       name: t('supportedCloudPlatforms.aliyun'),
-      icon: '/aliyun.png',
+      icon: `aliyun.png`,
     },
     {
       name: t('supportedCloudPlatforms.huawei'),
-      icon: '/huawei.png',
+      icon: `huawei.png`,
     },
     {
       name: t('supportedCloudPlatforms.tencent'),
-      icon: '/tencent.png',
+      icon: `tencent.png`,
     },
     {
       name: t('supportedCloudPlatforms.sensetime'),
-      icon: '/sensetime.png',
+      icon: `sensetime.png`,
     },
     {
       name: t('supportedCloudPlatforms.inspur'),
-      icon: '/inspur.png',
+      icon: `inspur.png`,
     },
   ]
 
@@ -82,7 +81,7 @@ function Empty({ className }: { className?: string }) {
           showIcon
           message={(
             <div>
-              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!text-[var(--ant-color-primary)] !px-0" href="/keychain">{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
+              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!text-[var(--ant-color-primary)] !px-0" href={`${window.__CONFIG__.BASE_URL ?? ''}/keychain`}>{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
             </div>
           )}
         />

@@ -240,7 +240,7 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
               showIcon
               message={(
                 <div>
-                  {t('bucketForm.alertMessage')} → <Button type="link" className="!text-[var(--ant-color-primary)] !px-0" target="_blank" size="small" href="/keychain">{t('bucketForm.AS&SKManagement')}<ExportOutlined /></Button>
+                  {t('bucketForm.alertMessage')} → <Button type="link" className="!text-[var(--ant-color-primary)] !px-0" target="_blank" size="small" href={`${window.__CONFIG__.BASE_URL ?? ''}/keychain`}>{t('bucketForm.AS&SKManagement')}<ExportOutlined /></Button>
                 </div>
               )}
             />

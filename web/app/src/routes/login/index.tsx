@@ -54,7 +54,7 @@ function RouteComponent() {
       <div className="max-w-md w-full space-y-8 bg-white p-10 pb-4 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex items-center justify-center gap-2">
-            <img src="/logo.svg" alt="logo" className="w-8 h-8" />
+            <img src={`logo.svg`} alt="logo" className="w-8 h-8" />
             <span className="text-3xl text-gray-800">
             Vis3
             </span>
@@ -107,7 +107,7 @@ function RouteComponent() {
               type="link"
               className="!px-0"
               size="small"
-              href="/register"
+              href={`${window.__CONFIG__.BASE_URL ?? ''}/register`}
             >
               {t('account.register')}
             </Button>
