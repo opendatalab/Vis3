@@ -13,7 +13,7 @@ declare global {
     __CONFIG__: {
       ENABLE_AUTH: boolean
       VERSION: string
-      [key: string]: any
+      BASE_URL: string
     }
   }
 }

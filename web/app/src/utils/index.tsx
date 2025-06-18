@@ -90,7 +90,7 @@ export async function download(fullPath: string) {
     const params = { path: fullPath } as any
 
     const searchParams = new URLSearchParams(params)
-    const downloadUrl = `/api/v1/bucket/download?${searchParams.toString()}`
+    const downloadUrl = `${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/download?${searchParams.toString()}`
 
     // window.open(downloadUrl, '_blank')
     downloadFromUrl(downloadUrl, basename)

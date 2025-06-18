@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     # Enable user authentication
     ENABLE_AUTH: bool = False
 
+    BASE_URL: str = ""
     BASE_DATA_DIR: str = get_data_dir()
     DATABASE_URL: str | None = None
 
@@ -44,6 +45,7 @@ class Settings(BaseSettings):
         logger.info(f"DATABASE_URL: {self.DATABASE_URL}")
 
         update_sys_config({
+            "BASE_URL": self.BASE_URL,
             "ENABLE_AUTH": self.ENABLE_AUTH,
             "VERSION": version,
         })
