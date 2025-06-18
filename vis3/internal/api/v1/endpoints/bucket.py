@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import List, Union
 
 from fastapi import APIRouter, Depends, Request, status
@@ -122,6 +123,7 @@ async def filter_bucket_request(
     db: Session = Depends(get_db),
 ):
     """预览s3文件"""
+    path = urllib.parse.unquote(path)
     if not is_s3_path(path):
         raise AppEx(
             code=ErrorCode.BUCKET_30003_INVALID_PATH,
@@ -174,7 +176,8 @@ async def download_file_request(
     """
     下载指定的文件。
     """
-    if not path.startswith("s3://"):
+    path = urllib.parse.unquote(path)
+    if not is_s3_path(path):
         raise AppEx(
             code=ErrorCode.BUCKET_30003_INVALID_PATH,
             status_code=status.HTTP_400_BAD_REQUEST,
