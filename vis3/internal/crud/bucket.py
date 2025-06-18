@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import List, Tuple
 
 from fastapi import status
@@ -35,6 +36,8 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.state == State.ENABLED).all()
     
     async def create(self, db: Session, *, obj_in: BucketCreateBody, created_by: int | None = None) -> Bucket:
+        path = urllib.parse.unquote(obj_in.path)
+        endpoint = urllib.parse.unquote(obj_in.endpoint)
         keychain = await keychain_crud.get(db, id=obj_in.keychain_id)
         if not keychain:
             raise AppEx(
@@ -43,15 +46,15 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
             )
         
         # path + keychain_id 唯一
-        if await self.get_by_path(db, path=obj_in.path, keychain_id=obj_in.keychain_id):
+        if await self.get_by_path(db, path=path, keychain_id=obj_in.keychain_id):
             raise AppEx(
                 code=ErrorCode.KEYCHAIN_20002_KEYCHAIN_ALREADY_EXISTS,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
         db_obj = Bucket(
-            path=obj_in.path,
-            endpoint=obj_in.endpoint,
+            path=path,
+            endpoint=endpoint,
             created_by=created_by,
             keychain_id=obj_in.keychain_id,
         )
@@ -65,9 +68,11 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         db_objs = []
         
         for bucket in obj_in:
+            path = urllib.parse.unquote(bucket.path)
+            endpoint = urllib.parse.unquote(bucket.endpoint)
             db_obj = Bucket(
-                path=bucket.path,
-                endpoint=bucket.endpoint,
+                path=path,
+                endpoint=endpoint,
                 created_by=created_by,
                 keychain_id=bucket.keychain_id,
             )
