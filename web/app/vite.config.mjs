@@ -12,7 +12,7 @@ const visuAppDir = resolve(__dirname, '../..', 'vis3/internal/statics')
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/',
+  base: '',
   publicDir: resolve(__dirname, 'public'),
   envDir: resolve(__dirname, 'env'),
   build: {
