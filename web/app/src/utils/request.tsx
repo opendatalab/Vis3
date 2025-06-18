@@ -13,7 +13,7 @@ export function successHandler(response: AxiosResponse<any>) {
 
 function errorHandler(error: AxiosError) {
   if (error.response?.status === 401 && !['/login', '/register'].includes(window.location.pathname) && window.__CONFIG__.ENABLE_AUTH) {
-    window.location.href = '/login'
+    window.location.href = `${window.__CONFIG__.BASE_URL ?? ''}/login`
   }
 
   const msg = _.get(error, 'response.data.detail', '') || _.get(error, 'response.data.msg', '')
