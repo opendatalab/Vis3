@@ -56,7 +56,7 @@ pip install vis3 -U
 
 ### `ENABLE_AUTH`
 
-Enable authentication
+Enable authentication.
 
 ```bash
 ENABLE_AUTH=1 vis3
@@ -64,10 +64,18 @@ ENABLE_AUTH=1 vis3
 
 ### `BASE_DATA_DIR`
 
-Specify database (SQLite) directory
+Specify database (SQLite) directory.
 
 ```bash
 BASE_DATA_DIR=your/database/path vis3
+```
+
+### `BASE_URL`
+
+Specity base url to the api call.
+
+```bash
+BASE_URL=/a/b/c
 ```
 
 ## Local Development
