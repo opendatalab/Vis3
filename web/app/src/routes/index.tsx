@@ -82,7 +82,7 @@ function Empty({ className }: { className?: string }) {
           showIcon
           message={(
             <div>
-              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!text-[var(--ant-color-primary)] !px-0" href="/keychain">{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
+              {t('bucketForm.alertMessage')} → <Button type="link" target="_blank" size="small" className="!text-[var(--ant-color-primary)] !px-0" href={`${window.__CONFIG__.BASE_URL ?? ''}/keychain`}>{t('bucketForm.AS&SKManagement')} <ExportOutlined /></Button>
             </div>
           )}
         />
