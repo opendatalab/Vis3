@@ -107,7 +107,7 @@ function RouteComponent() {
               type="link"
               className="!px-0"
               size="small"
-              href="/register"
+              href={`${window.__CONFIG__.BASE_URL ?? ''}/register`}
             >
               {t('account.register')}
             </Button>

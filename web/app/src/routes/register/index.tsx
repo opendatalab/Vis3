@@ -145,7 +145,7 @@ function RouteComponent() {
               type="link"
               className=""
               size="small"
-              href="/login"
+              href={`${window.__CONFIG__.BASE_URL ?? ''}/login`}
             >
               {t('account.loginNow')}
             </Button>
