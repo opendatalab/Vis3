@@ -27,7 +27,7 @@ function errorHandler(error: AxiosError) {
 
 const requestConfig = {
   timeout: 10 * 60 * 1000,
-  baseURL: '/api/v1',
+  baseURL: `${window.__CONFIG__.BASE_URL ?? ''}/api/v1`,
 }
 
 const request = axios.create(requestConfig)
