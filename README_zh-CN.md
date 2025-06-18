@@ -72,6 +72,14 @@ ENABLE_AUTH=1 vis3
 BASE_DATA_DIR=your/database/path vis3
 ```
 
+### `BASE_URL`
+
+指定应用的资源 base 路径，影响 `/api` 路径。
+
+```bash
+BASE_URL=/a/b/c
+```
+
 ## 本地开发
 
 ```bash
