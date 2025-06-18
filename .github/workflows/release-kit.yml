@@ -8,7 +8,6 @@ on:
       - completed
     branches:
       - main
-      - alpha
 
 jobs:
   prepare-vis3-kit:

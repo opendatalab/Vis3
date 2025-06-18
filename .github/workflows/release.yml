@@ -45,10 +45,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get next version
+      - name: Get next version from prepare-vis3
+        if: ${{ github.ref_name == 'main' }}
         id: get-next-version
         run: |
           echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
+
+      - name: Get next version from runner
+        if: ${{ github.ref_name == 'alpha' }}
+        id: get-next-version-from-runner
+        run: |
+          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3.outputs.NEXT_VERSION }}" | sed 's/-alpha\.[0-9]*$/-alpha.${{ github.run_number }}/')" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v4
         with:
@@ -120,6 +127,7 @@ jobs:
           poetry publish --build --skip-existing
 
       - name: Release vis3
+        if: ${{ github.ref_name == 'main' }}
         run: |
           npm i -g semantic-release @semantic-release/git @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec @semantic-release/github
           semantic-release --yes
