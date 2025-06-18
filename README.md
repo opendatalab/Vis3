@@ -15,7 +15,7 @@ Vis3 is a visualization tool for large language models and machine learning data
 ## Features
 
 - Supports JSON, JSONL, WARC, and more, automatically recognizing data structures for clear, visual insights.
-- One-click field previews with seamless switching between web, Markdown, and image views for intuitive operation.
+- One-click field previews with seamless switching between Html, Markdown, and image views for intuitive operation.
 - Integrates with S3-compatible cloud storage (Aliyun OSS, AWS, Tencent Cloud) and local file parsing for easy data access.
 
 https://github.com/user-attachments/assets/aa8ee5e8-c6d3-4b20-ae9d-2ceeb2eb2c41
