@@ -46,12 +46,29 @@ pip install vis3
 # 4. 启动
 vis3 --open
 
-# ----------------
+```
 
-# 默认启动不需要登录，通过EANBLE_AUTH启用登录
-ENABLE_AUTH=true vis3
+### 更新到最新版本
 
-# 指定数据库（sqlite）目录
+```bash
+pip install vis3 -U
+```
+
+## 环境变量设置
+
+### `ENABLE_AUTH`
+
+开启用户登录鉴权
+
+```bash
+ENABLE_AUTH=1 vis3
+```
+
+### `BASE_DATA_DIR`
+
+指定数据库文件（SQLite）目录
+
+```bash
 BASE_DATA_DIR=your/database/path vis3
 ```
 
@@ -81,7 +98,13 @@ uvicorn vis3.main:app --reload
 
 ## React Component
 
-我们通过 npm 提供了[单独的 React 组件](./web/packages/vis3-kit/)，方便自定义数据预览界面。
+我们通过 npm 提供了[React 组件](./web/packages/vis3-kit/)，方便自定义数据预览界面或者接入已有的 React 应用。
+
+![](./web/packages/vis3-kit/example/screenshot.png)
+
+```bash
+npm i @vis3/kit
+```
 
 ## 技术交流
 
