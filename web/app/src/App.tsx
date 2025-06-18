@@ -13,6 +13,7 @@ import themeToken from './theme.json';
 
 const router = createRouter({
   routeTree,
+  basepath: window.__CONFIG__.BASE_URL ?? '/',
   defaultPreload: 'intent',
   scrollRestoration: true,
   context: {
