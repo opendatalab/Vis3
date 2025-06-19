@@ -104,12 +104,12 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
         const newWidth = Math.floor(wrapRect.width)
         const newHeight = Math.floor(parentRect ? parentRect.height : 0)
         
-        // 只有当尺寸变化超过10像素时才更新状态，防止win上闪烁
-        if (Math.abs(newWidth - lastSize.width) > 10 || Math.abs(newHeight - lastSize.height) > 10) {
+        // 只有当尺寸变化超过20像素时才更新状态，防止win上闪烁
+        if (Math.abs(newWidth - lastSize.width) > 20 || Math.abs(newHeight - lastSize.height) > 20) {
           lastSize = { width: newWidth, height: newHeight }
           setSize(lastSize)
         }
-      }, 100)
+      }, 200)
     }
 
     const observer = new ResizeObserver(() => {
