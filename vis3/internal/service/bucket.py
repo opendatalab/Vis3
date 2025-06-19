@@ -18,7 +18,7 @@ from vis3.internal.utils import (
     should_not_read_as_raw,
     timer,
 )
-from vis3.internal.utils.path import is_s3_path, split_s3_path
+from vis3.internal.utils.path import split_s3_path
 
 
 async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Bucket, S3Reader]:
