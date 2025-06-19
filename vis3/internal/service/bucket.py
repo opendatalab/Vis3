@@ -238,18 +238,10 @@ async def get_buckets_or_objects(
         return ListResponse[BucketResponse](data=result, total=total)
     
     _, s3_reader = await get_bucket(path, db, id)
-
-
     path_without_query, _, query = path.partition("?")
     s3_path = quote(path_without_query, safe=":/")
     parsed_url = urlparse(s3_path)
     parsed_path = parsed_url.path
-
-    if not is_s3_path(path):
-        raise AppEx(
-            code=ErrorCode.BUCKET_30003_INVALID_PATH,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
     
     # 目录
     if parsed_path.endswith("/"):
