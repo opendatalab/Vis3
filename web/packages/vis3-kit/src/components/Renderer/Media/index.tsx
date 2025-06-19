@@ -108,7 +108,7 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
       bodyStyle={{
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'start',
       }}
       extra={(
         <ExtraContainer>
