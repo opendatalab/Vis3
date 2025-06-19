@@ -243,7 +243,7 @@ function PathContainer({ containerRef }: PathContainerProps) {
     queryClient.invalidateQueries()
     navigate({
       to: '/',
-      search: { ...search, id: !path ? undefined : search.id, path: trimmedPath },
+      search: { ...search, id: undefined, path: trimmedPath },
     })
     setTimeout(() => {
       setFocused(false)

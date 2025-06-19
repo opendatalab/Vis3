@@ -18,7 +18,7 @@ from vis3.internal.utils import (
     should_not_read_as_raw,
     timer,
 )
-from vis3.internal.utils.path import is_s3_path, split_s3_path
+from vis3.internal.utils.path import split_s3_path
 
 
 async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Bucket, S3Reader]:
@@ -238,18 +238,10 @@ async def get_buckets_or_objects(
         return ListResponse[BucketResponse](data=result, total=total)
     
     _, s3_reader = await get_bucket(path, db, id)
-
-
     path_without_query, _, query = path.partition("?")
     s3_path = quote(path_without_query, safe=":/")
     parsed_url = urlparse(s3_path)
     parsed_path = parsed_url.path
-
-    if not is_s3_path(path):
-        raise AppEx(
-            code=ErrorCode.BUCKET_30003_INVALID_PATH,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
     
     # 目录
     if parsed_path.endswith("/"):
