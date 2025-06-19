@@ -5,6 +5,7 @@ import re
 import shutil
 import tempfile
 import time
+import urllib.parse
 import zipfile
 from contextlib import contextmanager
 
@@ -56,7 +57,9 @@ def should_not_read_as_raw(mimetype: str):
 
 
 def ping_host(url: str) -> bool:
-    if not url.startswith("http"):
+    url = urllib.parse.unquote(url)
+    
+    if not url.startswith("http") and not url.startswith("https"):
         url = "http://" + url
 
     try:

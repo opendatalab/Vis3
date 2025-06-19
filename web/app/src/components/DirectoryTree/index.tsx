@@ -140,7 +140,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
     const responses = await Promise.all([
       queryClient.fetchQuery({ queryKey: getBucketQueryKey(), staleTime: 10000, queryFn: () => digBucket({ path: '/' }) }),
       ...fragments.map(fragment => 
-        queryClient.fetchQuery({ queryKey: getBucketQueryKey(fragment.fullPath), staleTime: 10000, queryFn: () => digBucket({ path: fragment.fullPath, id: Number(search.id) }) })
+        queryClient.fetchQuery({ queryKey: getBucketQueryKey(fragment.fullPath), staleTime: 10000, queryFn: () => digBucket({ path: fragment.fullPath, id: search.id ? Number(search.id) : undefined }) })
       )
     ])
     .finally(() => {
