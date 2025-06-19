@@ -24,7 +24,7 @@ from vis3.internal.service.bucket import (
     preview_file,
 )
 from vis3.internal.utils import ping_host, validate_path_accessibility
-from vis3.internal.utils.path import is_s3_path, split_s3_path
+from vis3.internal.utils.path import accurate_s3_path, is_s3_path, split_s3_path
 
 router = APIRouter(tags=["buckets"])
 
@@ -46,7 +46,8 @@ async def read_bucket_request(
     """
     获取指定 bucket 下的所有对象
     """
-    path = urllib.parse.unquote(path)
+    path = accurate_s3_path(path)
+
     result = await get_buckets_or_objects(
         path=path,
         id=id,
@@ -124,12 +125,7 @@ async def filter_bucket_request(
     db: Session = Depends(get_db),
 ):
     """预览s3文件"""
-    path = urllib.parse.unquote(path)
-    if not is_s3_path(path):
-        raise AppEx(
-            code=ErrorCode.BUCKET_30003_INVALID_PATH,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
+    path = accurate_s3_path(path)
     bucket_name, _ = split_s3_path(path)
     buckets = await bucket_crud.list_by_path(db, path=f"s3://{bucket_name}/")
 
@@ -151,7 +147,7 @@ async def file_preview_request(
     id: int | None = None,
     db: Session = Depends(get_db),
 ):
-    path = urllib.parse.unquote(path)
+    
     """预览s3文件"""
     if not is_s3_path(path):
         raise AppEx(
@@ -178,13 +174,7 @@ async def download_file_request(
     """
     下载指定的文件。
     """
-    path = urllib.parse.unquote(path)
-    if not is_s3_path(path):
-        raise AppEx(
-            code=ErrorCode.BUCKET_30003_INVALID_PATH,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    
+    path = accurate_s3_path(path)
     _, s3_reader = await get_bucket(path, db, id)
 
     return await s3_reader.download(as_attachment=as_attachment)
@@ -201,7 +191,7 @@ async def validate_path_accessibility_request(
     """
     验证路径是否可访问
     """
-    path = urllib.parse.unquote(path)
+    path = accurate_s3_path(path)
     endpoint = urllib.parse.unquote(endpoint)
     keychain = await keychain_crud.get(db, id=keychain_id)
     result = await validate_path_accessibility(path, endpoint, keychain.access_key_id, keychain.decrypted_secret_key_id)

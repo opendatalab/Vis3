@@ -16,6 +16,7 @@ from vis3.internal.crud.base import BaseCrud
 from vis3.internal.crud.keychain import keychain_crud
 from vis3.internal.models.bucket import Bucket
 from vis3.internal.schema.state import State
+from vis3.internal.utils.path import accurate_s3_path
 
 
 class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
@@ -36,7 +37,7 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         return db.query(self.model).filter(self.model.path.like(f"{path}%"), self.model.state == State.ENABLED).all()
     
     async def create(self, db: Session, *, obj_in: BucketCreateBody, created_by: int | None = None) -> Bucket:
-        path = urllib.parse.unquote(obj_in.path)
+        path = accurate_s3_path(obj_in.path)
         endpoint = urllib.parse.unquote(obj_in.endpoint)
         keychain = await keychain_crud.get(db, id=obj_in.keychain_id)
         if not keychain:
@@ -68,7 +69,7 @@ class BucketCRUD(BaseCrud[Bucket, BucketCreatePayload, BucketUpdatePayload]):
         db_objs = []
         
         for bucket in obj_in:
-            path = urllib.parse.unquote(bucket.path)
+            path = accurate_s3_path(bucket.path)
             endpoint = urllib.parse.unquote(bucket.endpoint)
             db_obj = Bucket(
                 path=path,

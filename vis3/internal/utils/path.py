@@ -1,7 +1,23 @@
 import re
+import urllib.parse
+
+from fastapi import status
+
+from vis3.internal.common.exceptions import AppEx, ErrorCode
 
 __re_s3_path = re.compile("^s3a?://([^/]+)(?:/(.*))?$")
 
+def accurate_s3_path(path: str) -> str:
+    if path and not is_s3_path(path):
+        path = urllib.parse.unquote(path)
+    
+    if not is_s3_path(path) or not path:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30003_INVALID_PATH,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+
+    return path
 
 def is_s3_path(path: str) -> bool:
     return path.startswith("s3://") or path.startswith("s3a://")
