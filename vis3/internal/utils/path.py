@@ -16,7 +16,7 @@ def accurate_s3_path(path: str | None) -> str | None:
                 code=ErrorCode.BUCKET_30003_INVALID_PATH,
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
-        
+          
         bucket_name, key = split_s3_path(path)
         
         if key == "":
