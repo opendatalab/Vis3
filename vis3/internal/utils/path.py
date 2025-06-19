@@ -8,7 +8,7 @@ from vis3.internal.common.exceptions import AppEx, ErrorCode
 __re_s3_path = re.compile("^s3a?://([^/]+)(?:/(.*))?$")
 
 def accurate_s3_path(path: str | None) -> str | None:
-    if path:
+    if path and path.strip() != "" and path != "/":
         path = urllib.parse.unquote(path) if not is_s3_path(path) else path
     
         if not is_s3_path(path):
