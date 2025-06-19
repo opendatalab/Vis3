@@ -244,7 +244,7 @@ async def get_buckets_or_objects(
     parsed_path = parsed_url.path
     
     # 目录
-    if parsed_path.endswith("/"):
+    if parsed_path.endswith("/") or s3_reader.key == "":
         with timer("get s3 dirs"):
             result = await get_s3_directories(
                 s3_reader=s3_reader,
