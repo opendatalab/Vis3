@@ -1,7 +1,7 @@
 import { DownloadOutlined } from '@ant-design/icons'
 import styled from '@emotion/styled'
 import { Button, Image } from 'antd'
-import { useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { useTranslation } from '../../../i18n'
 import FullScreenButton from '../../FullscreenButton'
@@ -54,10 +54,20 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
   const ref = useRef<HTMLDivElement>(null)
   const { onDownload } = usePreviewBlockContext()
   const { t } = useTranslation()
+  const [isLargerThanContainer, setIsLargerThanContainer] = useState(false)
+
+  const handleImageLoad = useCallback(() => {
+    if (ref.current) {
+      const body = ref.current.querySelector('.ant-card-body')
+      if (body) {
+        setIsLargerThanContainer(body.scrollHeight > body.clientHeight)
+      }
+    }
+  }, [])
 
   const content = useMemo(() => {
     if (type === 'image') {
-      return <StyledImage src={value} alt={value} />
+      return <StyledImage onLoad={handleImageLoad} src={value} alt={value} />
     }
 
     if (type === 'video') {
@@ -97,7 +107,7 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
         </PrimaryButton>
       )
     }
-  }, [type, value, onDownload, t])
+  }, [type, value, onDownload, t, handleImageLoad])
 
   return (
     <RenderCard
@@ -108,7 +118,7 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
       bodyStyle={{
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'start',
+        alignItems: isLargerThanContainer ? 'start' : 'center',
       }}
       extra={(
         <ExtraContainer>
