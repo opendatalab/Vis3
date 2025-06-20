@@ -148,7 +148,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
       onClose={onClose}
       onPathCorrection={handlePathCorrection}
       onDownload={download}
-      previewUrl={`${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/preview`}
+      previewUrl={`${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/preview?id=${bucketId}`}
       showGoParent={!isRootBlock && !!path}
       showPagination={!isRootBlock && pathType === 'folder'}
       onChange={handleOnChange}

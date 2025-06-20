@@ -48,6 +48,7 @@ function WrappedImage({ url, data }: {
 }) {
   const [isError, setIsError] = useState(false)
   const { previewUrl } = usePreviewBlockContext()
+  const separator = previewUrl?.includes('?') ? '&' : '?'
 
   const handleOnError = () => {
     setIsError(true)
@@ -65,19 +66,19 @@ function WrappedImage({ url, data }: {
     }
 
     if (isError) {
-      return `${previewUrl}?path=${s3Path}`
+      return `${previewUrl}${separator}path=${s3Path}`
     }
 
     if (url.startsWith('s3://')) {
-      return `${previewUrl}?path=${url}`
+      return `${previewUrl}${separator}path=${url}`
     }
 
     if (!url.startsWith('http') && !url.startsWith('https') && s3Path) {
-      return `${previewUrl}?path=${s3Path}`
+      return `${previewUrl}${separator}path=${s3Path}`
     }
 
     return url
-  }, [data, isError, url, previewUrl])
+  }, [data, isError, url, previewUrl, separator])
 
   return (
     <Image src={renderUrl} alt={renderUrl} onError={handleOnError} onLoadedData={handleOnLoaded} />

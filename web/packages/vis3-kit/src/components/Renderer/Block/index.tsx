@@ -412,7 +412,7 @@ export function BucketBlock<T extends BaseBucketType>({
       return <TextLikePreviewer name={basename} type={s3PathType || 'txt'} extraTail={extra} titleExtra={extraTitle} />
     }
 
-    let mediaUrl = `${previewUrl}?path=${encodeURIComponent(path)}`
+    let mediaUrl = `${previewUrl}${previewUrl?.includes('?') ? '&' : '?'}path=${encodeURIComponent(path)}`
 
     if (s3PathType === 'zip') {
       mediaUrl = path
