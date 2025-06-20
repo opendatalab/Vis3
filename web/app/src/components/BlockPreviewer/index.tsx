@@ -317,7 +317,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                     <div className="flex items-center gap-2">
                       <BucketIcon />
                       <Link className="hover:!underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
-                      {isDuplicate(item.path) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
+                      {isDuplicate(item.fullPath) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
                     </div>
                     <div className="flex gap-2">
                       <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id!)} />
