@@ -56,12 +56,15 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
   const { t } = useTranslation()
   const [isLargerThanContainer, setIsLargerThanContainer] = useState(false)
 
-  const handleImageLoad = useCallback(() => {
+  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.target as HTMLImageElement
+    const naturalWidth = img.naturalWidth
+    const naturalHeight = img.naturalHeight
+    
     if (ref.current) {
-      const body = ref.current.querySelector('.ant-card-body')
-      if (body) {
-        setIsLargerThanContainer(body.scrollHeight > body.clientHeight)
-      }
+      const body = (e.target as HTMLElement).closest('.ant-card-body') as HTMLElement
+
+      setIsLargerThanContainer(naturalWidth > body.clientWidth || naturalHeight > body.clientHeight)
     }
   }, [])
 
@@ -118,7 +121,7 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
       bodyStyle={{
         display: 'flex',
         justifyContent: 'center',
-        alignItems: isLargerThanContainer ? 'start' : 'center',
+        alignItems: isLargerThanContainer ? 'normal' : 'center',
       }}
       extra={(
         <ExtraContainer>
