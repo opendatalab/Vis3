@@ -178,8 +178,14 @@ function PathContainer({ containerRef }: PathContainerProps) {
 
     wrapperShadowRef.current.append(...pathItems)
 
-    while (wrapperShadowRef.current.scrollWidth - wrapperShadowRef.current.offsetWidth > 0) {
-      wrapperShadowRef.current.childNodes[0].remove()
+    while (wrapperShadowRef.current && wrapperShadowRef.current.scrollWidth - wrapperShadowRef.current.offsetWidth > 0) {
+      const firstChild = wrapperShadowRef.current.firstChild
+      if (firstChild && wrapperShadowRef.current.contains(firstChild)) {
+        wrapperShadowRef.current.removeChild(firstChild)
+      } else {
+        // 如果无法移除节点，跳出循环避免无限循环
+        break
+      }
       cursor += 1
     }
 
