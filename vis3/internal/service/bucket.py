@@ -331,18 +331,11 @@ async def preview_file(
 
     # 对于其他文件类型，使用流式响应
     async def content_generator():
-        # 使用分块读取，避免一次性加载大文件
-        chunk_size = 1024 * 1024  # 1MB chunks
-        offset = 0
-
         try:
-            while offset < file_size:
-                end = min(offset + chunk_size, file_size)
-                async for chunk, _ in s3_reader.read_by_range(
-                    start_byte=offset, end_byte=end
-                ):
-                    yield chunk
-                offset = end
+            async for chunk, _ in s3_reader.read_by_range(
+                start_byte=0, end_byte=file_size
+            ):
+                yield chunk
         except Exception as e:
             logger.error(f"文件流处理错误: {str(e)}")
             raise
@@ -354,5 +347,6 @@ async def preview_file(
             "Accept-Ranges": "bytes",
         },
     )
+
 
     return response
