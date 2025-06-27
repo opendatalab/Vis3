@@ -120,7 +120,7 @@ function ContentList({ name, data }: ContentListProps) {
         let img_url = item.img_path
 
         if (item.img_path.startsWith('s3://')) {
-          img_url = `${previewUrl}?path=${item.img_path}`
+          img_url = `${previewUrl}${previewUrl?.includes('?') ? '&' : '?'}path=${item.img_path}`
         }
 
         return <Tooltip title={item.img_caption}><Image src={img_url} alt={item.img_alt} /></Tooltip>

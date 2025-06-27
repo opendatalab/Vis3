@@ -92,8 +92,8 @@ export async function download(fullPath: string) {
     const searchParams = new URLSearchParams(params)
     const downloadUrl = `${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/download?${searchParams.toString()}`
 
-    // window.open(downloadUrl, '_blank')
-    downloadFromUrl(downloadUrl, basename)
+    const presignedUrl = await fetch(downloadUrl).then(res => res.json())
+    downloadFromUrl(presignedUrl, basename)
   }
   catch (error) {
     throw new Error('下载失败')

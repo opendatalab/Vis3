@@ -2,12 +2,10 @@ import asyncio
 import codecs
 import io
 import json
-import urllib.parse
 import zlib
 from typing import AsyncIterator, Optional, Tuple, Union
 
 import boto3
-import httpx
 from botocore.client import Config
 from botocore.exceptions import ClientError, NoCredentialsError
 from fastapi import HTTPException, status
@@ -113,6 +111,8 @@ class S3Reader:
         '.pdf': 'application/pdf',
         '.jpg': 'image/jpeg',
         '.jpeg': 'image/jpeg',
+        '.svg': 'image/svg+xml',
+        '.webp': 'image/webp',
         '.png': 'image/png',
         '.gif': 'image/gif',
         '.zip': 'application/zip',
@@ -124,6 +124,8 @@ class S3Reader:
         '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         '.js': 'application/javascript',
         '.css': 'text/css',
+        '.epub': 'application/epub+zip',
+        '.mobi': 'application/x-mobipocket-ebook',
     }
 
     def __init__(
@@ -839,52 +841,7 @@ class S3Reader:
 
     async def download(self, as_attachment=True) -> StreamingResponse:
         try:
-            presigned_url = await self.get_s3_presigned_url(as_attachment=as_attachment)
-            file_header_info = await self.head_object()
-            chunk_size = 1024 * 1024
-
-            async def stream_file():
-                async with httpx.AsyncClient() as http_client:
-                    try:
-                        async with http_client.stream("GET", presigned_url) as response:
-                            if response.status_code != 200:
-                                raise AppEx(
-                                    code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
-                                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                    detail=f"Failed to download file: {response.text}",
-                                )
-
-                            async for chunk in response.aiter_bytes(
-                                chunk_size=chunk_size
-                            ):
-                                yield chunk
-                    except httpx.RequestError as e:
-                        raise AppEx(
-                            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Failed to stream file: {str(e)}",
-                        )
-                    except Exception as e:
-                        raise AppEx(
-                            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"Unexpected error while streaming file: {str(e)}",
-                        )
-
-            headers = {
-                "Content-Disposition": f'attachment; filename="{urllib.parse.quote(self.key_without_query)}"',
-                "Content-Type": file_header_info.get(
-                    "ContentType", "application/octet-stream"
-                ),
-            }
-
-            return StreamingResponse(
-                stream_file(),
-                headers=headers,
-                media_type=file_header_info.get(
-                    "ContentType", "application/octet-stream"
-                ),
-            )
+            return await self.get_s3_presigned_url(as_attachment=as_attachment) 
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise

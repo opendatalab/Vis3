@@ -199,7 +199,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         fullPath = `${fullPath}/`
       }
 
-      const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(fullPath, bucketId), staleTime: 10000, queryFn: () => digBucket({ path: fullPath, id: bucketId }) })
+      const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(fullPath, undefined, bucketId), staleTime: 10000, queryFn: () => digBucket({ path: fullPath, id: bucketId }) })
 
       setTreeDataMap((pre) => {
         const key = `${bucketId}-${fullPath}`
@@ -230,7 +230,7 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         const _key = `${raw.id}-${raw.path}`
         const pageNo = _.get(treeDataMap, [_key, 'pageNo'], 1) + 1
         setTreeLoading(true)
-        const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(raw.path, pageNo), staleTime: 10000, queryFn: () => digBucket({ path: raw.path, id: raw.id, pageNo }) })
+        const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(raw.path, pageNo, raw.id), staleTime: 10000, queryFn: () => digBucket({ path: raw.path, id: raw.id, pageNo }) })
 
         setTreeDataMap((pre) => {
           const exist = pre[_key]

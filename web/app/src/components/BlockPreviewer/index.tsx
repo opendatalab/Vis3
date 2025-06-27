@@ -148,7 +148,7 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
       onClose={onClose}
       onPathCorrection={handlePathCorrection}
       onDownload={download}
-      previewUrl={`${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/preview`}
+      previewUrl={`${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/preview?id=${bucketId}`}
       showGoParent={!isRootBlock && !!path}
       showPagination={!isRootBlock && pathType === 'folder'}
       onChange={handleOnChange}
@@ -317,7 +317,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                     <div className="flex items-center gap-2">
                       <BucketIcon />
                       <Link className="hover:!underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
-                      {isDuplicate(item.path) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
+                      {isDuplicate(item.fullPath) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
                     </div>
                     <div className="flex gap-2">
                       <Button type="text" size="small" icon={<EditOutlined />} onClick={() => bucketEditModalRef.current?.open(item.id!)} />
