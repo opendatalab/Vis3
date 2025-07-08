@@ -4,15 +4,15 @@ import formatter from '@labelu/formatter'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
-import { useTranslation } from '../../../i18n'
-import { getBasename, getBytes, getNextUrl } from '../../../utils'
-import TextLikePreviewer from '../../TextLikePreviewer'
-import { getPathType } from '../utils'
+import { useTranslation } from '../../i18n'
+import { getBasename, getBytes, getNextUrl } from '../../utils'
+import { getPathType } from '../Renderer/utils'
+import TextLikePreviewer from '../TextLikePreviewer'
 
-import { PreviewBlockContext, RenderBlockContextType } from '../contexts/preview.context'
-import { BaseBucketType, BucketParams } from '../contexts/types'
-import FolderRenderer from '../Folder'
-import MediaCard from '../Media'
+import { PreviewBlockContext, RenderBlockContextType } from '../Renderer/contexts/preview.context'
+import { BaseBucketType, BucketParams } from '../Renderer/contexts/types'
+import FolderRenderer from '../Renderer/Folder'
+import MediaCard from '../Renderer/Media'
 
 function formatBucketList(bucketList: BaseBucketType[], parentPath: string) {
   return bucketList.map(item => ({
@@ -118,6 +118,7 @@ export interface BucketBlockProps<BucketType extends BaseBucketType> {
   onOpenInNewTab?: (path: string) => void
   onLinkClick?: (path: string) => void
   onKeyClick?: (path: string, value: string) => void
+  renderMarkdown?: (value: string) => React.ReactNode
 }
 
 export function BucketBlock<T extends BaseBucketType>({
