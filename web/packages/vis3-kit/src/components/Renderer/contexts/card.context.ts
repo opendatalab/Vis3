@@ -1,9 +1,9 @@
 import { createContext, useContext } from 'react'
 
 export const RenderCardContext = createContext<{
-  builtIns?: React.ReactNode
+  renderer?: React.ReactNode
 }>({
-  builtIns: null,
+  renderer: null,
 })
 
 export function useRenderCardContext() {
