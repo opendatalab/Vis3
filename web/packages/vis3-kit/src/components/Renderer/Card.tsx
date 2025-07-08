@@ -42,7 +42,7 @@ const FieldName = styled.span`
 `
 
 function InnerRenderCard({ className, name, title, titleExtra, extra, children, bodyStyle }: RenderCardProps, ref: ForwardedRef<HTMLDivElement>) {
-  const { builtIns } = useRenderCardContext()
+  const { renderer } = useRenderCardContext()
 
   return (
     <StyledCard
@@ -57,7 +57,7 @@ function InnerRenderCard({ className, name, title, titleExtra, extra, children, 
           <Tooltip title={name}>
             <FieldName className="field-name">{name}</FieldName>
           </Tooltip>
-          {builtIns}
+          {renderer}
           {titleExtra}
         </TitleContainer>
       )}
