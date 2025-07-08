@@ -4,49 +4,7 @@ import { Divider, Dropdown, type MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
 export type RenderType = 'raw' | 'image' | 'html' | 'json' | 'markdown' | 'content_list' | 'img_list'
 
-import { i18n } from '../../../i18n'
-
-const renderOptions = [
-  {
-    key: 'raw',
-    label: i18n.t('renderer.raw'),
-    value: 'raw',
-  },
-  {
-    key: 'image',
-    label: i18n.t('renderer.image'),
-    value: 'image',
-  },
-  {
-    key: 'html',
-    label: i18n.t('renderer.html'),
-    value: 'html',
-  },
-  {
-    key: 'json',
-    label: i18n.t('renderer.json'),
-    value: 'json',
-  },
-  {
-    key: 'markdown',
-    label: i18n.t('renderer.markdown'),
-    value: 'markdown',
-  },
-  {
-    type: 'divider',
-  },
-  // build_in_fields
-  {
-    key: 'content_list',
-    label: i18n.t('renderer.contentList'),
-    value: 'content_list',
-  },
-  {
-    key: 'img_list',
-    label: i18n.t('renderer.imgList'),
-    value: 'img_list',
-  },
-]
+import { getRenders } from '../textRender'
 
 const StyledRenderTrigger = styled.div`
   display: flex;
@@ -58,6 +16,12 @@ const StyledRenderTrigger = styled.div`
 
 export default function useRenderType(initialRenderType: RenderType = 'raw'): [React.ReactNode, { renderType: RenderType | undefined }] {
   const [renderType, setRenderType] = useState<RenderType | undefined>(initialRenderType)
+
+  const renderOptions = getRenders().map(item => ({
+    key: item.name,
+    label: item.label,
+    value: item.name,
+  }))
 
   const dropdownMenu: MenuProps = useMemo(() => ({
     items: renderOptions as MenuProps['items'],
