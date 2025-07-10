@@ -1,4 +1,5 @@
 import { i18n } from '../../i18n'
+import { RendererProps } from './Card'
 import ContentListCard from './ContentList'
 import CsvCard from './Csv'
 import HtmlCard from './Html'
@@ -14,7 +15,7 @@ export type TextRender = {
   renderer: React.ComponentType<any>
 }
 
-const textRenders: Record<string, TextRender> = {
+const textRenderers: Record<string, TextRender> = {
   raw: {
     label: i18n.t('renderer.raw'),
     name: 'raw',
@@ -57,32 +58,32 @@ const textRenders: Record<string, TextRender> = {
   },
 }
 
-export function getTextRender(name: string) {
-  return textRenders[name]
+export function getTextRenderer(name: string) {
+  return textRenderers[name]
 }
 
-export function registerTextRender(name: string, label: string, renderer: React.ComponentType<any>) {
+export function registerTextRenderer(name: string, label: string, renderer: React.ComponentType<RendererProps>) {
   if (name === 'jsonl') {
     throw new Error('jsonl cannot be overridden')
   }
 
-  if (name in textRenders) {
+  if (name in textRenderers) {
     console.warn(`Text render ${name} already registered, will be overridden`)
   }
 
-  textRenders[name] = {
+  textRenderers[name] = {
     name,
     label,
     renderer,
   }
 }
 
-export function getRenders() {
-  return Object.values(textRenders)
+export function getRenderers() {
+  return Object.values(textRenderers)
 }
 
-export function unregisterTextRender(name: string) {
-  delete textRenders[name]
+export function unregisterTextRenderer(name: string) {
+  delete textRenderers[name]
 }
 
-export default textRenders
+export default textRenderers

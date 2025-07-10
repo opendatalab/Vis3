@@ -4,7 +4,7 @@ import { Divider, Dropdown, type MenuProps } from 'antd'
 import { useMemo, useState } from 'react'
 export type RenderType = 'raw' | 'image' | 'html' | 'json' | 'markdown' | 'content_list' | 'img_list'
 
-import { getRenders } from '../textRender'
+import { getRenderers } from '../textRender'
 
 const StyledRenderTrigger = styled.div`
   display: flex;
@@ -17,7 +17,7 @@ const StyledRenderTrigger = styled.div`
 export default function useRenderType(initialRenderType: RenderType = 'raw'): [React.ReactNode, { renderType: RenderType | undefined }] {
   const [renderType, setRenderType] = useState<RenderType | undefined>(initialRenderType)
 
-  const renderOptions = getRenders().map(item => ({
+  const renderOptions = getRenderers().map(item => ({
     key: item.name,
     label: item.label,
     value: item.name,

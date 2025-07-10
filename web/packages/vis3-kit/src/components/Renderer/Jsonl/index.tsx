@@ -25,7 +25,7 @@ import usePreview from '../stateHooks/usePreview'
 import type { RenderType } from '../stateHooks/useRenderType'
 import useRenderType from '../stateHooks/useRenderType'
 import useWrap from '../stateHooks/useWrap'
-import textRenders, { getTextRender } from '../textRender'
+import textRenderers, { getTextRenderer } from '../textRender'
 import fileSchema from './schemas/file.schema.json'
 import htmlSchema from './schemas/html.schema.json'
 import richSchema from './schemas/rich.schema.json'
@@ -65,7 +65,7 @@ const StyledWrapper = styled(FieldRendererWrapper)`
 export function FieldRendererWrapper({ renderAs, ...props }: FieldRendererWrapperProps) {
   const [renderTypeNode, { renderType }] = useRenderType(renderAs)
 
-  const FieldRenderer = getTextRender(renderType ?? renderAs ?? 'raw')?.renderer ?? textRenders.raw.renderer
+  const FieldRenderer = getTextRenderer(renderType ?? renderAs ?? 'raw')?.renderer ?? textRenderers.raw.renderer
 
   const contextValue = useMemo(() => ({
     renderer: renderTypeNode,

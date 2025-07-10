@@ -10,7 +10,7 @@ import { useTranslation } from '../../i18n'
 import type { RendererProps } from '../Renderer/Card'
 import { usePreviewBlockContext } from '../Renderer/contexts/preview.context'
 import JsonlCard from '../Renderer/Jsonl'
-import textRenders, { getTextRender } from '../Renderer/textRender'
+import textRenderers, { getTextRenderer } from '../Renderer/textRender'
 import styles from './index.module.css'
 
 export interface TextLikePreviewerProps extends Omit<RendererProps, 'value'> {
@@ -46,7 +46,7 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
   if (type === 'jsonl') {
     Render = JsonlCard
   } else {
-    Render = getTextRender(type)?.renderer ?? textRenders.raw.renderer
+    Render = getTextRenderer(type)?.renderer ?? textRenderers.raw.renderer
   }
 
   if (!Render) {
