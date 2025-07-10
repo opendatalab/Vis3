@@ -25,7 +25,7 @@ import usePreview from '../stateHooks/usePreview'
 import type { RenderType } from '../stateHooks/useRenderType'
 import useRenderType from '../stateHooks/useRenderType'
 import useWrap from '../stateHooks/useWrap'
-import renders from '../withtout_jsonl'
+import textRenderers, { getTextRenderer } from '../textRender'
 import fileSchema from './schemas/file.schema.json'
 import htmlSchema from './schemas/html.schema.json'
 import richSchema from './schemas/rich.schema.json'
@@ -65,10 +65,10 @@ const StyledWrapper = styled(FieldRendererWrapper)`
 export function FieldRendererWrapper({ renderAs, ...props }: FieldRendererWrapperProps) {
   const [renderTypeNode, { renderType }] = useRenderType(renderAs)
 
-  const FieldRenderer = renders[(renderType ?? renderAs) as keyof typeof renders] ?? renders.raw
+  const FieldRenderer = getTextRenderer(renderType ?? renderAs ?? 'raw')?.renderer ?? textRenderers.raw.renderer
 
   const contextValue = useMemo(() => ({
-    builtIns: renderTypeNode,
+    renderer: renderTypeNode,
   }), [renderTypeNode])
 
   return (
@@ -238,6 +238,10 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
   }, [stateValue])
   const [copyButton] = useCopy(parsedValue)
   const jsonKeys = useMemo(() => {
+    if (!parsedValue) {
+      return []
+    }
+
     return Object.keys(parsedValue)
   }, [parsedValue])
 

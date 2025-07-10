@@ -1,7 +1,3 @@
-import JsonlCard from './Jsonl'
-import renders from './withtout_jsonl'
+export { default as RenderCard } from './Card';
+export * from './textRender';
 
-export default {
-  ...renders,
-  jsonl: JsonlCard,
-}
