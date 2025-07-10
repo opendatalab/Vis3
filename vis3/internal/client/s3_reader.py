@@ -148,6 +148,7 @@ class S3Reader:
         self.region_name = region_name
         self.endpoint_url = endpoint_url
         self.is_compressed = self.key_without_query.endswith(".gz")
+        self._header_info = None
 
         if self.access_key_id and self.secret_access_key:
             self.client = S3Reader.get_client(self.access_key_id, self.secret_access_key, self.endpoint_url, self.region_name)
@@ -163,13 +164,24 @@ class S3Reader:
         return await loop.run_in_executor(None, wrapper)
 
     def _get_range_header(self, start: int, length: int | None = None):
-        max_end = start + MAX_END
+        """
+        生成 S3 Range header
+        
+        Args:
+            start: 起始字节位置
+            length: 读取长度，如果为 None 则读取从 start 开始的 1MB 数据
+            
+        Returns:
+            str: Range header 字符串
+        """
         if length is None or length == 0:
-            # 如果 offset 为空，读取从 start 开始的 1MB 数据
-            # 这个大小足够读取一行，同时避免读取过多数据
-            range_header = f"bytes={start}-{max_end}"
+            # 如果 length 为空，读取从 start 开始的 1MB 数据
+            end = start + MAX_END - 1  # Range header 的 end 是包含的
+            range_header = f"bytes={start}-{end}"
         else:
-            range_header = f"bytes={start}-{start + length}"
+            # 如果指定了 length，读取指定长度的数据
+            end = start + length - 1  # Range header 的 end 是包含的
+            range_header = f"bytes={start}-{end}"
 
         return range_header
     
@@ -211,11 +223,18 @@ class S3Reader:
         """
         try:
             with timer("head_object"):
-                return await S3Reader._run_in_executor(
+                if self._header_info:
+                    return self._header_info
+
+                header_info = await S3Reader._run_in_executor(
                     self.client.head_object,
                     Bucket=self.bucket_name,
                     Key=self.key_without_query,
                 )
+
+                self._header_info = header_info
+
+                return header_info
         except ClientError as e:
             error_code = e.response["Error"]["Code"]
             if error_code == "NoSuchBucket":
@@ -679,7 +698,7 @@ class S3Reader:
 
         Args:
             start: 起始字节位置
-            offset: 结束字节位置，如果为 None 则读取从 start 开始的完整一行
+            length: 读取长度，如果为 None 则读取从 start 开始的完整一行
 
         Returns:
             JsonRow: (行内容, 偏移量, 行号)
@@ -687,79 +706,130 @@ class S3Reader:
         if self.is_compressed:
             return await self.read_gz_row(start=start, length=length)
 
-        # 变成异步
-        MAX_TOTAL_SIZE = 10 * 1024 * 1024  # 10MB
-        NEXT_READ_SIZE = 1 * 1024 * 1024  # 1MB
-
-        current_start = start
-        total_size = 0
-        buffer = bytearray()
-
-        while total_size < MAX_TOTAL_SIZE:
-            # 计算本次读取的大小
-            read_size = NEXT_READ_SIZE
-
-            # 变成异步
-            def get_object_sync():
-                return self.client.get_object(
-                    Bucket=self.bucket_name,
-                    Key=self.key_without_query,
-                    Range=self._get_range_header(start=current_start, length=read_size),
-                    RequestPayer="requester",
-                )
-
-            response = await self._run_in_executor(get_object_sync)
-            stream = response["Body"]
-
-            # 读取数据
-            chunk = await self._run_in_executor(stream.read)
-            if not chunk:
-                break
-
-            buffer.extend(chunk)
-            total_size += len(chunk)
-
-            # 查找换行符
-            newline_pos = buffer.find(b"\n")
-            if newline_pos != -1:
-                # 找到换行符，提取内容
-                line = buffer[:newline_pos]
-                new_start = start
-                new_len = len(line) + 1
-
-                # 处理行内容
-                try:
-                    decoded_line = line.decode("utf-8")
-                except UnicodeDecodeError:
-                    try:
-                        decoded_line = line.decode("latin1")
-                    except UnicodeDecodeError:
-                        decoded_line = str(line)
-
-                return JsonRow(
-                    value=decoded_line,
-                    loc=self._make_location(new_start, new_len),
-                    offset=new_len,
-                    size=len(line),
-                )
-
-            current_start += len(chunk)
-
-        # 如果达到最大限制还没找到换行符，返回所有内容
         try:
-            decoded_line = buffer.decode("utf-8")
-        except UnicodeDecodeError:
-            try:
-                decoded_line = buffer.decode("latin1")
-            except UnicodeDecodeError:
-                decoded_line = str(buffer)
+            # 获取文件头部信息
+            file_header_info = await self.head_object()
+            content_length = file_header_info.get("ContentLength", 0)
+            
+            # 设置读取限制
+            _MAX_TOTAL_SIZE = 10 << 20  # 10MB
+            MAX_TOTAL_SIZE = min(content_length, _MAX_TOTAL_SIZE)
+            NEXT_READ_SIZE = 1 << 20  # 1MB
 
-        return JsonRow(
-            value=decoded_line,
-            loc=self._make_location(start, len(buffer)),
-            offset=len(buffer),
-            size=len(buffer),
-        )
+            current_start = start
+            total_size = 0
+            buffer = bytearray()
+
+            while total_size < MAX_TOTAL_SIZE:
+                # 计算本次读取的大小，确保不超过文件末尾
+                remaining_size = content_length - current_start
+                if remaining_size <= 0:
+                    break
+                    
+                read_size = min(NEXT_READ_SIZE, remaining_size)
+
+                try:
+                    range_header = f"bytes={current_start}-{current_start + read_size - 1}"
+                    
+                    def get_object_sync():
+                        return self.client.get_object(
+                            Bucket=self.bucket_name,
+                            Key=self.key_without_query,
+                            Range=range_header,
+                            RequestPayer="requester",
+                        )
+
+                    response = await self._run_in_executor(get_object_sync)
+                    stream = response["Body"]
+
+                    # 读取数据
+                    chunk = await self._run_in_executor(stream.read)
+                    if not chunk:
+                        break
+
+                    buffer.extend(chunk)
+                    total_size += len(chunk)
+
+                    # 查找换行符
+                    newline_pos = buffer.find(b"\n")
+                    if newline_pos != -1:
+                        # 找到换行符，提取内容
+                        line = buffer[:newline_pos]
+                        new_start = start
+                        new_len = len(line) + 1
+
+                        # 处理行内容
+                        try:
+                            decoded_line = line.decode("utf-8")
+                        except UnicodeDecodeError:
+                            try:
+                                decoded_line = line.decode("latin1")
+                            except UnicodeDecodeError:
+                                decoded_line = str(line)
+
+                        return JsonRow(
+                            value=decoded_line,
+                            loc=self._make_location(new_start, new_len),
+                            offset=new_len,
+                            size=len(line),
+                        )
+
+                    # 更新下一次读取的起始位置
+                    current_start += len(chunk)
+                    
+                except ClientError as e:
+                    error_code = e.response["Error"]["Code"]
+                    if error_code == "NoSuchKey":
+                        raise AppEx(
+                            code=ErrorCode.S3_CLIENT_40003_NOT_FOUND,
+                            status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Object {self.key_without_query} not found",
+                        )
+                    elif error_code == "AccessDenied":
+                        raise AppEx(
+                            code=ErrorCode.S3_CLIENT_40001_ACCESS_DENIED,
+                            status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f"Access denied to object {self.key_without_query}",
+                        )
+                    else:
+                        raise AppEx(
+                            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            detail=f"S3 client error: {str(e)}",
+                        )
+                except Exception as e:
+                    logger.error(f"Error reading S3 object: {e}")
+                    raise AppEx(
+                        code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=f"Failed to read object: {str(e)}",
+                    )
+
+            # 如果达到最大限制还没找到换行符，返回所有内容
+            try:
+                decoded_line = buffer.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    decoded_line = buffer.decode("latin1")
+                except UnicodeDecodeError:
+                    decoded_line = str(buffer)
+
+            return JsonRow(
+                value=decoded_line,
+                loc=self._make_location(start, len(buffer)),
+                offset=len(buffer),
+                size=len(buffer),
+            )
+            
+        except Exception as e:
+            if isinstance(e, AppEx):
+                raise
+            logger.error(f"Unexpected error in read_row: {e}")
+            raise AppEx(
+                code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Unexpected error: {str(e)}",
+            )
 
     async def read_gz_row(self, start: int, length: int | None = None) -> JsonRow:
         """
