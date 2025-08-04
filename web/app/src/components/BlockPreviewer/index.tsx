@@ -1,5 +1,5 @@
 import type { BucketBlockProps } from '@vis3/kit'
-import { BucketBlock, getBasename, getPathType, useTranslation } from '@vis3/kit'
+import { BucketBlock, FileIcon, getBasename, getPathType, useTranslation } from '@vis3/kit'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -315,8 +315,10 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
                 return (
                   <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
                     <div className="flex items-center gap-2">
-                      <BucketIcon />
-                      <Link className="hover:!underline" to="/" search={{ path: `${item.path}/`, id: item.id }}>{`${item.path}/`}</Link>
+                      <div className="text-lg w-4 h-4">
+                        <FileIcon path={item.fullPath} />
+                      </div>
+                      <Link className="hover:!underline" to="/" search={{ path: `${item.fullPath}`, id: item.id }}>{`${item.path}`}</Link>
                       {isDuplicate(item.fullPath) && <Tag color="blue"><KeyOutlined /> {item.keychain_name}</Tag>}
                     </div>
                     <div className="flex gap-2">

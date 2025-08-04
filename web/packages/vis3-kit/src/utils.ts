@@ -214,9 +214,13 @@ export function getBasename(path: string) {
     return ''
   }
 
-  // 兼容path中带中文的情况
-  const pathname = new URL(path).pathname
-  return decodeURIComponent(pathname.split('/').pop() ?? '')
+  try {
+    // 兼容path中带中文的情况
+    const pathname = new URL(path).pathname
+    return decodeURIComponent(pathname.split('/').pop() ?? '')
+  } catch (error) {
+    return ''
+  }
 }
 
 export function getBytes(url: string) {
