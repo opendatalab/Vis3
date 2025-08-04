@@ -131,7 +131,7 @@ export default function FolderRenderer({ path, onPathChange, name, extraTail, ti
         backgroundColor: '#fff',
       }}
       renderItem={(item) => {
-        if (typeof renderBucketItem === 'function' && !pathWithoutQuery) {
+        if (typeof renderBucketItem === 'function') {
           return renderBucketItem(item)
         }
 

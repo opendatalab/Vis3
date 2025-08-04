@@ -42,7 +42,7 @@ export default function HtmlCard({ className, name, value, extraTail }: Renderer
   const [baseurlButton, { base }, , form] = useBase()
   const { value: topValue } = useFieldContext()
   const [previewButton, { preview }] = usePreview()
-  const [copyButton] = useCopy(value)
+  const [copyButton] = useCopy(value ?? '')
 
   const initialBaseUrl = useMemo(() => {
     if (topValue && isUrl(topValue.url)) {
@@ -77,7 +77,7 @@ export default function HtmlCard({ className, name, value, extraTail }: Renderer
 
     // 使用正则表达式替换HTML中的绝对路径
     // 匹配href和src属性中的绝对路径（以/开头但不是//开头的路径）
-    return stateValue.replace(/(href|src)=(["'])(\/(?!\/).*?)\2/gi, (match, attr, quote, path) => {
+    return stateValue?.replace(/(href|src)=(["'])(\/(?!\/).*?)\2/gi, (match, attr, quote, path) => {
       return `${attr}=${quote}${base.replace(/\/+$/, '')}${path}${quote}`
     })
   }, [base, stateValue])

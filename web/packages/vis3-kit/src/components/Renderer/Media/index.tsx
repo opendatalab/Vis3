@@ -105,7 +105,7 @@ export default function MediaCard({ type, className, name, value, extraTail, tit
 
     if (type === 'zip') {
       return (
-        <PrimaryButton icon={<DownloadOutlined type="text" />} onClick={() => onDownload?.(value)}>
+        <PrimaryButton icon={<DownloadOutlined type="text" />} onClick={() => onDownload?.(value ?? '')}>
           {t('renderer.downloadZipFile')}
         </PrimaryButton>
       )

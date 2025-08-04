@@ -227,7 +227,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
   const parsedValue = useMemo(() => {
     try {
       setJsonError('')
-      return JSON.parse(stateValue)
+      return JSON.parse(stateValue ?? '')
     }
     catch (_err: any) {
       if (stateValue && stateValue.length > 0) {
@@ -430,7 +430,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
                         <StyledWrapper
                           renderAs={innerBlock.renderAs as RenderType}
                           name={innerBlock.field}
-                          value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field) ?? ''}
+                          value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field)}
                           extraTail={
                             innerBlock.field !== '__whole__' && (
                               <>

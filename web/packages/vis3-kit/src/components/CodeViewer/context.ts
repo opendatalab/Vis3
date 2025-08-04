@@ -2,11 +2,11 @@ import { createContext, useContext } from 'react'
 
 export const CodeViewerContext = createContext<{
   wrap: boolean
-  value: string
+  value?: string | null
   onChange: (value: string) => void
 }>({
       wrap: false,
-      value: '',
+      value: undefined,
       onChange: () => { },
     })
 

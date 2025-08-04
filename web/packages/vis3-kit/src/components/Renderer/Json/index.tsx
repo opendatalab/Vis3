@@ -58,7 +58,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   const [stateValue, setStateValue] = useState(value)
   const parentCodeViewerContext = useCodeViewerContext()
   const { id: propsBlockId } = usePreviewBlockContext()
-  const [copyButton] = useCopy(stateValue)
+  const [copyButton] = useCopy(stateValue ?? '')
   const { t } = useTranslation()
   const cardRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
@@ -70,7 +70,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   const parsedValue = useMemo(() => {
     try {
       setJsonError('')
-      return JSON.parse(stateValue)
+      return JSON.parse(value ?? '')
     }
     catch (_err: any) {
       if (stateValue && stateValue.length > 0) {
@@ -230,7 +230,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
                     <FullHeightWrapper
                       renderAs={innerBlock.renderAs as RenderType}
                       name={innerBlock.field}
-                      value={innerBlock.field === '__whole__' ? stateValue : get(parsedValue, innerBlock.field) ?? ''}
+                      value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field)}
                       extraTail={
                         innerBlock.field !== '__whole__' && (
                           <>

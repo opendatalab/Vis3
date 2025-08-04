@@ -21,11 +21,11 @@ export interface TextLikePreviewerProps extends Omit<RendererProps, 'value'> {
 
 export default function TextLikePreviewer({ name, type, className, extraTail, titleExtra }: TextLikePreviewerProps) {
   const { data, onNext, onPrev, prevable, nextable } = usePreviewBlockContext()
-  const [stateContent, setStateContent] = useState('')
+  const [stateContent, setStateContent] = useState<string | undefined>(undefined)
   const { t } = useTranslation()
 
   useEffect(() => {
-    setStateContent(data?.content ?? '')
+    setStateContent(data?.content)
   }, [data])
 
   const rowAction = ['jsonl', 'json', 'csv', 'txt'].includes(type)

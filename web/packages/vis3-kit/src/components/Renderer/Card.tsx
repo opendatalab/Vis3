@@ -19,7 +19,7 @@ export type RenderCardProps = React.PropsWithChildren<{
 export interface RendererProps {
   className?: string
   name: string
-  value: string
+  value?: string
   extraTail?: React.ReactNode
   titleExtra?: React.ReactNode
 }

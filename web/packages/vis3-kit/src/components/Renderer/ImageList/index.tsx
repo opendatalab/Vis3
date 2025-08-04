@@ -114,7 +114,7 @@ export default function ImageListCard({ className, name, value, extraTail }: Ren
   const [wrapButton, { wrap }] = useWrap()
   const [stateValue, setStateValue] = useState(value)
   const [previewButton, { preview }] = usePreview()
-  const [copyButton] = useCopy(value)
+  const [copyButton] = useCopy(value ?? '')
 
   useEffect(() => {
     setStateValue(value)

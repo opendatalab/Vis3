@@ -17,7 +17,7 @@ export default function CsvCard({ className, name, value, extraTail, titleExtra 
   const ref = useRef<HTMLDivElement>(null)
 
   const { headers, data } = useMemo(() => {
-    return parseCsv(value)
+    return parseCsv(value ?? '')
   }, [value])
 
   return (

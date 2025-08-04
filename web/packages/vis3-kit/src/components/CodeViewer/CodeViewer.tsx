@@ -16,7 +16,7 @@ export interface JsonViewerProps {
 }
 
 export function JsonViewer({ className }: JsonViewerProps) {
-  const { wrap, value = '', onChange } = useCodeViewerContext()
+  const { wrap, value, onChange } = useCodeViewerContext()
 
   const code = useMemo(() => {
     try {
@@ -42,7 +42,11 @@ export function JsonViewer({ className }: JsonViewerProps) {
     return exts
   }, [wrap])
 
-  return <CodeMirror className={className} value={code} height="auto" extensions={extensions} onChange={onChange} />
+  if (typeof value === 'undefined') {
+    return null
+  }
+
+  return <CodeMirror className={className} value={code ?? ''} height="auto" extensions={extensions} onChange={onChange} />
 }
 
 export function TextViewer({ className }: { className?: string }) {
@@ -51,7 +55,7 @@ export function TextViewer({ className }: { className?: string }) {
 
   const validJson = useMemo(() => {
     try {
-      return JSON.parse(value)
+      return JSON.parse(value ?? '')
     }
     catch (err) {
       console.error(err)
@@ -78,6 +82,6 @@ export function TextViewer({ className }: { className?: string }) {
   }
 
   return (
-    <CodeMirror className={className} value={code} height="auto" extensions={wrap ? [EditorView.lineWrapping, ...plugins] : plugins} onChange={onChange} />
+    <CodeMirror className={className} value={code || undefined} height="auto" extensions={wrap ? [EditorView.lineWrapping, ...plugins] : plugins} onChange={onChange} />
   )
 }

@@ -281,35 +281,39 @@ class KeyPlugin {
       const maxNodes = 1000 // 限制节点数量，避免超长JSON内容导致性能问题
       const visibleRanges = view.visibleRanges
 
-      // 只处理可见区域内的节点
-      for (const node of nodes) {
-        // 确保节点在文档范围内
-        if (node.start >= 0
-          && node.end <= view.state.doc.length
-          && node.start < node.end
-          && typeof node.pathArray[node.pathArray.length - 1] !== 'number') {
-          // 检查节点是否在可见范围内
-          if (this.isNodeInVisibleRange(node, visibleRanges)) {
-            decorations.push(
-              Decoration.mark({
-                class: 'cm-json-key',
-                attributes: {
-                  'data-key-path': node.path,
-                  'title': node.path,
-                },
-              }).range(node.start + 1, node.end - 1),
-            )
+      try {
+        // 只处理可见区域内的节点
+        for (const node of nodes) {
+          // 确保节点在文档范围内
+          if (node.start >= 0
+            && node.end <= view.state.doc.length
+            && node.start < node.end
+            && typeof node.pathArray[node.pathArray.length - 1] !== 'number') {
+            // 检查节点是否在可见范围内
+            if (this.isNodeInVisibleRange(node, visibleRanges)) {
+              decorations.push(
+                Decoration.mark({
+                  class: 'cm-json-key',
+                  attributes: {
+                    'data-key-path': node.path,
+                    'title': node.path,
+                  },
+                }).range(node.start + 1, node.end - 1),
+              )
+            }
+          }
+  
+          // 如果已经处理了足够多的节点，就停止处理
+          if (decorations.length >= maxNodes) {
+            break
           }
         }
-
-        // 如果已经处理了足够多的节点，就停止处理
-        if (decorations.length >= maxNodes) {
-          break
-        }
+  
+        this.decorations = Decoration.set(decorations, true)
+        view.update([]) // 触发视图更新
+      } catch (error) {
+        console.warn(error)
       }
-
-      this.decorations = Decoration.set(decorations, true)
-      view.update([]) // 触发视图更新
     })
   }
 
