@@ -21,7 +21,7 @@ const ExtraContainer = styled.div`
 export default function MarkdownCard({ className, name, value, extraTail }: RendererProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [previewButton, { preview }] = usePreview()
-  const [copyButton] = useCopy(value)
+  const [copyButton] = useCopy(value ?? '')
   const [stateValue, setStateValue] = useState(value)
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function MarkdownCard({ className, name, value, extraTail }: Rend
       >
         {preview
           ? (
-            <MarkdownPreview value={stateValue} />
+            <MarkdownPreview value={stateValue ?? ''} />
           )
           : <TextViewer />}
       </RenderCard>

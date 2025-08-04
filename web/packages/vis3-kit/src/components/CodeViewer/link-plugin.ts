@@ -50,7 +50,10 @@ function hyperLinkDecorator(regexp?: RegExp, matchData?: Record<string, string>,
 
       if (isS3Path) {
         markAttributes.attributes.onclick = `
-          document.dispatchEvent(new CustomEvent('s3-path-click', { detail: { path: '${urlStr}' } }))
+          const blockContainer = this.closest('[data-block-id]');
+          if (blockContainer) {
+            blockContainer.dispatchEvent(new CustomEvent('s3-path-click', { detail: { path: '${urlStr}' } }))
+          }
         `
       }
       else {

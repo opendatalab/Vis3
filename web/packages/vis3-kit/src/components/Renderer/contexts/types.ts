@@ -2,7 +2,7 @@ export interface BaseBucketType {
   type: 'directory' | 'file' | 'bucket'
   path: string
   // file
-  content: string | null
+  content?: string
   size: number | null
   created_by: string | null
   last_modified: string | null

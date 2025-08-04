@@ -18,7 +18,7 @@ const ExtraContainer = styled.div`
 export default function RawCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [wrapButton, { wrap }] = useWrap()
-  const [copyButton] = useCopy(value)
+  const [copyButton] = useCopy(value ?? '')
   const [stateValue, setStateValue] = useState(value)
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { ArrowUpOutlined, CloseOutlined, DownloadOutlined, ExportOutlined, InfoC
 import styled from '@emotion/styled'
 import formatter from '@labelu/formatter'
 import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } from 'antd'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTranslation } from '../../i18n'
 import { getBasename, getBytes, getNextUrl } from '../../utils'
@@ -116,7 +116,7 @@ export interface BucketBlockProps<BucketType extends BaseBucketType> {
   renderBucketItem?: (item: BucketType) => React.ReactNode,
   previewUrl?: string,
   onOpenInNewTab?: (path: string) => void
-  onLinkClick?: (path: string) => void
+  onLinkClick?: (path: string, id: string) => void
   onKeyClick?: (path: string, value: string) => void
   renderMarkdown?: (value: string) => React.ReactNode
 }
@@ -147,11 +147,12 @@ export function BucketBlock<T extends BaseBucketType>({
 }: BucketBlockProps<T>) {
   const basename = getBasename(path)
   const { t } = useTranslation()
+  const blockRef = useRef<HTMLDivElement>(null)
   
   // 未知的文件类型，包括没有后缀名的文件，供用户选择渲染类型
   const unkonwnFileType = !/\.\w+$/.test(basename)
   const [renderAs, setRenderAs] = useState<string | undefined>()
-  const pathWithoutQuery = path.split('?')[0]
+  const pathWithoutQuery = path?.split('?')[0] ?? ''
 
   const folders = useMemo(() => {
     if (Array.isArray(dataSource)) {
@@ -171,17 +172,21 @@ export function BucketBlock<T extends BaseBucketType>({
   }, [dataSource, unkonwnFileType])
 
   useEffect(() => {
+    if (!blockRef.current) {
+      return
+    }
+
     // 监听s3-path-click事件
     const handleS3PathClick = (e: any) => {
-      onLinkClick?.(e.detail.path)
+      onLinkClick?.(e.detail.path, id)
     }
 
-    document.addEventListener('s3-path-click', handleS3PathClick)
-
+    blockRef.current.addEventListener('s3-path-click', handleS3PathClick)
+    
     return () => {
-      document.removeEventListener('s3-path-click', handleS3PathClick)
+      blockRef.current?.removeEventListener('s3-path-click', handleS3PathClick)
     }
-  }, [onLinkClick])
+  }, [onLinkClick, id])
 
   const [prevBytes, setPrevBytes] = useState<number[]>([])
   const hasPrev = prevBytes.length > 0
@@ -429,7 +434,7 @@ export function BucketBlock<T extends BaseBucketType>({
 
   return (
     <PreviewBlockContext.Provider value={contextValue}>
-      <StyledBlockWrapper data-block-id={id} style={style} className={className}>
+      <StyledBlockWrapper data-block-id={id} style={style} className={className} ref={blockRef}>
         {content}
         <StyledSpin
           spinning
