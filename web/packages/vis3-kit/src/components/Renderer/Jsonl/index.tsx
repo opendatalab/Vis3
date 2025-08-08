@@ -242,6 +242,10 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
       return []
     }
 
+    if (typeof parsedValue !== 'object') {
+      return []
+    }
+
     return Object.keys(parsedValue)
   }, [parsedValue])
 

@@ -311,7 +311,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
               pageNo={block.id === ROOT_BLOCK_ID ? pageNo : undefined}
               style={{ width: `calc(100% / ${blocks.length})` }}
               onLinkClick={handleS3PathClick}
-              renderBucketItem={block.id === ROOT_BLOCK_ID ? (item) => {
+              renderBucketItem={block.id === ROOT_BLOCK_ID && !path ? (item) => {
                 return (
                   <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
                     <div className="flex items-center gap-2">
