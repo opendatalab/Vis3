@@ -20,7 +20,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port: 3000,
+    port: 5187,
     proxy: {
       // '/api': {
       //   target: 'https://data-workbench-dev.dc.shlab.tech',
@@ -28,7 +28,7 @@ export default defineConfig({
       //   secure: false,
       // },
       '/api/': {
-        target: 'http://127.0.0.1:8001',
+        target: 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       },
