@@ -289,7 +289,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
 
       setPreviewConfig((pre) => {
         if (pre.length === 0) {
-          return [{ id: 'whole', field: '__whole__', renderAs: 'json' }, ...defaultConfigs]
+          return [{ id: 'root', field: '__root__', renderAs: 'json' }, ...defaultConfigs]
         }
 
         return pre
@@ -310,7 +310,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
     const handleJsonKeyOnClick = (e: CustomEvent<CustomEventJsonNodeDetail>) => {
       const objectField = e.detail.field
       const blockId = e.detail.blockId
-      const parentField = e.detail.parentField ?? '__whole__'
+      const parentField = e.detail.parentField ?? '__root__'
       const indexKey = `${blockId}-${objectField}`
       const parentIndexKey = `${blockId}-${parentField}`
 
@@ -328,7 +328,7 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
       try {
         // 没有预览时，第一个预览区块为整个json
         if (previewConfig.length === 0) {
-          setPreviewConfig([{ id: 'whole', field: '__whole__', renderAs: 'json' }, { id: gid(), field: fieldChain.fullPath, renderAs }])
+          setPreviewConfig([{ id: 'root', field: '__root__', renderAs: 'json' }, { id: gid(), field: fieldChain.fullPath, renderAs }])
         }
         else if (!previewConfig.find(innerBlock => innerBlock.field === objectField)) {
           setPreviewConfig((pre) => {
@@ -434,9 +434,9 @@ export default function JsonlCard({ className, name, value, extraTail, titleExtr
                         <StyledWrapper
                           renderAs={innerBlock.renderAs as RenderType}
                           name={innerBlock.field}
-                          value={innerBlock.field === '__whole__' ? parsedValue : get(parsedValue, innerBlock.field)}
+                          value={innerBlock.field === '__root__' ? parsedValue : get(parsedValue, innerBlock.field)}
                           extraTail={
-                            innerBlock.field !== '__whole__' && (
+                            innerBlock.field !== '__root__' && (
                               <>
                                 <Tooltip title={t('renderer.close')}>
                                   <Button size="small" type="text" icon={<CloseOutlined />} onClick={() => handleClose?.(innerBlock.id)} />
