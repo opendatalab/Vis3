@@ -20,7 +20,7 @@ export interface TextLikePreviewerProps extends Omit<RendererProps, 'value'> {
 }
 
 export default function TextLikePreviewer({ name, type, className, extraTail, titleExtra }: TextLikePreviewerProps) {
-  const { data, onNext, onPrev, prevable, nextable } = usePreviewBlockContext()
+  const { data, onNext, onPrev, prevable, nextable, showSegmentSwitch } = usePreviewBlockContext()
   const [stateContent, setStateContent] = useState<string | undefined>(undefined)
   const { t } = useTranslation()
 
@@ -28,7 +28,7 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
     setStateContent(data?.content)
   }, [data])
 
-  const rowAction = ['jsonl', 'json', 'csv', 'txt'].includes(type)
+  const rowAction = showSegmentSwitch && ['jsonl', 'json', 'csv', 'txt'].includes(type)
     ? (
       <Space.Compact>
         <Tooltip title={t('textPreviewer.prevSection')}>

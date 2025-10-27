@@ -64,7 +64,7 @@ export interface ContentItem {
 }
 
 export interface ContentListProps {
-  name: string
+  name: React.ReactNode
   data: ContentItem[]
 }
 
@@ -134,7 +134,7 @@ function ContentList({ name, data }: ContentListProps) {
   }
 
   return (
-    <ContentListContainer className={styles.contentList} title={name}>
+    <ContentListContainer className={styles.contentList}>
       {
         data.map((item, index) => {
           return (

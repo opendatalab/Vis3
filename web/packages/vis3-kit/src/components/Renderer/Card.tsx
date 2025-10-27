@@ -9,7 +9,7 @@ import { useRenderCardContext } from './contexts/card.context'
 
 export type RenderCardProps = React.PropsWithChildren<{
   className?: string
-  name: string
+  name: React.ReactNode
   title?: string
   titleExtra?: React.ReactNode
   extra?: React.ReactNode
@@ -18,7 +18,7 @@ export type RenderCardProps = React.PropsWithChildren<{
 
 export interface RendererProps {
   className?: string
-  name: string
+  name: React.ReactNode
   value?: string
   extraTail?: React.ReactNode
   titleExtra?: React.ReactNode

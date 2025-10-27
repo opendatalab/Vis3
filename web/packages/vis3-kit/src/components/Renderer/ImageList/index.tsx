@@ -20,7 +20,7 @@ export interface ImageItem {
 
 export interface ImageListProps {
   data: string[] | ImageItem[]
-  name: string
+  name: React.ReactNode
 }
 
 export const ErrorContainer = styled.div`
@@ -93,7 +93,7 @@ function ImageList({ name, data }: ImageListProps) {
   }
 
   return (
-    <ImageListContainer title={name}>
+    <ImageListContainer>
       {
         data.map((item) => {
           if (typeof item === 'string') {

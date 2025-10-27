@@ -16,6 +16,7 @@ export interface RenderBlockContextType<BucketType extends BaseBucketType> {
   dataSource?: BucketType | BucketType[]
   onDownload?: (path: string) => void
   renderBucketItem?: (item: BucketType) => React.ReactNode
+  showSegmentSwitch?: boolean
   previewUrl?: string
   onLinkClick?: (path: string) => void
   onKeyClick?: (path: string, value: string) => void

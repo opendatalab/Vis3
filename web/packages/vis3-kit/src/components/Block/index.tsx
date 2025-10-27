@@ -111,6 +111,9 @@ export interface BucketBlockProps<BucketType extends BaseBucketType> {
   showPagination?: boolean
   showOpenInNewTab?: boolean
   showDownload?: boolean
+  showSegmentSwitch?: boolean
+  showFileInfo?: boolean
+  title?: React.ReactNode
   closeable?: boolean
   onChange?: (params: Partial<BucketParams>) => void
   renderBucketItem?: (item: BucketType) => React.ReactNode,
@@ -123,6 +126,7 @@ export interface BucketBlockProps<BucketType extends BaseBucketType> {
 
 export function BucketBlock<T extends BaseBucketType>({
   id,
+  title,
   path,
   onClose,
   dataSource,
@@ -142,6 +146,8 @@ export function BucketBlock<T extends BaseBucketType>({
   renderBucketItem,
   previewUrl,
   showDownload = true,
+  showFileInfo = true,
+  showSegmentSwitch = true,
   onLinkClick,
   onKeyClick,
 }: BucketBlockProps<T>) {
@@ -281,6 +287,7 @@ export function BucketBlock<T extends BaseBucketType>({
     goParent: handleGoParent,
     onChange,
     onClose,
+    showSegmentSwitch,
     renderBucketItem,
     onDownload,
     dataSource,
@@ -288,13 +295,13 @@ export function BucketBlock<T extends BaseBucketType>({
     onLinkClick,
     onKeyClick,
   } as RenderBlockContextType<T> as unknown as RenderBlockContextType<BaseBucketType>), [
-    id, path, s3PathType, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl, onLinkClick, onKeyClick])
+    id, path, s3PathType, fileObject, basename, hasNext, nextUrl, hasPrev, handleNextLine, handlePrevLine, handleGoParent, onClose, dataSource, onChange, renderBucketItem, onDownload, previewUrl, onLinkClick, onKeyClick, showSegmentSwitch])
 
   const extraTitle = useMemo(() => {
     return (
       <>
         {
-          s3PathType !== 'folder' && !!path && (
+          showFileInfo && s3PathType !== 'folder' && !!path && (
             <Popover
               title={t('renderer.fileInfo')}
               content={(
@@ -365,7 +372,9 @@ export function BucketBlock<T extends BaseBucketType>({
         }
       </>
     )
-  }, [s3PathType, path, totalSize, fileObject, id, handleGoParent, pageNo, loading, folders.length, pageSize, handlePageNoChange, t, dataSource])
+  }, [s3PathType, path, totalSize, fileObject, id, handleGoParent, pageNo, loading, folders.length, pageSize, handlePageNoChange, t, dataSource, showFileInfo])
+
+  const finalName = title ?? basename
 
   const extra = useMemo(() => {
     return (
@@ -415,7 +424,7 @@ export function BucketBlock<T extends BaseBucketType>({
     }
 
     if (isTextLike || ['jsonl'].includes(s3PathType!)) {
-      return <TextLikePreviewer name={basename} type={s3PathType || 'txt'} extraTail={extra} titleExtra={extraTitle} />
+      return <TextLikePreviewer name={finalName} type={s3PathType || 'txt'} extraTail={extra} titleExtra={extraTitle} />
     }
 
     let mediaUrl = `${previewUrl}${previewUrl?.includes('?') ? '&' : '?'}path=${encodeURIComponent(path)}`
@@ -428,8 +437,8 @@ export function BucketBlock<T extends BaseBucketType>({
       mediaUrl = (dataSource as BaseBucketType).content!
     }
 
-    return <StyledMediaCard name={basename} value={mediaUrl} type={s3PathType} extraTail={extra} titleExtra={extraTitle} />
-  }, [basename, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType, dataSource])
+    return <StyledMediaCard name={finalName} value={mediaUrl} type={s3PathType} extraTail={extra} titleExtra={extraTitle} />
+  }, [finalName, extra, extraTitle, folders, id, isTextLike, onFolderPathChange, path, pathWithoutQuery, s3PathType, dataSource])
 
 
   return (
