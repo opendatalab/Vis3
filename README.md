@@ -8,7 +8,7 @@
   </article>
 </div>
 
-> OSS browser based on s3
+> Data browser based on s3
 
 Vis3 is a visualization tool for large language models and machine learning data, supporting cloud storage platforms with S3 protocol (AWS, Aliyun OSS, Tencent Cloud) and various data formats (json, jsonl.gz, warc.gz, md, mobi, epub, etc.). It offers interactive visualization through JSON, HTML, Markdown, and image views for efficient data analysis.
 
