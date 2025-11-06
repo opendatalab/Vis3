@@ -1,6 +1,6 @@
 {
   "name": "@vis3/kit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "scripts": {
     "build": "vite build && tsc -d --emitDeclarationOnly",
     "clean": "rimraf ./node_modules",
