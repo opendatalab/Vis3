@@ -19,12 +19,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22.14.0
+          node-version: 20.8.1
 
       - name: Vis3 Semantic Release dry-run
         id: dry-run
         run: |
-          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git semantic-release
+          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git semantic-release@24.2.8
           semantic-release --dry-run --yes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -38,7 +38,7 @@ jobs:
         python-version: [3.11]
         poetry-version: ['2.0.1']
         os: [ubuntu-24.04]
-        node-version: [22.14.0]
+        node-version: [20.8.1]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -129,7 +129,7 @@ jobs:
       - name: Release vis3
         if: ${{ github.ref_name == 'main' }}
         run: |
-          npm i -g semantic-release @semantic-release/git @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec @semantic-release/github
+          npm i -g semantic-release@24.2.8 @semantic-release/git @semantic-release/commit-analyzer @semantic-release/release-notes-generator @semantic-release/exec @semantic-release/github
           semantic-release --yes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

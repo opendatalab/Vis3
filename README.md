@@ -24,7 +24,7 @@ https://github.com/user-attachments/assets/aa8ee5e8-c6d3-4b20-ae9d-2ceeb2eb2c41
 ## Getting Started
 
 ```bash
-# python >= 3.9.2
+# python >= 3.11
 pip install vis3
 ```
 
