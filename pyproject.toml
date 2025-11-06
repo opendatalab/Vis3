@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vis3"
-version = '1.2.1'
+version = '1.2.2'
 description = "Visualize s3 data"
 authors = [
     "shenguanlin <shenguanlin@pjlab.org.cn>",
