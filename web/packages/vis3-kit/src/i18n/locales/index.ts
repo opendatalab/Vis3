@@ -9,3 +9,7 @@ export const resources = {
     translation: translation_zh_cn as Record<string, unknown>,
   },
 } as Record<string, { translation: Record<string, unknown> }>;
+
+export const SUPPORTED_LANGUAGES = ['en-US', 'zh-CN']
+
+export type SupportedLanguage = keyof typeof resources

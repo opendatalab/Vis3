@@ -1,5 +1,6 @@
 import { css, Global } from '@emotion/react'
 import styled from '@emotion/styled'
+import clsx from 'clsx'
 import 'github-markdown-css/github-markdown.css'
 import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
@@ -12,6 +13,7 @@ import { useTheme } from '../theme'
 export interface MarkdownPreviewProps {
   value: string
   inline?: boolean
+  className?: string
 }
 
 const MarkdownContainer = styled.div<{ $inline?: boolean }>`
@@ -28,7 +30,7 @@ const globalStyle = css`
   }
 `
 
-export default function MarkdownPreview({ value, inline}: MarkdownPreviewProps) {
+export default function MarkdownPreview({ value, inline, className }: MarkdownPreviewProps) {
   const { tokens } = useTheme();
   const parsedValue = useMemo(() => {
     try {
@@ -52,7 +54,7 @@ export default function MarkdownPreview({ value, inline}: MarkdownPreviewProps) 
   }, [value])
 
   return (
-    <MarkdownContainer $inline={inline} className="markdown-body">
+    <MarkdownContainer $inline={inline} className={clsx('markdown-body', className)}>
       <Global styles={globalStyle} />
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}

@@ -1,25 +1,46 @@
 import { useEffect, useState } from 'react';
 
-export const useLocalStorage = (key: string, value: any) => {
-  const [state, setState] = useState<any>(() => {
+const serialize = (data: unknown) => {
+  if (typeof data === 'string') {
+    return data;
+  }
+
+  return JSON.stringify(data);
+};
+
+const deserialize = (data: string, fallback: unknown) => {
+  try {
+    return JSON.parse(data);
+  } catch (_unused) {
+    return data ?? fallback;
+  }
+};
+
+export const useLocalStorage = <T,>(key: string, value: T | (() => T)) => {
+  const getInitialValue = () => (typeof value === 'function' ? (value as () => T)() : value);
+
+  const [state, setState] = useState<T>(() => {
+    const initialValue = getInitialValue();
+
     try {
       const localStorageValue = localStorage.getItem(key);
       if (typeof localStorageValue !== 'string') {
-        localStorage.setItem(key, JSON.stringify(value));
-        return value;
-      } else {
-        return JSON.parse(localStorageValue);
+        localStorage.setItem(key, serialize(initialValue));
+        return initialValue;
       }
+
+      return deserialize(localStorageValue, initialValue) as T;
     } catch (_unused) {
-      return value;
+      return initialValue;
     }
   });
+
   useEffect(() => {
     try {
-      const serializedState = JSON.stringify(state);
-      localStorage.setItem(key, serializedState);
-    } catch (_unused2) {
+      localStorage.setItem(key, serialize(state));
+    } catch (_unused) {
     }
-  });
-  return [state, setState];
+  }, [key, state]);
+
+  return [state, setState] as const;
 };

@@ -1,6 +1,6 @@
 {
   "name": "@vis3/kit",
-  "version": "1.1.11",
+  "version": "1.1.11-alpha.10",
   "scripts": {
     "build": "vite build && tsc -d --emitDeclarationOnly",
     "clean": "rimraf ./node_modules",
@@ -32,8 +32,6 @@
     "clsx": "^2.1.1",
     "github-markdown-css": "^5.8.1",
     "json-schema-library": "^9.3.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "react-grid-layout": "^1.5.1",
     "react-markdown": "^10.1.0",
     "react-resizable": "^3.0.5",
@@ -63,6 +61,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "vite-plugin-svgr": "^4.3.0"
   },
   "peerDependencies": {

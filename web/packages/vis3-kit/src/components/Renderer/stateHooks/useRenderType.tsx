@@ -14,10 +14,26 @@ const StyledRenderTrigger = styled.div`
   
 `
 
-export default function useRenderType(initialRenderType: RenderType = 'raw'): [React.ReactNode, { renderType: RenderType | undefined }] {
-  const [renderType, setRenderType] = useState<RenderType | undefined>(initialRenderType)
+export interface RenderTypeOptions {
+  onlyStructured?: boolean
+}
 
-  const renderOptions = getRenderers().map(item => ({
+export default function useRenderType(initialRenderType: RenderType = 'raw', options?: RenderTypeOptions): [React.ReactNode, { renderType: RenderType | undefined }] {
+  const [renderType, setRenderType] = useState<RenderType | undefined>(initialRenderType)
+  const typeOptions = useMemo(() => {
+    return {
+      onlyStructured: false,
+      ...options,
+    }
+  }, [options])
+
+  const renderOptions = getRenderers().filter((item) => {
+    if (typeOptions.onlyStructured) {
+      return item.structured
+    }
+
+    return true
+  }).map(item => ({
     key: item.name,
     label: item.label,
     value: item.name,

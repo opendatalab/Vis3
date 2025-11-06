@@ -183,7 +183,9 @@
     "confirm": "Confirm",
     "clear": "Clear",
     "baseUrlEffect": "Effect: /abc.css => https://example.com/abc.css",
+    "s3PrefixEffect": "Effect：abc/de/f.jsonl => s3://prefix-path/abc/de/f.jsonl",
     "convertToFullUrl": "Convert Absolute Path to Full URL",
+    "addS3Prefix": "Add S3 path prefix",
     "cancelLineWrap": "Disable Line Wrap",
     "lineWrap": "Enable Line Wrap",
     "closePreview": "Close Preview",
@@ -196,6 +198,7 @@
     "json": "JSON",
     "markdown": "Markdown",
     "contentList": "Content List",
+    "llmChat": "LLM Chat",
     "imgList": "Image List"
   },
 

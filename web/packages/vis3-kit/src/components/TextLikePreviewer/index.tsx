@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from '../../i18n'
 import type { RendererProps } from '../Renderer/Card'
 import { usePreviewBlockContext } from '../Renderer/contexts/preview.context'
-import JsonlCard from '../Renderer/Jsonl'
+import JsonCard from '../Renderer/Json'
 import textRenderers, { getTextRenderer } from '../Renderer/textRender'
 import styles from './index.module.css'
 
@@ -44,7 +44,7 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
 
   let Render = null
   if (type === 'jsonl') {
-    Render = JsonlCard
+    Render = JsonCard
   } else {
     Render = getTextRenderer(type)?.renderer ?? textRenderers.raw.renderer
   }

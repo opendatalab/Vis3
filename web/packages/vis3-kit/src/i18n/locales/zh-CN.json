@@ -184,7 +184,9 @@
     "confirm": "确定",
     "clear": "清空",
     "baseUrlEffect": "效果：/abc.css => https://example.com/abc.css",
+    "s3PrefixEffect": "效果：abc/de/f.jsonl => s3://prefix-path/abc/de/f.jsonl",
     "convertToFullUrl": "将绝对路径转换为完整URL",
+    "addS3Prefix": "添加s3路径前缀",
     "cancelLineWrap": "取消换行",
     "lineWrap": "换行",
     "closePreview": "关闭预览",
@@ -197,6 +199,7 @@
     "json": "JSON",
     "markdown": "Markdown",
     "contentList": "内容列表",
+    "llmChat": "LLM 对话",
     "imgList": "图片列表"
   },
 
