@@ -124,9 +124,9 @@ export function ChatRenderer({ className, name, value, extraTail, titleExtra }: 
         titleExtra={titleExtra}
         extra={(
           <ExtraActions>
-            {layoutNode}
             {!preview && wrapButton}
             {previewButton}
+            {preview && layoutNode}
             {trigger}
             <FullScreenButton elementRef={ref as unknown as RefObject<HTMLElement>} />
             {extraTail}
