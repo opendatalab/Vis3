@@ -61,11 +61,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v4
         name: Install pnpm
         id: pnpm-install
         with:
-          version: 7
+          version: 9
           run_install: false
 
       - name: Get pnpm store directory

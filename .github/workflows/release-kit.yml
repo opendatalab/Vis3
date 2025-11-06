@@ -54,12 +54,37 @@ jobs:
           # update vis3-kit version in package.json
           sed -i "s/\"@vis3\/kit\": \"[^\"]*\"/\"@vis3\/kit\": \"${NEXT_VERSION}\"/" package.json
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 9
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          pnpm install --frozen-lockfile
       - name: Release vis3-kit
         run: |
           cd web/packages/vis3-kit
-          npm install
-          npm run build
-          npm run release
+          pnpm install --frozen-lockfile
+          pnpm run build
+          pnpm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }} 
