@@ -8,90 +8,38 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as RegisterIndexRouteImport } from './routes/register/index'
+import { Route as LoginIndexRouteImport } from './routes/login/index'
+import { Route as LocalIndexRouteImport } from './routes/local/index'
+import { Route as KeychainIndexRouteImport } from './routes/keychain/index'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as IndexImport } from './routes/index'
-import { Route as RegisterIndexImport } from './routes/register/index'
-import { Route as LoginIndexImport } from './routes/login/index'
-import { Route as LocalIndexImport } from './routes/local/index'
-import { Route as KeychainIndexImport } from './routes/keychain/index'
-
-// Create/Update Routes
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const RegisterIndexRoute = RegisterIndexImport.update({
+const RegisterIndexRoute = RegisterIndexRouteImport.update({
   id: '/register/',
   path: '/register/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const LoginIndexRoute = LoginIndexImport.update({
+const LoginIndexRoute = LoginIndexRouteImport.update({
   id: '/login/',
   path: '/login/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const LocalIndexRoute = LocalIndexImport.update({
+const LocalIndexRoute = LocalIndexRouteImport.update({
   id: '/local/',
   path: '/local/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const KeychainIndexRoute = KeychainIndexImport.update({
+const KeychainIndexRoute = KeychainIndexRouteImport.update({
   id: '/keychain/',
   path: '/keychain/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/keychain/': {
-      id: '/keychain/'
-      path: '/keychain'
-      fullPath: '/keychain'
-      preLoaderRoute: typeof KeychainIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/local/': {
-      id: '/local/'
-      path: '/local'
-      fullPath: '/local'
-      preLoaderRoute: typeof LocalIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/login/': {
-      id: '/login/'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginIndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/register/': {
-      id: '/register/'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterIndexImport
-      parentRoute: typeof rootRoute
-    }
-  }
-}
-
-// Create and export the route tree
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,7 +48,6 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginIndexRoute
   '/register': typeof RegisterIndexRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/keychain': typeof KeychainIndexRoute
@@ -108,16 +55,14 @@ export interface FileRoutesByTo {
   '/login': typeof LoginIndexRoute
   '/register': typeof RegisterIndexRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/keychain/': typeof KeychainIndexRoute
   '/local/': typeof LocalIndexRoute
   '/login/': typeof LoginIndexRoute
   '/register/': typeof RegisterIndexRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths: '/' | '/keychain' | '/local' | '/login' | '/register'
@@ -126,13 +71,52 @@ export interface FileRouteTypes {
   id: '__root__' | '/' | '/keychain/' | '/local/' | '/login/' | '/register/'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   KeychainIndexRoute: typeof KeychainIndexRoute
   LocalIndexRoute: typeof LocalIndexRoute
   LoginIndexRoute: typeof LoginIndexRoute
   RegisterIndexRoute: typeof RegisterIndexRoute
+}
+
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register/': {
+      id: '/register/'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login/': {
+      id: '/login/'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/local/': {
+      id: '/local/'
+      path: '/local'
+      fullPath: '/local'
+      preLoaderRoute: typeof LocalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/keychain/': {
+      id: '/keychain/'
+      path: '/keychain'
+      fullPath: '/keychain'
+      preLoaderRoute: typeof KeychainIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+  }
 }
 
 const rootRouteChildren: RootRouteChildren = {
@@ -142,39 +126,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginIndexRoute: LoginIndexRoute,
   RegisterIndexRoute: RegisterIndexRoute,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/keychain/",
-        "/local/",
-        "/login/",
-        "/register/"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/keychain/": {
-      "filePath": "keychain/index.tsx"
-    },
-    "/local/": {
-      "filePath": "local/index.tsx"
-    },
-    "/login/": {
-      "filePath": "login/index.tsx"
-    },
-    "/register/": {
-      "filePath": "register/index.tsx"
-    }
-  }
-}
-ROUTE_MANIFEST_END */

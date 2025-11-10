@@ -1,6 +1,7 @@
 export interface BaseBucketType {
   type: 'directory' | 'file' | 'bucket'
   path: string
+  next?: string
   // file
   content?: string
   size: number | null

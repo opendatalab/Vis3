@@ -223,7 +223,7 @@ export function getBasename(path: string) {
   }
 }
 
-export function getBytes(url: string) {
+export function getOffset(url: string) {
   if (typeof url !== 'string') {
     return
   }
@@ -232,26 +232,23 @@ export function getBytes(url: string) {
     return
   }
 
-  const match = url.match(/bytes=(\d+),(\d+)/)
+  const match = url.match(/(bytes|rows)=(\d+),(\d+)/)
 
-  if (match) {
-    return {
-      byte: Number(match[1]),
-      size: Number(match[2]),
-    }
-  }
-}
-
-export function getNextUrl(url?: string) {
-  if (!url) {
-    return ''
+  if (!match) {
+    return
   }
 
-  const [path, search] = url.split('?')
+  const [, rawType, start, end] = match
 
-  const range = getBytes(search)
+  if (rawType !== 'bytes' && rawType !== 'rows') {
+    return
+  }
 
-  return range ? `${path}?bytes=${range.byte + range.size},0` : ''
+  return {
+    type: rawType,
+    [rawType]: Number(start),
+    size: Number(end),
+  }
 }
 
 export function extractBucketName(s3Path: string) {

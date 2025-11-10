@@ -3,12 +3,13 @@ import SiderArrowRight from '@/assets/sider-arrow-right.svg?react'
 import UploadIcon from '@/assets/upload.svg?react'
 import { ClearOutlined, CloseOutlined, UploadOutlined } from '@ant-design/icons'
 import { createFileRoute } from '@tanstack/react-router'
-import { BucketBlock, BucketParams, getBytes, getPathType, useTranslation } from '@vis3/kit'
+import { BucketBlock, BucketParams, getPathType, useTranslation } from '@vis3/kit'
 import type { UploadProps } from 'antd'
 import { Button, List, message, Popconfirm, Tooltip, Upload } from 'antd'
 import clsx from 'clsx'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { getBytes } from '../../utils'
 import styles from './index.module.css'
 
 export const Route = createFileRoute('/local/')({

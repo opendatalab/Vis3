@@ -4,6 +4,7 @@ from loguru import logger
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
 from vis3.internal.config import settings
 
 engine = None
@@ -14,7 +15,7 @@ database_url = settings.DATABASE_URL
 engine = create_engine(
     database_url,
     connect_args={"check_same_thread": False},
-    echo=True,
+    echo=False,
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -39,4 +40,5 @@ def get_db() -> Generator:
         raise e
     finally:
         if db:
+            db.close()
             db.close()

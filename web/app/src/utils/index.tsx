@@ -99,3 +99,22 @@ export async function download(fullPath: string) {
     throw new Error('下载失败')
   }
 }
+
+export function getBytes(url: string) {
+  if (typeof url !== 'string') {
+    return
+  }
+
+  if (!url) {
+    return
+  }
+
+  const match = url.match(/bytes=(\d+),(\d+)/)
+
+  if (match) {
+    return {
+      byte: Number(match[1]),
+      size: Number(match[2]),
+    }
+  }
+}
