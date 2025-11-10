@@ -68,10 +68,8 @@ export function ChatRenderer({ className, name, value, extraTail, titleExtra }: 
   const [wrapButton, { wrap }] = useWrap()
   const [previewButton, { preview }] = usePreview()
   const [stateValue, setStateValue] = useState(value)
-  const [trigger, { prefix }, , form] = useS3Prefix()
+  const [trigger, { prefix }, onPrefixChange] = useS3Prefix()
   const [layoutNode, layout] = useStatusButton('split', layoutOptions)
-
-  console.log('layout', layout)
 
   useEffect(() => {
     setStateValue(value)
@@ -102,10 +100,10 @@ export function ChatRenderer({ className, name, value, extraTail, titleExtra }: 
   }, [prefix, stateValue])
 
   useEffect(() => {
-    form.setFieldsValue({
-      baseUrl: prefixedValue?.path_prefix,
-    })
-  }, [prefixedValue?.path_prefix, form])
+    onPrefixChange(prefixedValue?.path_prefix)
+  }, [prefixedValue?.path_prefix])
+
+  console.log('prefixedValue:', prefix)
 
   const contextValue = useMemo(() => ({
     wrap: wrap ?? false,

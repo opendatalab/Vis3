@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - 'main'
+    paths:
+      - 'web/packages/vis3-kit/**'
   workflow_run:
     workflows: ["release"]
     types:

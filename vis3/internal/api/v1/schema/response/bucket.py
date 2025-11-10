@@ -21,6 +21,7 @@ class BucketResponse(BaseModel):
     # file only
     mimetype: str | None = None
     size: int | None = None
+    next: str | None = None
     content: str | None = None
     last_modified: datetime | None = None
     keychain_id: int | None = None

@@ -1,24 +1,142 @@
 from typing import Tuple
 from urllib.parse import parse_qsl, quote, urlparse
 
-from fastapi import status
+import httpx
+from fastapi import Request, status
 from fastapi.responses import HTMLResponse, StreamingResponse
 from loguru import logger
 from sqlalchemy.orm import Session
 
 from vis3.internal.api.v1.schema.response import ItemResponse, ListResponse
-from vis3.internal.api.v1.schema.response.bucket import BucketResponse, PathType
+from vis3.internal.api.v1.schema.response.bucket import (BucketResponse,
+                                                         PathType)
 from vis3.internal.client.s3_reader import S3Reader
 from vis3.internal.common.exceptions import AppEx, ErrorCode
 from vis3.internal.crud.bucket import bucket_crud
 from vis3.internal.models.bucket import Bucket
-from vis3.internal.utils import (
-    convert_epub_stream_to_html,
-    convert_mobi_stream_to_html,
-    should_not_read_as_raw,
-    timer,
-)
+from vis3.internal.utils import (convert_epub_stream_to_html,
+                                 convert_mobi_stream_to_html,
+                                 should_not_read_as_raw, timer)
 from vis3.internal.utils.path import split_s3_path
+
+PROXY_MEDIA_MIME_PREFIXES = ("audio/", "video/", "image/")
+PROXY_MEDIA_MIME_TYPES = ("application/pdf",)
+PROXY_MEDIA_EXTENSIONS = (
+    ".pdf",
+    ".mp3",
+    ".m4a",
+    ".aac",
+    ".wav",
+    ".flac",
+    ".ogg",
+    ".oga",
+    ".opus",
+    ".wma",
+    ".amr",
+    ".mp4",
+    ".m4v",
+    ".mov",
+    ".avi",
+    ".mkv",
+    ".webm",
+    ".flv",
+    ".ts",
+    ".m2ts",
+    ".mpg",
+    ".mpeg",
+    ".3gp",
+    ".3g2",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".bmp",
+    ".tiff",
+    ".tif",
+    ".heic",
+    ".heif",
+    ".avif",
+)
+
+def _extract_extension(key: str) -> str:
+    if not key or "." not in key:
+        return ""
+    return f".{key.rsplit('.', 1)[-1].lower()}"
+
+
+def _should_proxy_media(mimetype: str, file_extension: str) -> bool:
+    return (
+        mimetype.startswith(PROXY_MEDIA_MIME_PREFIXES)
+        or mimetype in PROXY_MEDIA_MIME_TYPES
+        or file_extension in PROXY_MEDIA_EXTENSIONS
+    )
+
+
+async def _proxy_media_stream(
+    s3_reader: S3Reader, mimetype: str, range_header: str | None
+) -> StreamingResponse:
+    try:
+        presigned_url = await s3_reader.get_s3_presigned_url(as_attachment=False)
+    except AppEx:
+        raise
+    except Exception as exc:
+        raise AppEx(
+            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to prepare media proxy: {exc}",
+        ) from exc
+
+    headers: dict[str, str] = {}
+    if range_header:
+        headers["Range"] = range_header
+
+    client = httpx.AsyncClient(timeout=None, follow_redirects=True)
+    try:
+        request = client.build_request("GET", presigned_url, headers=headers)
+        upstream = await client.send(request, stream=True)
+    except Exception as exc:
+        await client.aclose()
+        raise AppEx(
+            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to proxy media: {exc}",
+        ) from exc
+
+    allowed_headers = {
+        "accept-ranges",
+        "content-length",
+        "content-range",
+        "content-type",
+        "content-disposition",
+        "cache-control",
+        "etag",
+        "last-modified",
+    }
+    response_headers: dict[str, str] = {
+        name: value
+        for name, value in upstream.headers.items()
+        if name.lower() in allowed_headers
+    }
+    response_headers.setdefault("Accept-Ranges", "bytes")
+    media_type = upstream.headers.get("Content-Type", mimetype) or mimetype
+
+    async def stream_body():
+        try:
+            async for chunk in upstream.aiter_bytes():
+                if chunk:
+                    yield chunk
+        finally:
+            await upstream.aclose()
+            await client.aclose()
+
+    return StreamingResponse(
+        stream_body(),
+        status_code=upstream.status_code,
+        media_type=media_type,
+        headers=response_headers,
+    )
 
 
 async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Bucket, S3Reader]:
@@ -156,6 +274,23 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 status_code=status.HTTP_400_BAD_REQUEST,
             )
 
+        rows_param = query_dict.get("rows")
+        row_offset = 0
+        row_limit = 20
+        if rows_param:
+            start_str, _, count_str = rows_param.partition(",")
+            try:
+                if start_str:
+                    row_offset = max(int(start_str), 0)
+                if count_str:
+                    row_limit = max(int(count_str), 1)
+            except ValueError as exc:
+                raise AppEx(
+                    code=ErrorCode.BUCKET_30002_OUT_OF_RANGE,
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid rows query parameter",
+                ) from exc
+
         # 文件
         if parsed_path.endswith(".jsonl") or parsed_path.endswith(".jsonl.gz") or parsed_path.endswith(".warc.gz"):
             row = await s3_reader.read_row(start=request_byte_start)
@@ -169,8 +304,27 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
                 last_modified=file_header_info.get("LastModified"),
                 content=row.value,
                 path=row.loc,
+                next=row.next,
             )
 
+        if parsed_path.endswith((".parquet", ".parq")):
+            parquet_preview = await s3_reader.read_parquet_preview(
+                max_rows=row_limit,
+                row_offset=row_offset,
+            )
+
+            return BucketResponse(
+                id=s3_reader.bucket.id,
+                type=PathType.File,
+                owner=owner,
+                size=size,
+                mimetype=mimetype,
+                last_modified=file_header_info.get("LastModified"),
+                content=parquet_preview.value,
+                path=parquet_preview.loc,
+                next=parquet_preview.next
+            )
+            
         rest_size = size - request_byte_start
 
         if rest_size <= 0:
@@ -192,6 +346,11 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
         ):
             content += chunk.decode("utf-8", errors="ignore")
 
+        next_loc = None
+        
+        if request_byte_start + read_size < size:
+            next_loc = f"s3://{s3_reader.bucket_name}/{s3_reader.key_without_query}?bytes={request_byte_start + read_size},0"
+        
         return BucketResponse(
             type=PathType.File,
             id=s3_reader.bucket.id,
@@ -201,6 +360,7 @@ async def get_file(parsed_path: str, query_dict: dict, s3_reader: S3Reader):
             last_modified=file_header_info.get("LastModified"),
             content=content,
             path=f"s3://{s3_reader.bucket_name}/{s3_reader.key_without_query}?bytes={byte_range}",
+            next=next_loc,
         )
 
 
@@ -266,8 +426,9 @@ async def get_buckets_or_objects(
 async def preview_file(
     path: str,
     db: Session,
-    mimetype: str = None,
+    mimetype: str | None = None,
     id: int | None = None,
+    request: Request | None = None,
 ):
     """
     预览文件内容，支持多种文件格式。
@@ -295,12 +456,6 @@ async def preview_file(
     file_size = file_header_info.get("ContentLength")
     max_file_size = 40 << 20  # 40 MB
 
-    if file_size > max_file_size:
-        raise AppEx(
-            code=ErrorCode.BUCKET_30002_OUT_OF_RANGE,
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-
     # 获取文件类型
     if not mimetype:
         mimetype = await s3_reader.mime_type()
@@ -309,6 +464,61 @@ async def preview_file(
                 code=ErrorCode.BUCKET_30005_DATA_IS_EMPTY,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    file_extension = _extract_extension(s3_reader.key_without_query)
+    should_proxy_media = _should_proxy_media(mimetype, file_extension)
+    if (
+        file_extension in PROXY_MEDIA_EXTENSIONS
+        and not mimetype.startswith(PROXY_MEDIA_MIME_PREFIXES)
+        and mimetype not in PROXY_MEDIA_MIME_TYPES
+    ):
+        guessed_mimetype = S3Reader.MIME_TYPES.get(file_extension)
+        if guessed_mimetype:
+            mimetype = guessed_mimetype
+    range_header = request.headers.get("Range") if request else None
+
+    if should_proxy_media:
+        return await _proxy_media_stream(
+            s3_reader=s3_reader,
+            mimetype=mimetype,
+            range_header=range_header,
+        )
+
+    def parse_range_header(range_value: str):
+        try:
+            units, _, range_spec = range_value.partition("=")
+            if units.strip().lower() != "bytes":
+                return None
+            first_range = range_spec.split(",")[0].strip()
+            if not first_range:
+                return None
+            start_str, _, end_str = first_range.partition("-")
+            if not start_str and not end_str:
+                return None
+            if start_str:
+                start = int(start_str)
+                end = int(end_str) if end_str else file_size - 1
+            else:
+                suffix = int(end_str)
+                start = max(file_size - suffix, 0)
+                end = file_size - 1
+            if start > end or start >= file_size:
+                raise ValueError("Invalid range")
+            return start, min(end, file_size - 1)
+        except ValueError as exc:
+            raise AppEx(
+                code=ErrorCode.BUCKET_30002_OUT_OF_RANGE,
+                status_code=status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE,
+                detail="Invalid Range header",
+            ) from exc
+
+    byte_range = parse_range_header(range_header) if range_header else None
+
+    if byte_range is None and file_size > max_file_size:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30002_OUT_OF_RANGE,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
 
     # 处理特殊格式文件
     if mimetype in ("application/x-mobipocket-ebook", "application/epub+zip"):
@@ -330,22 +540,41 @@ async def preview_file(
         return HTMLResponse(content=html_content, media_type="text/html")
 
     # 对于其他文件类型，使用流式响应
+    start_byte, end_byte = (
+        byte_range if byte_range else (0, file_size - 1)
+    )
+
     async def content_generator():
         try:
             async for chunk, _ in s3_reader.read_by_range(
-                start_byte=0, end_byte=file_size
+                start_byte=start_byte, end_byte=end_byte
             ):
                 yield chunk
         except Exception as e:
             logger.error(f"文件流处理错误: {str(e)}")
             raise
 
+    status_code = (
+        status.HTTP_206_PARTIAL_CONTENT
+        if byte_range is not None
+        else status.HTTP_200_OK
+    )
+    content_length = end_byte - start_byte + 1
     response = StreamingResponse(
         content_generator(),
         media_type=mimetype,
         headers={
             "Accept-Ranges": "bytes",
+            "Content-Length": str(content_length),
+            **(
+                {
+                    "Content-Range": f"bytes {start_byte}-{end_byte}/{file_size}",
+                }
+                if byte_range is not None
+                else {}
+            ),
         },
+        status_code=status_code,
     )
 
 

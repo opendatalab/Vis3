@@ -233,7 +233,7 @@ export default function BlockPreviewer({ className }: BlockPreviewerProps) {
               id: item.id,
             }))}
             renderItem={(item) => (
-              <List.Item className={clsx(styles.listItem, "!flex !items-center")}>
+              <List.Item className={clsx(styles.listItem, "flex! items-center!")}>
                 <div className="flex items-center gap-2">
                   <BucketIcon />
                   <a href="javascript:void(0)" className="!hover:underline" onClick={() => {

@@ -1,9 +1,14 @@
 import asyncio
+import base64
 import codecs
 import io
 import json
+import urllib
 import zlib
-from typing import AsyncIterator, Optional, Tuple, Union
+from bisect import bisect_right
+from decimal import Decimal
+from threading import Lock
+from typing import Any, AsyncIterator, Optional, Tuple, Union
 
 import boto3
 from botocore.client import Config
@@ -115,6 +120,12 @@ class S3Reader:
         '.webp': 'image/webp',
         '.png': 'image/png',
         '.gif': 'image/gif',
+        '.bmp': 'image/bmp',
+        '.tiff': 'image/tiff',
+        '.tif': 'image/tiff',
+        '.heic': 'image/heic',
+        '.heif': 'image/heif',
+        '.avif': 'image/avif',
         '.zip': 'application/zip',
         '.gz': 'application/gzip',
         '.warc': 'application/warc',
@@ -126,8 +137,32 @@ class S3Reader:
         '.css': 'text/css',
         '.epub': 'application/epub+zip',
         '.mobi': 'application/x-mobipocket-ebook',
+        # 常见视频格式
+        '.mp4': 'video/mp4',
+        '.m4v': 'video/mp4',
+        '.mov': 'video/quicktime',
+        '.avi': 'video/x-msvideo',
+        '.mkv': 'video/x-matroska',
+        '.webm': 'video/webm',
+        '.flv': 'video/x-flv',
+        '.ts': 'video/mp2t',
+        '.m2ts': 'video/mp2t',
+        '.mpg': 'video/mpeg',
+        '.mpeg': 'video/mpeg',
+        '.3gp': 'video/3gpp',
+        '.3g2': 'video/3gpp2',
+        # 常见音频格式
+        '.mp3': 'audio/mpeg',
+        '.m4a': 'audio/mp4',
+        '.aac': 'audio/aac',
+        '.wav': 'audio/wav',
+        '.flac': 'audio/flac',
+        '.ogg': 'audio/ogg',
+        '.oga': 'audio/ogg',
+        '.opus': 'audio/opus',
+        '.wma': 'audio/x-ms-wma',
+        '.amr': 'audio/amr',
     }
-
     def __init__(
         self,
         key: str,
@@ -149,6 +184,11 @@ class S3Reader:
         self.endpoint_url = endpoint_url
         self.is_compressed = self.key_without_query.endswith(".gz")
         self._header_info = None
+        self._arrow_fs = None
+        self._arrow_fs_lock = Lock()
+        self._row_group_index_cache = None
+        self._parquet_schema_fields_cache = None
+        self._object_version_marker = None
 
         if self.access_key_id and self.secret_access_key:
             self.client = S3Reader.get_client(self.access_key_id, self.secret_access_key, self.endpoint_url, self.region_name)
@@ -194,7 +234,7 @@ class S3Reader:
                 aws_secret_access_key=sk,
                 region_name=region_name,
                 endpoint_url=endpoint,
-                config=Config(s3={"addressing_style": "virtual"})
+                config=Config(s3={"addressing_style": "virtual"}, signature_version='s3v4')
             )
         except Exception:
             # TODO: 错误类型
@@ -203,7 +243,7 @@ class S3Reader:
                 aws_access_key_id=ak,
                 aws_secret_access_key=sk,
                 endpoint_url=endpoint,
-                config=Config(s3={"addressing_style": "path"}, retries={"max_attempts": 8}),
+                config=Config(s3={"addressing_style": "path"}, retries={"max_attempts": 8}, signature_version='s3v4'),
             )
 
     async def head_object(self):
@@ -224,6 +264,10 @@ class S3Reader:
         try:
             with timer("head_object"):
                 if self._header_info:
+                    if self._object_version_marker is None:
+                        self._object_version_marker = self._extract_version_marker(
+                            self._header_info
+                        )
                     return self._header_info
 
                 header_info = await S3Reader._run_in_executor(
@@ -233,6 +277,11 @@ class S3Reader:
                 )
 
                 self._header_info = header_info
+                new_marker = self._extract_version_marker(header_info)
+                old_marker = self._object_version_marker
+                if old_marker and new_marker and new_marker != old_marker:
+                    self._clear_parquet_caches()
+                self._object_version_marker = new_marker
 
                 return header_info
         except ClientError as e:
@@ -548,6 +597,7 @@ class S3Reader:
             return JsonRow(
                 value=json_dumps(result),
                 loc=self._make_location(start, length),
+                next=self._make_location(start + length, 0),
                 metadata={"content_length": result.get("content_length", 0)},
             )
         except Exception as e:
@@ -645,6 +695,261 @@ class S3Reader:
     def _make_location(self, start: int, offset: Optional[int] = None):
         return f"s3://{self.bucket_name}/{self.key_without_query}?bytes={start},{offset}"
 
+    def _get_arrow_filesystem(self, fs_module):
+        if self._arrow_fs is not None:
+            return self._arrow_fs
+
+        fs_kwargs: dict[str, Any] = {"region": self.region_name}
+
+        if self.access_key_id:
+            fs_kwargs["access_key"] = self.access_key_id
+        if self.secret_access_key:
+            fs_kwargs["secret_key"] = self.secret_access_key
+
+        if self.endpoint_url:
+            parsed = urllib.parse.urlparse(self.endpoint_url)
+            if parsed.scheme:
+                fs_kwargs["scheme"] = parsed.scheme
+            fs_kwargs["endpoint_override"] = self.endpoint_url
+
+        # For preview reads we only need small slices, so reduce the readahead block to 1MB
+        fs_kwargs["default_block_size"] = MAX_END
+
+        with self._arrow_fs_lock:
+            if self._arrow_fs is None:
+                try:
+                    self._arrow_fs = fs_module.S3FileSystem(**fs_kwargs)
+                except TypeError:
+                    fs_kwargs.pop("default_block_size", None)
+                    self._arrow_fs = fs_module.S3FileSystem(**fs_kwargs)
+
+        return self._arrow_fs
+
+    @staticmethod
+    def _extract_version_marker(header_info: dict[str, Any] | None) -> str | None:
+        if not header_info:
+            return None
+        marker = header_info.get("ETag") or header_info.get("VersionId")
+        if marker:
+            return str(marker)
+        last_modified = header_info.get("LastModified")
+        if last_modified:
+            return (
+                last_modified.isoformat()
+                if hasattr(last_modified, "isoformat")
+                else str(last_modified)
+            )
+        content_length = header_info.get("ContentLength")
+        if content_length is not None:
+            return str(content_length)
+        return None
+
+    def _clear_parquet_caches(self):
+        self._row_group_index_cache = None
+        self._parquet_schema_fields_cache = None
+
+    def _collect_schema_fields(self, parquet_file, column_filter: set[str] | None):
+        if self._parquet_schema_fields_cache is None:
+            schema_pairs: list[tuple[str, str]] = []
+            arrow_schema = getattr(parquet_file, "schema_arrow", None)
+            if arrow_schema is not None:
+                for field in arrow_schema:
+                    schema_pairs.append((field.name, str(field.type)))
+            else:
+                schema = parquet_file.schema
+                for column in schema:
+                    column_type = column.logical_type or column.physical_type
+                    schema_pairs.append((column.name, str(column_type)))
+            self._parquet_schema_fields_cache = schema_pairs
+
+        if column_filter:
+            return [
+                {"name": name, "type": type_str}
+                for name, type_str in self._parquet_schema_fields_cache
+                if name in column_filter
+            ]
+
+        return [
+            {"name": name, "type": type_str}
+            for name, type_str in self._parquet_schema_fields_cache
+        ]
+
+    def _get_row_group_index(self, metadata):
+        if self._row_group_index_cache is not None:
+            return self._row_group_index_cache
+
+        row_group_starts: list[int] = []
+        row_group_sizes: list[int] = []
+        cumulative = 0
+
+        for idx in range(metadata.num_row_groups):
+            row_group_starts.append(cumulative)
+            num_rows = metadata.row_group(idx).num_rows
+            row_group_sizes.append(num_rows)
+            cumulative += num_rows
+
+        self._row_group_index_cache = (row_group_starts, row_group_sizes, cumulative)
+        return self._row_group_index_cache
+    
+    async def read_parquet_preview(
+        self,
+        max_rows: int = 20,
+        columns: list[str] | None = None,
+        row_offset: int = 0,
+    ) -> JsonRow:
+        """
+        读取 Parquet 文件的前若干行，返回结构化的 JSON 内容。
+
+        Args:
+            max_rows: 预览的最大行数
+            columns: 需要读取的列，默认读取全部
+            row_offset: 起始行位置，用于分页
+
+        Returns:
+            JsonRow: 包含数据、位置说明和元数据
+        """
+
+        def _safe_value(value: Any):
+            if isinstance(value, (bytes, bytearray, memoryview)):
+                buffer = bytes(value)
+                try:
+                    return buffer.decode("utf-8")
+                except UnicodeDecodeError:
+                    return base64.b64encode(buffer).decode("utf-8")
+            if isinstance(value, Decimal):
+                return str(value)
+            if isinstance(value, list):
+                return [_safe_value(item) for item in value]
+            if isinstance(value, dict):
+                return {k: _safe_value(v) for k, v in value.items()}
+            return value
+
+        def _safe_row(row: dict[str, Any]):
+            return {key: _safe_value(val) for key, val in row.items()}
+
+        try:
+            from pyarrow import fs
+            from pyarrow import parquet as pq
+        except ModuleNotFoundError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="pyarrow is required for reading parquet files",
+            ) from exc
+
+        preview_rows = max(max_rows, 1)
+        start_row = max(row_offset, 0)
+        await self.head_object()
+
+        def _load_parquet_preview():
+            s3_fs = self._get_arrow_filesystem(fs)
+            parquet_path = f"{self.bucket_name}/{self.key_without_query}"
+            parquet_file = pq.ParquetFile(parquet_path, filesystem=s3_fs)
+
+            selected_columns = [col for col in columns if col] if columns else None
+            column_filter = set(selected_columns) if selected_columns else None
+            schema_fields = self._collect_schema_fields(parquet_file, column_filter)
+
+            metadata = parquet_file.metadata
+            if self._row_group_index_cache is not None:
+                total_rows = self._row_group_index_cache[2]
+            else:
+                total_rows = metadata.num_rows if metadata else None
+
+            if total_rows is not None and start_row >= total_rows:
+                return [], schema_fields, total_rows
+
+            rows: list[dict[str, Any]] = []
+
+            if metadata is None:
+                # Fallback: iterate batches when row-group metadata is missing.
+                skipped = start_row
+                batch_iter = parquet_file.iter_batches(
+                    batch_size=preview_rows,
+                    columns=selected_columns,
+                )
+                for batch in batch_iter:
+                    batch_rows = batch.to_pylist()
+                    if skipped >= len(batch_rows):
+                        skipped -= len(batch_rows)
+                        continue
+
+                    batch_rows = batch_rows[skipped:]
+                    skipped = 0
+                    need = preview_rows - len(rows)
+                    rows.extend(_safe_row(row) for row in batch_rows[:need])
+                    if len(rows) >= preview_rows:
+                        break
+
+                return rows, schema_fields, total_rows
+
+            row_group_starts, row_group_sizes, _ = self._get_row_group_index(metadata)
+            if not row_group_starts:
+                return rows, schema_fields, total_rows
+
+            first_rg = bisect_right(row_group_starts, start_row) - 1
+            if first_rg < 0:
+                first_rg = 0
+
+            offset_in_first = start_row - row_group_starts[first_rg]
+            rows_to_cover = offset_in_first + preview_rows
+            rg_indices: list[int] = []
+            rg_idx = first_rg
+
+            while rg_idx < len(row_group_sizes) and rows_to_cover > 0:
+                rg_indices.append(rg_idx)
+                rows_to_cover -= row_group_sizes[rg_idx]
+                rg_idx += 1
+
+            if not rg_indices:
+                return rows, schema_fields, total_rows
+
+            read_kwargs: dict[str, Any] = {}
+            if selected_columns:
+                read_kwargs["columns"] = selected_columns
+
+            table = parquet_file.read_row_groups(rg_indices, **read_kwargs)
+            sliced_table = table.slice(offset_in_first, preview_rows)
+
+            rows = [_safe_row(row) for row in sliced_table.to_pylist()]
+
+            return rows, schema_fields, total_rows
+
+        try:
+            rows, schema_fields, total_rows = await self._run_in_executor(
+                _load_parquet_preview
+            )
+        except Exception as exc:
+            logger.error(f"Failed to read parquet file {self.key_without_query}: {exc}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to read parquet file",
+            ) from exc
+
+        preview_payload = {
+            "schema": schema_fields,
+            "rows": rows,
+            "row_count": len(rows),
+            "total_rows": total_rows,
+        }
+        
+        next_loc = None
+        
+        if total_rows is not None and (start_row + len(rows)) < total_rows:
+            next_loc = f"s3://{self.bucket_name}/{self.key_without_query}?rows={start_row + len(rows)},{max_rows}"
+
+        return JsonRow(
+            value=json_dumps(preview_payload, default=str),
+            loc=f"s3://{self.bucket_name}/{self.key_without_query}?rows={start_row},{start_row + len(rows)}",
+            next=next_loc,
+            metadata={
+                "schema": schema_fields,
+                "row_count": len(rows),
+                "total_rows": total_rows,
+                "row_offset": start_row,
+            },
+        )
+
+
     async def read_s3_row_with_cache(self, start: int, length: int | None = None):
         """
         读取S3行，并缓存结果，Need redis support
@@ -655,11 +960,11 @@ class S3Reader:
 
         if cached_result:
             cached_row = json.loads(cached_result)
-            row = JsonRow(value=cached_row.get("row"), loc=cached_row.get("path"))
+            row = JsonRow(value=cached_row.get("row"), loc=cached_row.get("path"), next=cached_row.get("next"))
         else:
             row = await self.read_row(start=start, length=length)
             redis_client.set(
-                cache_key, json.dumps({"row": row.value, "path": row.loc}), ex=120
+                cache_key, json.dumps({"row": row.value, "path": row.loc, "next": row.next}), ex=120
             )
 
         # cache next row
@@ -766,10 +1071,16 @@ class S3Reader:
                                 decoded_line = line.decode("latin1")
                             except UnicodeDecodeError:
                                 decoded_line = str(line)
+                                
+                        next_loc = None
+                        
+                        if (current_start + newline_pos + 1) < content_length:
+                            next_loc = self._make_location(current_start + newline_pos + 1, 0)
 
                         return JsonRow(
                             value=decoded_line,
                             loc=self._make_location(new_start, new_len),
+                            next=next_loc,
                             offset=new_len,
                             size=len(line),
                         )
@@ -814,9 +1125,17 @@ class S3Reader:
                 except UnicodeDecodeError:
                     decoded_line = str(buffer)
 
+            row_len = len(buffer)
+            
+            next_loc = None
+            
+            if (start + row_len) < content_length:
+                next_loc = self._make_location(start + row_len, 0)
+            
             return JsonRow(
                 value=decoded_line,
-                loc=self._make_location(start, len(buffer)),
+                loc=self._make_location(start, row_len),
+                next=next_loc,
                 offset=len(buffer),
                 size=len(buffer),
             )
@@ -886,10 +1205,16 @@ class S3Reader:
                     decoded_line = line.decode("latin1")
                 except Exception:
                     decoded_line = str(line)
+                    
+            next_loc = None
+            
+            if (start + original_length) < response["ContentLength"]:
+                next_loc = self._make_location(start + original_length, 0)
 
             return JsonRow(
                 value=decoded_line,
                 loc=self._make_location(start, original_length),
+                next=next_loc,
                 offset=original_length,
             )
 

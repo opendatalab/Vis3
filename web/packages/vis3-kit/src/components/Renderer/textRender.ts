@@ -9,6 +9,7 @@ import ImageListCard from './ImageList'
 import JsonCard from './Json'
 import { ChatRenderer } from './LLMChat'
 import MarkdownCard from './Markdown'
+import ParquetCard from './Parquet'
 import RawCard from './Raw'
 
 export type TextRender = {
@@ -51,6 +52,11 @@ const textRenderers: Record<string, TextRender> = {
     label: 'CSV',
     name: 'csv',
     renderer: CsvCard,
+  },
+  parquet: {
+    label: 'Parquet',
+    name: 'parquet',
+    renderer: ParquetCard,
   },
   llm_chat: {
     label: i18n.t('renderer.llmChat'),

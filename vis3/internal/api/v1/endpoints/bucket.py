@@ -5,26 +5,24 @@ from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.orm import Session
 
 from vis3.internal.api.dependencies.auth import get_auth_user_or_error
-from vis3.internal.api.v1.schema.request.bucket import (
-    BucketCreateBody,
-    BucketUpdateBody,
-    BucketUpdatePayload,
-)
-from vis3.internal.api.v1.schema.response import ItemResponse, ListResponse, OkResponse
-from vis3.internal.api.v1.schema.response.bucket import BucketResponse, PathType
+from vis3.internal.api.v1.schema.request.bucket import (BucketCreateBody,
+                                                        BucketUpdateBody,
+                                                        BucketUpdatePayload)
+from vis3.internal.api.v1.schema.response import (ItemResponse, ListResponse,
+                                                  OkResponse)
+from vis3.internal.api.v1.schema.response.bucket import (BucketResponse,
+                                                         PathType)
 from vis3.internal.common.db import get_db
 from vis3.internal.common.exceptions import AppEx, ErrorCode
 from vis3.internal.config import settings
 from vis3.internal.crud.bucket import bucket_crud
 from vis3.internal.crud.keychain import keychain_crud
 from vis3.internal.models.user import User
-from vis3.internal.service.bucket import (
-    get_bucket,
-    get_buckets_or_objects,
-    preview_file,
-)
+from vis3.internal.service.bucket import (get_bucket, get_buckets_or_objects,
+                                          preview_file)
 from vis3.internal.utils import ping_host, validate_path_accessibility
-from vis3.internal.utils.path import accurate_s3_path, is_s3_path, split_s3_path
+from vis3.internal.utils.path import (accurate_s3_path, is_s3_path,
+                                      split_s3_path)
 
 router = APIRouter(tags=["buckets"])
 
@@ -143,6 +141,7 @@ async def filter_bucket_request(
 @router.get("/bucket/preview", summary="预览文件")
 async def file_preview_request(
     path: str,
+    request: Request,
     mimetype: str = None,
     id: int | None = None,
     db: Session = Depends(get_db),
@@ -158,6 +157,7 @@ async def file_preview_request(
         mimetype=mimetype,
         path=path,
         id=id,
+        request=request,
         db=db,
     )
 

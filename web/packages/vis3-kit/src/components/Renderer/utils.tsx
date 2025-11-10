@@ -3,7 +3,7 @@ import { isAudio, isImage, isVideo, isZip } from '../../utils'
 import { BaseBucketType } from './contexts/types'
 
 export function getPathType(path: string) {
-  let type
+  let type = getBasename(path).split('.').pop()
 
   if (!path) {
     return undefined

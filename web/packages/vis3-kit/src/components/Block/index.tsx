@@ -5,7 +5,7 @@ import { Button, Descriptions, Divider, Input, Popover, Space, Spin, Tooltip } f
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useTranslation } from '../../i18n'
-import { getBasename, getBytes, getNextUrl } from '../../utils'
+import { getBasename, getOffset } from '../../utils'
 import { getPathType } from '../Renderer/utils'
 import TextLikePreviewer from '../TextLikePreviewer'
 
@@ -194,26 +194,26 @@ export function BucketBlock<T extends BaseBucketType>({
     }
   }, [onLinkClick, id])
 
-  const [prevBytes, setPrevBytes] = useState<number[]>([])
-  const hasPrev = prevBytes.length > 0
+  const [prevPaths, setPrevPaths] = useState<string[]>([])
+  const hasPrev = prevPaths.length > 0
   const fileObject = dataSource as unknown as BaseBucketType
   const url = fileObject?.path ?? ''
   const totalSize = fileObject?.size ?? 0
-  const range = getBytes(url.split('?')[1])
-  const currentSize = range ? range.byte + range.size : 0
-  const nextUrl = getNextUrl(url)
-  const hasNext = currentSize < (totalSize || 0)
+  const nextUrl = fileObject?.next
+  const hasNext = !!fileObject?.next || fileObject?.size && (fileObject.size < (totalSize || 0))
 
   const s3PathType = useMemo(() => {
     return renderAs || getPathType(path)
   }, [path, renderAs])
 
+  console.log('s3PathType', s3PathType)
+
   useEffect(() => {
-    // 解析url中的bytes参数
-    const range = getBytes(url)
+    // 解析url中的bytes / rows等参数
+    const offset = getOffset(url)
     let newUrl = url
 
-    if (Number(range?.byte) === 0) {
+    if (offset && Number(offset?.[offset?.type]) === 0) {
       newUrl = url.split('?')[0]
     }
 
@@ -230,27 +230,30 @@ export function BucketBlock<T extends BaseBucketType>({
 
   // 换了文件，清空上一次的 prevBytes
   useEffect(() => {
-    setPrevBytes([])
+    setPrevPaths([])
   }, [basename])
 
   
   const isTextLike = !s3PathType || !['image', 'video', 'audio', 'zip', 'jsonl', 'pdf', 'epub', 'mobi'].includes(s3PathType)
 
   const handleNextLine = useCallback(async () => {
-    setPrevBytes([...prevBytes, range?.byte ?? 0])
+    if (fileObject?.path) {
+      setPrevPaths([...prevPaths, fileObject.path])
+    }
 
-    onChange?.({ path: nextUrl })
-  }, [id, nextUrl, prevBytes, range?.byte, onChange])
+    if (fileObject?.next) {
+      onChange?.({ path: nextUrl })
+    }
+  }, [id, fileObject, onChange])
 
   const handlePrevLine = useCallback(async () => {
-    const _prevBytes = prevBytes[prevBytes.length - 1] ?? 0
-    const prevUrl = `${url.split('?')[0]}?bytes=${_prevBytes},0`
+    const prevUrl = prevPaths[prevPaths.length - 1] ?? 0
 
-    setPrevBytes(prevBytes.slice(0, -1))
+    setPrevPaths((pre => pre.slice(0, -1)))
 
     // 第一个默认block
     onChange?.({ path: prevUrl })
-  }, [id, prevBytes, onChange, url])
+  }, [id, onChange, url])
 
   const onFolderPathChange = useCallback((path: string) => {
     onChange?.({ path, pageNo: 1 })

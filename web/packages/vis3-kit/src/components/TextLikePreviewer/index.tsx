@@ -28,7 +28,7 @@ export default function TextLikePreviewer({ name, type, className, extraTail, ti
     setStateContent(data?.content)
   }, [data])
 
-  const rowAction = showSegmentSwitch && ['jsonl', 'json', 'csv', 'txt'].includes(type)
+  const rowAction = showSegmentSwitch && ['jsonl', 'json', 'csv', 'txt', 'parquet'].includes(type)
     ? (
       <Space.Compact>
         <Tooltip title={t('textPreviewer.prevSection')}>
