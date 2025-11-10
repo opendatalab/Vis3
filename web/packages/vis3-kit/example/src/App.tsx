@@ -1,4 +1,5 @@
 import { BucketBlock } from '@vis3/kit';
+import '@vis3/kit/dist/index.css';
 
 export default function App() {
   const handleParamsChange = (params) => {
