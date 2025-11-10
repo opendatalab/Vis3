@@ -77,7 +77,7 @@ jobs:
 
       - name: Install frontend dependencies
         run: |
-          cd frontend
+          cd web/app
           pnpm install --frozen-lockfile
       - name: Release vis3-kit
         run: |
