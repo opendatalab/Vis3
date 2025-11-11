@@ -20,6 +20,22 @@ Vis3 is a visualization tool for large language models and machine learning data
 
 https://github.com/user-attachments/assets/aa8ee5e8-c6d3-4b20-ae9d-2ceeb2eb2c41
 
+## Screenshots
+
+- File list
+![File list](./screenshots/folder.png)
+- llm chat
+![llm chat](./screenshots/llm-chat.png)
+- JSONL / JSON
+![jsonl](./screenshots/jsonl.png)
+- Parquet
+![parquet](./screenshots/parquet.png)
+- PDF
+![pdf](./screenshots/pdf.png)
+- HTML
+![html](./screenshots/html.png)
+- Video
+![video](./screenshots/video.png)
 
 ## Getting Started
 
