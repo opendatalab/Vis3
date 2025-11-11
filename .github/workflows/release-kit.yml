@@ -48,23 +48,23 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get next version
-        id: get-next-version
-        run: |
-          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
-
-      - name: update vis3-kit version
-        run: |
-          cd web/app
-          # update vis3-kit version in package.json
-          sed -i "s/\"@vis3\/kit\": \"[^\"]*\"/\"@vis3\/kit\": \"${NEXT_VERSION}\"/" package.json
-
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         id: pnpm-install
         with:
           version: 9
           run_install: false
+
+      - name: Get next version
+        id: get-next-version
+        run: |
+          echo "NEXT_VERSION=$(echo "${{ needs.prepare-vis3-kit.outputs.NEXT_VERSION }}")" >> $GITHUB_ENV
+
+      - name: update vis3-kit version
+        working-directory: web
+        run: |
+          pnpm --filter vis3-web-app pkg set dependencies."@vis3/kit"="${NEXT_VERSION}"
+          pnpm install --lockfile-only
 
       - name: Get pnpm store directory
         id: pnpm-cache
