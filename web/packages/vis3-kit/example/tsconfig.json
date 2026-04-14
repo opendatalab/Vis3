@@ -1,6 +1,9 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "paths": {
+      "@vis3/kit": ["../src/index.ts"]
+    },
     "target": "ESNext",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": false,
@@ -17,5 +20,5 @@
     "jsx": "react-jsx",
     "verbatimModuleSyntax": true
   },
-  "include": ["./src"]
+  "include": ["./src", "../src"]
 }

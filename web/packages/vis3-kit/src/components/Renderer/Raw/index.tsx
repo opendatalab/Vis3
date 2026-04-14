@@ -2,7 +2,7 @@ import styled from '@emotion/styled'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { TextViewer } from '../../CodeViewer'
-import { CodeViewerContext } from '../../CodeViewer/context'
+import { CodeViewerContext, useCodeViewerContext } from '../../CodeViewer/context'
 import FullScreenButton from '../../FullscreenButton'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
@@ -16,6 +16,7 @@ const ExtraContainer = styled.div`
 `
 
 export default function RawCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
+  const parentCodeViewerContext = useCodeViewerContext()
   const ref = useRef<HTMLDivElement>(null)
   const [wrapButton, { wrap }] = useWrap()
   const [copyButton] = useCopy(value ?? '')
@@ -29,7 +30,10 @@ export default function RawCard({ className, name, value, extraTail, titleExtra 
     wrap: wrap ?? false,
     value: stateValue,
     onChange: setStateValue,
-  }), [wrap, stateValue])
+    onJsonKeyClick: parentCodeViewerContext.onJsonKeyClick,
+    openJsonPreview: parentCodeViewerContext.openJsonPreview,
+    jsonBasePath: parentCodeViewerContext.jsonBasePath,
+  }), [wrap, stateValue, parentCodeViewerContext.onJsonKeyClick, parentCodeViewerContext.openJsonPreview, parentCodeViewerContext.jsonBasePath])
 
   return (
     <CodeViewerContext.Provider value={contextValue}>

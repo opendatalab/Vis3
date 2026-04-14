@@ -9,10 +9,10 @@ import './index.css'
 
 import { Draft07 } from 'json-schema-library'
 import { useTranslation } from '../../../i18n'
-import { get, gid } from '../../../utils'
+import { get, getBasename, gid, parsePath } from '../../../utils'
 import { JsonViewer } from '../../CodeViewer'
 import { CodeViewerContext, useCodeViewerContext } from '../../CodeViewer/context'
-import { JSON_KEY_CLICK_EVENT, type CustomEventJsonNodeDetail } from '../../CodeViewer/json-key-plugin'
+import { keyPathToString, type JsonKeyClickDetail, type KeyPath } from '../../CodeViewer/json-key-plugin'
 import FullScreenButton from '../../FullscreenButton'
 import type { RendererProps } from '../Card'
 import RenderCard from '../Card'
@@ -35,27 +35,7 @@ export interface FieldBlock {
   id: string
   field: string
   renderAs: RenderType
-}
-
-const richJsonschema = new Draft07(richSchema)
-const htmlJsonschema = new Draft07(htmlSchema)
-const fileJsonschema = new Draft07(fileSchema)
-
-const htmlValidFields = ['html', 'main_html', 'body_bytes']
-const richValidFields = ['content_list']
-const fileValidFields = ['path', 'track_loc']
-const otherValidFields = ['content', 'img_list']
-
-const renderOptions = {
-  onlyStructured: true,
-}
-
-const defaultRenderAs: Record<string, RenderType> = {
-  html: 'html',
-  main_html: 'html',
-  content: 'markdown',
-  content_list: 'content_list',
-  img_list: 'img_list',
+  pathArray?: KeyPath
 }
 
 const ExtraContainer = styled.div`
@@ -87,6 +67,19 @@ const GridItemContainer = styled.div`
   background-color: #f8fafc;
 `
 
+const TitleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`
+
+const TitleText = styled.span`
+  min-width: 48px;
+  white-space: normal;
+  word-break: break-all;
+  line-height: 1.35;
+`
+
 const FieldRendererStyledWrapper = styled(FieldRendererWrapper)`
   height: 100%;
   overflow: auto;
@@ -96,31 +89,33 @@ interface FieldRendererWrapperProps extends RendererProps {
   renderAs: RenderType
 }
 
-class FieldChain {
-  public current: string
-  public parent: FieldChain | undefined
+const richJsonschema = new Draft07(richSchema)
+const htmlJsonschema = new Draft07(htmlSchema)
+const fileJsonschema = new Draft07(fileSchema)
 
-  constructor(current: string, parent?: FieldChain) {
-    this.current = current
-    this.parent = parent
+const htmlValidFields = ['html', 'main_html', 'body_bytes']
+const richValidFields = ['content_list']
+const fileValidFields = ['path', 'track_loc']
+const otherValidFields = ['content', 'img_list']
+
+const renderOptions = {
+  onlyStructured: true,
+}
+
+const defaultRenderAs: Record<string, RenderType> = {
+  html: 'html',
+  main_html: 'html',
+  content: 'markdown',
+  content_list: 'content_list',
+  img_list: 'img_list',
+}
+
+function getBlockIdentity(field: string, pathArray?: KeyPath) {
+  if (pathArray?.length) {
+    return JSON.stringify(pathArray)
   }
 
-  public get fullPath() {
-    let fullPath = this.current
-    let parent = this.parent
-
-    while (parent) {
-      if (parent.current !== '') {
-        fullPath = `${parent.current}.${fullPath}`
-      }
-      else {
-        fullPath = `${fullPath}`
-      }
-      parent = parent.parent
-    }
-
-    return fullPath
-  }
+  return field
 }
 
 function FieldRendererWrapper({ renderAs, ...props }: FieldRendererWrapperProps) {
@@ -157,8 +152,12 @@ export function inferDefaultRenderAs(field: string, value: any) {
     return field
   }
 
+  if (value !== null && typeof value === 'object') {
+    return 'json'
+  }
+
   if (Array.isArray(value)) {
-    return 'raw'
+    return 'json'
   }
 
   return 'raw'
@@ -218,14 +217,13 @@ export function useContainerSize(wrapper: HTMLDivElement | null) {
 export default function JsonCard({ className, name, value, extraTail, titleExtra }: RendererProps) {
   const [stateValue, setStateValue] = useState(value)
   const parentCodeViewerContext = useCodeViewerContext()
-  const { id: propsBlockId, path } = usePreviewBlockContext()
+  const { path } = usePreviewBlockContext()
+  const isFlatChild = !!parentCodeViewerContext.openJsonPreview
+  const currentBlockBasename = useMemo(() => path ? getBasename(path.split('?')[0] ?? path) : '', [path])
   const [copyButton] = useCopy(stateValue ?? '')
   const { t } = useTranslation()
   const cardRef = useRef<HTMLDivElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const subOpendKeys = useRef<Record<string, FieldChain>>({
-    __root__: new FieldChain(''),
-  })
   const size = useContainerSize(wrapperRef.current)
   const { parsedValue, jsonError } = useMemo(() => {
     if (typeof stateValue !== 'string') {
@@ -250,6 +248,21 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
     }
   }, [stateValue])
   const [previewConfig, setPreviewConfig] = useState<FieldBlock[]>([])
+  const currentPathArray = useMemo<KeyPath>(() => {
+    if (name === '__root__') {
+      return []
+    }
+
+    if (typeof name !== 'string') {
+      return []
+    }
+
+    if (name === currentBlockBasename) {
+      return []
+    }
+
+    return parsePath(name) as KeyPath
+  }, [currentBlockBasename, name])
 
   const jsonKeys = useMemo(() => {
     if (!parsedValue) {
@@ -293,11 +306,15 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
             return otherValidFields.includes(field)
           })
           .map((_item) => {
+            const pathArray: KeyPath = [_item]
+            const previewValue = get(parsedValue, pathArray) ?? parsedValue
+            const fullPath = keyPathToString([...currentPathArray, ...pathArray])
+
             return {
               id: gid(),
-              field: _item,
-              value: get(parsedValue, _item) ?? parsedValue,
-              renderAs: defaultRenderAs[_item as keyof typeof defaultRenderAs] ?? 'raw' as RenderType,
+              field: fullPath,
+              pathArray,
+              renderAs: defaultRenderAs[_item as keyof typeof defaultRenderAs] ?? inferDefaultRenderAs(_item, previewValue),
             }
           })
   
@@ -309,7 +326,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
           return pre
         })
       }
-    }, [isFile, isHtml, isRich, jsonKeys, parsedValue])
+    }, [currentPathArray, isFile, isHtml, isRich, jsonKeys, parsedValue])
 
   const [previewButton, { preview }, setPreview] = usePreview(false, onPreview)
   const [wrapButton, { wrap }] = useWrap(parentCodeViewerContext.wrap)
@@ -318,55 +335,34 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
     setStateValue(value)
   }, [value])
 
-  useEffect(() => {
-    const handleJsonKeyOnClick = (e: CustomEvent<CustomEventJsonNodeDetail>) => {
-      // __whole__内再点击字段，不再内部打开预览区块，防止套娃
-      if (name === '__root__') {
-        return
+  const openPreviewAtPath = useCallback((absolutePathArray: KeyPath) => {
+    const localPathArray = absolutePathArray.slice(currentPathArray.length)
+    const fullPath = keyPathToString(absolutePathArray)
+    const clickedValue = get(parsedValue, localPathArray)
+    const leafKey = localPathArray.length ? String(localPathArray[localPathArray.length - 1]) : fullPath
+    const renderAs = inferDefaultRenderAs(leafKey, clickedValue)
+
+    try {
+      // 没有预览时，第一个预览区块为整个json
+      if (previewConfig.length === 0) {
+        setPreviewConfig([{ id: 'root', field: '__root__', renderAs: 'json' }, { id: gid(), field: fullPath, renderAs, pathArray: localPathArray }])
       }
-
-      const objectField = e.detail.field
-      const blockId = e.detail.blockId
-      const parentField = e.detail.parentField ?? '__root__'
-      const indexKey = `${blockId}-${objectField}`
-      const parentIndexKey = `${blockId}-${parentField}`
-
-      const parentFieldChain = subOpendKeys.current[parentIndexKey]
-      const fieldChain = new FieldChain(objectField, parentFieldChain)
-      const renderAs = inferDefaultRenderAs(objectField, e.detail.value)
-      const fullPath = fieldChain.fullPath
-
-      subOpendKeys.current[indexKey] = fieldChain
-
-      // 相同jsonl文件内的区块才可以预览，非同一文件内的区块不可预览
-      if (propsBlockId !== blockId) {
-        return
+      else if (!previewConfig.find(innerBlock => getBlockIdentity(innerBlock.field, innerBlock.pathArray) === getBlockIdentity(fullPath, localPathArray))) {
+        setPreviewConfig((pre) => {
+          return [...pre, { id: gid(), field: fullPath, renderAs, pathArray: localPathArray }]
+        })
       }
-
-      try {
-        // 没有预览时，第一个预览区块为整个json
-        if (previewConfig.length === 0) {
-          setPreviewConfig([{ id: 'root', field: '__root__', renderAs: 'json' }, { id: gid(), field: fullPath, renderAs }])
-        }
-        else if (!previewConfig.find(innerBlock => innerBlock.field === fullPath)) {
-          setPreviewConfig((pre) => {
-            return [...pre, { id: gid(), field: fullPath, renderAs }]
-          })
-        }
-      }
-      catch (e) {
-        console.error('error', e)
-      }
-
-      setPreview(true)
     }
-    // 监听json-key-click事件
-    document.addEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
-
-    return () => {
-      document.removeEventListener(JSON_KEY_CLICK_EVENT, handleJsonKeyOnClick as EventListener)
+    catch (e) {
+      console.error('error', e)
     }
-  }, [propsBlockId, previewConfig, parsedValue, setPreview, name])
+
+    setPreview(true)
+  }, [currentPathArray, parsedValue, previewConfig, setPreview])
+
+  const handleJsonKeyOnClick = useCallback((detail: JsonKeyClickDetail) => {
+    openPreviewAtPath([...currentPathArray, ...detail.pathArray])
+  }, [currentPathArray, openPreviewAtPath])
 
   const layout = useMemo(() => {
     if (!wrapperRef.current) {
@@ -391,12 +387,15 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   const contextValue = useMemo(() => ({
     wrap: wrap ?? parentCodeViewerContext.wrap,
     value: stateValue,
+    onJsonKeyClick: handleJsonKeyOnClick,
+    openJsonPreview: parentCodeViewerContext.openJsonPreview ?? openPreviewAtPath,
+    jsonBasePath: currentPathArray,
     // 对 __whole__字段特殊处理，修改需要反应到上一层的context
     onChange: (value: string) => {
       setStateValue(value)
       parentCodeViewerContext?.onChange(value)
     },
-  }), [wrap, parentCodeViewerContext, stateValue])
+  }), [wrap, parentCodeViewerContext, stateValue, handleJsonKeyOnClick, openPreviewAtPath, currentPathArray])
 
   const handleClose = useCallback((id: string) => {
     setPreviewConfig(pre => pre.filter(innerBlock => innerBlock.id !== id))
@@ -409,6 +408,18 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
   const renderContextValue = useMemo(() => ({
     renderer: renderTypeNode,
   }), [renderTypeNode])
+
+  const jsonCardTitle = useMemo(() => {
+    return (
+      <TitleContainer>
+        <Tooltip title={name}>
+          <TitleText className="field-name">{name}</TitleText>
+        </Tooltip>
+        {renderTypeNode}
+        {titleExtra}
+      </TitleContainer>
+    )
+  }, [name, renderTypeNode, titleExtra])
 
   const fieldContextValue = useMemo(() => {
     return {
@@ -425,12 +436,13 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
             <RenderCard
               className={className}
               name={name}
+              title={jsonCardTitle as any}
               ref={cardRef}
               titleExtra={titleExtra}
               extra={(
                 <ExtraContainer>
                   {!preview && wrapButton}
-                  {previewButton}
+                  {!isFlatChild && previewButton}
                   {copyButton}
                   <FullScreenButton elementRef={cardRef as React.RefObject<HTMLElement>} />
                   {extraTail}
@@ -446,7 +458,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
                   )
                 }
                 <GridContainer
-                  $preview={preview}
+                  $preview={!isFlatChild && preview}
                   style={{
                     minHeight: size.height,
                   }}
@@ -467,7 +479,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
                           <FieldRendererStyledWrapper
                             renderAs={innerBlock.renderAs as RenderType}
                             name={innerBlock.field}
-                            value={innerBlock.field === '__root__' ? parsedValue : get(parsedValue, innerBlock.field)}
+                            value={innerBlock.field === '__root__' ? parsedValue : get(parsedValue, innerBlock.pathArray ?? innerBlock.field)}
                             extraTail={
                               innerBlock.field !== '__root__' && (
                                 <>
@@ -483,7 +495,7 @@ export default function JsonCard({ className, name, value, extraTail, titleExtra
                     })}
                   </ReactGridLayout>
                 </GridContainer>
-                <JsonViewerContainer visible={preview} />
+                <JsonViewerContainer visible={!isFlatChild && preview} />
               </div>
             </RenderCard>
           ) : (

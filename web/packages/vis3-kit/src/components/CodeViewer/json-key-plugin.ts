@@ -1,18 +1,13 @@
 import { syntaxTree } from '@codemirror/language'
-import type { EditorState } from '@codemirror/state'
+import type { EditorState, Extension } from '@codemirror/state'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { Decoration, EditorView, ViewPlugin } from '@codemirror/view'
 
-export const JSON_KEY_CLICK_EVENT = 'json-key-click'
-
 export type KeyPath = (string | number)[]
 
-export interface CustomEventJsonNodeDetail {
+export interface JsonKeyClickDetail {
   field: string
-  valueType: string
-  blockId?: string
-  value: any
-  parentField: string
+  pathArray: KeyPath
 }
 
 export interface JsonNode {
@@ -24,17 +19,22 @@ export interface JsonNode {
   path: string
 }
 
-function keyPathToString(path: KeyPath) {
+export function keyPathToString(path: KeyPath) {
   return path.map((p, index) => {
     if (typeof p === 'number') {
       return `[${p}]`
     }
 
-    if (index === 0) {
+    const isSafeKey = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(p)
+    if (isSafeKey && index === 0) {
       return p
     }
 
-    return `.${p}`
+    if (isSafeKey) {
+      return `.${p}`
+    }
+
+    return `[${JSON.stringify(p)}]`
   }).join('')
 }
 
@@ -230,27 +230,37 @@ function parseJSONFromCodeMirror(state: EditorState): JsonNode[] {
   return results
 }
 
-function handleClick(elem: HTMLElement) {
-  const blockId = elem.closest('[data-block-id]')?.getAttribute('data-block-id')
-  const parentField = elem.closest('.field-renderer')?.querySelector('.field-name')?.textContent
-  const field = elem.getAttribute('data-key-path')
+function readKeyClickDetail(elem: HTMLElement): JsonKeyClickDetail {
+  const field = elem.getAttribute('data-key-path') ?? ''
+  const rawPathArray = elem.getAttribute('data-key-path-array')
+  let pathArray: KeyPath = []
 
-  document.dispatchEvent(new CustomEvent(JSON_KEY_CLICK_EVENT, {
-    detail: {
-      field,
-      blockId,
-      parentField,
-    },
-  }))
+  if (rawPathArray) {
+    try {
+      const parsedPathArray = JSON.parse(rawPathArray)
+      if (Array.isArray(parsedPathArray)) {
+        pathArray = parsedPathArray as KeyPath
+      }
+    } catch (error) {
+      console.warn('Failed to parse JSON key path array', error)
+    }
+  }
+
+  return {
+    field,
+    pathArray,
+  }
 }
 
 class KeyPlugin {
   decorations: DecorationSet
   private updateScheduled: boolean = false
   private lastTreeLength: number = 0
+  private onJsonKeyClick?: (detail: JsonKeyClickDetail) => void
 
-  constructor(view: EditorView) {
+  constructor(view: EditorView, onJsonKeyClick?: (detail: JsonKeyClickDetail) => void) {
     this.decorations = Decoration.set([])
+    this.onJsonKeyClick = onJsonKeyClick
     this.scheduleUpdate(view)
   }
 
@@ -296,6 +306,7 @@ class KeyPlugin {
                   class: 'cm-json-key',
                   attributes: {
                     'data-key-path': node.path,
+                    'data-key-path-array': JSON.stringify(node.pathArray),
                     'title': node.path,
                   },
                 }).range(node.start + 1, node.end - 1),
@@ -339,20 +350,6 @@ class KeyPlugin {
   }
 }
 
-const keyDecorationPlugin = ViewPlugin.fromClass(KeyPlugin, {
-  decorations: v => v.decorations,
-  eventHandlers: {
-    click: (e) => {
-      const target = e.target as HTMLElement
-      if (target.classList.contains('cm-json-key')) {
-        handleClick(target)
-        return true
-      }
-      return false
-    },
-  },
-})
-
 export const keyStyle = EditorView.baseTheme({
   '.cm-json-key': {
     textDecoration: 'underline',
@@ -361,4 +358,24 @@ export const keyStyle = EditorView.baseTheme({
   },
 })
 
-export const jsonKeyLink = [keyDecorationPlugin, keyStyle]
+export function jsonKeyLink(onJsonKeyClick?: (detail: JsonKeyClickDetail) => void): Extension {
+  const keyDecorationPlugin = ViewPlugin.fromClass(class extends KeyPlugin {
+    constructor(view: EditorView) {
+      super(view, onJsonKeyClick)
+    }
+  }, {
+    decorations: (v: KeyPlugin) => v.decorations,
+    eventHandlers: {
+      click: (e: MouseEvent) => {
+        const target = e.target as HTMLElement
+        if (target.classList.contains('cm-json-key')) {
+          onJsonKeyClick?.(readKeyClickDetail(target))
+          return true
+        }
+        return false
+      },
+    },
+  })
+
+  return [keyDecorationPlugin, keyStyle]
+}

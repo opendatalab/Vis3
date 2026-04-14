@@ -51,7 +51,7 @@ export function get<T = any>(
 /**
  * 解析lodash风格的路径字符串为路径数组
  */
-function parsePath(path: string): (string | number)[] {
+export function parsePath(path: string): (string | number)[] {
   if (!path) return [];
 
   const result: (string | number)[] = [];

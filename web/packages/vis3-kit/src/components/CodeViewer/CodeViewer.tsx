@@ -16,7 +16,7 @@ export interface JsonViewerProps {
 }
 
 export function JsonViewer({ className }: JsonViewerProps) {
-  const { wrap, value, onChange } = useCodeViewerContext()
+  const { wrap, value, onChange, onJsonKeyClick, openJsonPreview, jsonBasePath } = useCodeViewerContext()
 
   const code = useMemo(() => {
     try {
@@ -33,14 +33,20 @@ export function JsonViewer({ className }: JsonViewerProps) {
   }, [value])
 
   const extensions = useMemo(() => {
-    const exts = [json(), hyperLink, jsonKeyLink]
+    const handleJsonKeyClick = !openJsonPreview
+      ? onJsonKeyClick
+      : (detail: { field: string, pathArray: (string | number)[] }) => {
+          openJsonPreview([...(jsonBasePath ?? []), ...detail.pathArray])
+        }
+
+    const exts = [json(), hyperLink, jsonKeyLink(handleJsonKeyClick)]
 
     if (wrap) {
       exts.push(EditorView.lineWrapping as any)
     }
 
     return exts
-  }, [wrap])
+  }, [jsonBasePath, onJsonKeyClick, openJsonPreview, wrap])
 
   if (typeof value === 'undefined') {
     return null
