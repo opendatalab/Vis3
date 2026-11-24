@@ -2,33 +2,37 @@ import { ThemeProvider as EmotionThemeProvider } from '@emotion/react';
 import React, { createContext, useContext, useMemo } from 'react';
 import tokens from './tokens';
 
+export type ThemeMode = 'light' | 'dark';
+
 // 主题上下文类型
 export interface ThemeContextType {
   tokens: typeof tokens;
-  // 未来可以在这里添加更多的主题相关功能
-  // 例如：切换暗/亮模式等
+  mode: ThemeMode;
 }
 
 // 创建主题上下文
 export const ThemeContext = createContext<ThemeContextType>({
   tokens,
+  mode: 'light',
 });
 
 // 主题提供者属性
 export interface ThemeProviderProps {
   children: React.ReactNode;
+  mode?: ThemeMode;
   // 未来可以添加自定义主题，覆盖默认tokens
   // customTokens?: DeepPartial<typeof tokens>;
 }
 
 // 主题提供者组件
-export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children, mode = 'light' }) => {
   // 主题上下文值
   const themeContextValue = useMemo(
     () => ({
       tokens,
+      mode,
     }),
-    []
+    [mode]
   );
 
   return (

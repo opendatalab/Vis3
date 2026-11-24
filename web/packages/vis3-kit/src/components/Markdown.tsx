@@ -1,19 +1,20 @@
 import { css, Global } from '@emotion/react'
 import styled from '@emotion/styled'
 import clsx from 'clsx'
-import 'github-markdown-css/github-markdown.css'
 import { useMemo } from 'react'
 import ReactMarkdown from 'react-markdown'
 import rehypeMathjax from 'rehype-mathjax'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
-import { useTheme } from '../theme'
+import { type ThemeMode, useTheme } from '../theme'
+import './markdown-theme.css'
 
 export interface MarkdownPreviewProps {
   value: string
   inline?: boolean
   className?: string
+  theme?: ThemeMode
 }
 
 const MarkdownContainer = styled.div<{ $inline?: boolean }>`
@@ -30,8 +31,9 @@ const globalStyle = css`
   }
 `
 
-export default function MarkdownPreview({ value, inline, className }: MarkdownPreviewProps) {
-  const { tokens } = useTheme();
+export default function MarkdownPreview({ value, inline, className, theme }: MarkdownPreviewProps) {
+  const { mode } = useTheme();
+  const resolvedTheme = theme ?? mode;
   const parsedValue = useMemo(() => {
     try {
       const jsonValue = JSON.parse(value)
@@ -54,7 +56,11 @@ export default function MarkdownPreview({ value, inline, className }: MarkdownPr
   }, [value])
 
   return (
-    <MarkdownContainer $inline={inline} className={clsx('markdown-body', className)}>
+    <MarkdownContainer
+      $inline={inline}
+      data-theme={resolvedTheme}
+      className={clsx('markdown-body', className)}
+    >
       <Global styles={globalStyle} />
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
