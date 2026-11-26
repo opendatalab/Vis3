@@ -18,7 +18,7 @@ export interface RenderBlockContextType<BucketType extends BaseBucketType> {
   renderBucketItem?: (item: BucketType) => React.ReactNode
   showSegmentSwitch?: boolean
   previewUrl?: string
-  onLinkClick?: (path: string) => void
+  onLinkClick?: (path: string, id?: string) => void
   onKeyClick?: (path: string, value: string) => void
 }
 

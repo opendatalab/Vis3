@@ -178,7 +178,8 @@ export function BucketBlock<T extends BaseBucketType>({
   }, [dataSource, unkonwnFileType])
 
   useEffect(() => {
-    if (!blockRef.current) {
+    const blockEl = blockRef.current
+    if (!blockEl) {
       return
     }
 
@@ -187,10 +188,10 @@ export function BucketBlock<T extends BaseBucketType>({
       onLinkClick?.(e.detail.path, id)
     }
 
-    blockRef.current.addEventListener('s3-path-click', handleS3PathClick)
-    
+    blockEl.addEventListener('s3-path-click', handleS3PathClick)
+
     return () => {
-      blockRef.current?.removeEventListener('s3-path-click', handleS3PathClick)
+      blockEl.removeEventListener('s3-path-click', handleS3PathClick)
     }
   }, [onLinkClick, id])
 

@@ -2,12 +2,13 @@ import { json } from '@codemirror/lang-json'
 import { markdown } from '@codemirror/lang-markdown'
 import { python } from '@codemirror/lang-python'
 import CodeMirror, { EditorView } from '@uiw/react-codemirror'
-import { useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 
 import { useTranslation } from '../../i18n'
+import { usePreviewBlockContext } from '../Renderer/contexts/preview.context'
 import { useCodeViewerContext } from './context'
 import { jsonKeyLink } from './json-key-plugin'
-import { hyperLink } from './link-plugin'
+import { hyperLinkExtension, hyperLinkStyle } from './link-plugin'
 
 const plugins = [python(), json(), markdown()]
 
@@ -17,6 +18,22 @@ export interface JsonViewerProps {
 
 export function JsonViewer({ className }: JsonViewerProps) {
   const { wrap, value, onChange, onJsonKeyClick, openJsonPreview, jsonBasePath } = useCodeViewerContext()
+  const { id: blockId, onLinkClick } = usePreviewBlockContext()
+
+  const onLinkClickRef = useRef(onLinkClick)
+  onLinkClickRef.current = onLinkClick
+  const blockIdRef = useRef(blockId)
+  blockIdRef.current = blockId
+
+  // 用 ref 持有最新回调，避免未 memoize 的 onLinkClick 触发 CodeMirror 扩展重建
+  const handleS3PathClick = useCallback((url: string) => {
+    if (onLinkClickRef.current) {
+      onLinkClickRef.current(url, blockIdRef.current)
+      return true
+    }
+
+    return false
+  }, [])
 
   const code = useMemo(() => {
     try {
@@ -39,14 +56,14 @@ export function JsonViewer({ className }: JsonViewerProps) {
           openJsonPreview([...(jsonBasePath ?? []), ...detail.pathArray])
         }
 
-    const exts = [json(), hyperLink, jsonKeyLink(handleJsonKeyClick)]
+    const exts = [json(), [hyperLinkExtension({ onS3PathClick: handleS3PathClick }), hyperLinkStyle], jsonKeyLink(handleJsonKeyClick)]
 
     if (wrap) {
       exts.push(EditorView.lineWrapping as any)
     }
 
     return exts
-  }, [jsonBasePath, onJsonKeyClick, openJsonPreview, wrap])
+  }, [handleS3PathClick, jsonBasePath, onJsonKeyClick, openJsonPreview, wrap])
 
   if (typeof value === 'undefined') {
     return null

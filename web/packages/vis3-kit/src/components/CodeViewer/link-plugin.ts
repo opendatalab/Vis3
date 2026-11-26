@@ -12,7 +12,8 @@ import {
 } from '@codemirror/view'
 
 const newWindowIcon = `<span style="display: inline-block; vertical-align: middle; font-size: 14px"><svg fill-rule="evenodd" viewBox="64 64 896 896" focusable="false" data-icon="export" width="1em" height="1em" fill="currentColor" aria-hidden="true"><path d="M880 912H144c-17.7 0-32-14.3-32-32V144c0-17.7 14.3-32 32-32h360c4.4 0 8 3.6 8 8v56c0 4.4-3.6 8-8 8H184v656h656V520c0-4.4 3.6-8 8-8h56c4.4 0 8 3.6 8 8v360c0 17.7-14.3 32-32 32zM770.87 199.13l-52.2-52.2a8.01 8.01 0 014.7-13.6l179.4-21c5.1-.6 9.5 3.7 8.9 8.9l-21 179.4c-.8 6.6-8.9 9.4-13.6 4.7l-52.4-52.4-256.2 256.2a8.03 8.03 0 01-11.3 0l-42.4-42.4a8.03 8.03 0 010-11.3l256.1-256.3z"></path></svg></span>`
-const defaultRegexp = /"((?:https?:\/\/|s3:\/\/)[^"]+)"/gi
+// 匹配常规 JSON 字符串与内嵌转义 JSON 字符串中的链接，避免把闭合 \" 的反斜杠吞入 URL
+const defaultRegexp = /"((?:https?:\/\/|s3:\/\/)(?:[^"\\]|\\[^"])*)\\?"/gi
 
 export interface HyperLinkState {
   at: number
@@ -25,46 +26,48 @@ export interface HyperLinkExtensionOptions {
   match?: Record<string, string>
   handle?: (value: string, input: string, from: number, to: number) => string
   anchor?: (dom: HTMLAnchorElement) => HTMLAnchorElement
+  onS3PathClick?: (path: string) => boolean | void
+  onExternalLinkClick?: (url: string) => boolean | void
 }
 
 function hyperLinkDecorator(regexp?: RegExp, matchData?: Record<string, string>, matchFn?: (str: string, input: string, from: number, to: number) => string, anchor?: HyperLinkExtensionOptions['anchor']) {
   return new MatchDecorator({
     regexp: regexp || defaultRegexp,
     decorate: (add, from, to, match) => {
-      const url = match[0]
-      let urlStr = matchFn && typeof matchFn === 'function' ? matchFn(url, match.input, from, to) : url
+      const raw = match[0]
+      const matchedUrl = !regexp && typeof match[1] === 'string' ? match[1] : undefined
+      let urlStr = matchFn && typeof matchFn === 'function' ? matchFn(raw, match.input, from, to) : (matchedUrl ?? raw)
 
-      // 去除开头和结尾的双引号
-      urlStr = urlStr.replace(/^"/, '').replace(/"$/, '')
+      // 去除开头和结尾可能存在的引号（兼容自定义 matchFn / regexp）
+      urlStr = urlStr.replace(/^"/, '').replace(/\\?"$/, '')
 
-      if (matchData && matchData[url]) {
-        urlStr = matchData[url]
+      if (matchData && matchData[raw]) {
+        urlStr = matchData[raw]
       }
 
-      const isS3Path = urlStr.startsWith('s3://')
+      const isS3Path = /^s3:\/\//i.test(urlStr)
+      const normalizedUrl = isS3Path ? urlStr.replace(/^s3:\/\//i, 's3://') : urlStr
 
       const markAttributes = {
         class: 'cm-hyper-link-text',
-        attributes: { 'data-url': urlStr },
-      } as any
-
-      if (isS3Path) {
-        markAttributes.attributes.onclick = `
-          const blockContainer = this.closest('[data-block-id]');
-          if (blockContainer) {
-            blockContainer.dispatchEvent(new CustomEvent('s3-path-click', { detail: { path: '${urlStr}' } }))
-          }
-        `
-      }
-      else {
-        markAttributes.attributes.onclick = `
-          document.dispatchEvent(new CustomEvent('s3-path-click-in-new-tab', { detail: { path: '${urlStr}' } }))
-        `
+        attributes: {
+          'data-url': normalizedUrl,
+          'data-link-type': isS3Path ? 's3' : 'external',
+        },
       }
 
-      add(from + 1, to - 1, Decoration.mark(markAttributes))
+      const markFrom = !regexp && typeof matchedUrl === 'string'
+        ? from + 1
+        : (raw.startsWith('"') ? from + 1 : from)
+      const markTo = !regexp && typeof matchedUrl === 'string'
+        ? from + 1 + matchedUrl.length
+        : (raw.endsWith('"') ? to - 1 : to)
 
-      const linkIcon = new HyperLinkIcon({ at: to, url: urlStr, anchor, isS3Path })
+      if (markFrom < markTo) {
+        add(markFrom, markTo, Decoration.mark(markAttributes))
+      }
+
+      const linkIcon = new HyperLinkIcon({ at: to, url: normalizedUrl, anchor, isS3Path })
       add(to, to, Decoration.widget({ widget: linkIcon, side: 1 }))
     },
   })
@@ -86,11 +89,13 @@ class HyperLinkIcon extends WidgetType {
     wrapper.className = 'cm-hyper-link-icon-wrapper'
 
     const newWindowLink = document.createElement('a')
-    newWindowLink.href = `${this.state.isS3Path ? `/s3?path=${this.state.url}` : this.state.url}`
+    newWindowLink.href = this.state.isS3Path
+      ? `/s3?path=${encodeURIComponent(this.state.url)}`
+      : this.state.url
     newWindowLink.target = '_blank'
     newWindowLink.innerHTML = newWindowIcon
     newWindowLink.className = 'cm-hyper-link-icon'
-    newWindowLink.rel = 'nofollow'
+    newWindowLink.rel = 'noopener noreferrer nofollow'
 
     wrapper.appendChild(newWindowLink)
 
@@ -99,7 +104,7 @@ class HyperLinkIcon extends WidgetType {
   }
 }
 
-export function hyperLinkExtension({ regexp, match, handle }: HyperLinkExtensionOptions = {}) {
+export function hyperLinkExtension({ regexp, match, handle, anchor, onS3PathClick, onExternalLinkClick }: HyperLinkExtensionOptions = {}) {
   return [
     ViewPlugin.fromClass(
       class HyperLinkView {
@@ -107,7 +112,7 @@ export function hyperLinkExtension({ regexp, match, handle }: HyperLinkExtension
         decorations: DecorationSet
 
         constructor(view: EditorView) {
-          this.decorator = hyperLinkDecorator(regexp, match, handle)
+          this.decorator = hyperLinkDecorator(regexp, match, handle, anchor)
           this.decorations = this.decorator.createDeco(view)
         }
 
@@ -119,6 +124,64 @@ export function hyperLinkExtension({ regexp, match, handle }: HyperLinkExtension
       },
       {
         decorations: v => v.decorations,
+        eventHandlers: {
+          click: (e: MouseEvent, view: EditorView) => {
+            if (e.button !== 0 || e.defaultPrevented) {
+              return false
+            }
+
+            // CodeMirror 高亮会在 mark 内生成子 span，需向上匹配 .cm-hyper-link-text
+            const targetEl = e.target instanceof Element ? e.target : (e.target as Node | null)?.parentElement
+            const linkEl = targetEl?.closest('.cm-hyper-link-text') as HTMLElement | null
+            if (!linkEl) {
+              return false
+            }
+
+            const selectedText = window.getSelection?.()?.toString()
+            if (!view.state.selection.main.empty || (selectedText && selectedText.length > 0)) {
+              return false
+            }
+
+            const url = linkEl.getAttribute('data-url')
+            if (!url) {
+              return false
+            }
+
+            const isS3Path = linkEl.getAttribute('data-link-type') === 's3' || /^s3:\/\//i.test(url)
+
+            if (isS3Path) {
+              if (onS3PathClick) {
+                const handled = onS3PathClick(url)
+                if (handled !== false) {
+                  return true
+                }
+              }
+
+              const blockContainer = linkEl.closest('[data-block-id]')
+              const targetContainer = blockContainer || document
+              targetContainer.dispatchEvent(new CustomEvent('s3-path-click', { detail: { path: url } }))
+              return true
+            }
+
+            if (onExternalLinkClick) {
+              const handled = onExternalLinkClick(url)
+              if (handled !== false) {
+                return true
+              }
+            }
+
+            const customEvent = new CustomEvent('s3-path-click-in-new-tab', {
+              detail: { path: url },
+              cancelable: true,
+            })
+            document.dispatchEvent(customEvent)
+            if (!customEvent.defaultPrevented) {
+              window.open(url, '_blank', 'noopener,noreferrer')
+            }
+
+            return true
+          },
+        },
       },
     ),
   ]
