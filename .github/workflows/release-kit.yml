@@ -27,12 +27,12 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20.8.1
+          node-version: 22
 
       - name: Vis3-kit Semantic Release dry-run
         id: dry-run
         run: |
-          npm i -g @semantic-release/exec @semantic-release/commit-analyzer @semantic-release/git @semantic-release/npm semantic-release@24.2.8
+          npm i -g semantic-release@24.2.8 @semantic-release/exec@7 @semantic-release/commit-analyzer@13 @semantic-release/git@10 @semantic-release/npm@12
           cd web/packages/vis3-kit
           semantic-release --dry-run --yes
         env:
@@ -47,6 +47,10 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
