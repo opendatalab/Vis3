@@ -44,7 +44,7 @@ async def get_current_user(
     """
     获取当前用户
     """
-    logger.info(f"\(^o^)/~ get_current_user: {token}")
+    logger.debug("Decoding user access token")
     
     try:
         payload = jwt.decode(

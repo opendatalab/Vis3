@@ -143,7 +143,7 @@ async def update_keychain(
     # 如果启用了鉴权，检查权限
     if current_user and keychain.created_by != current_user.id:
         raise AppEx(
-            code=ErrorCode.KEYCHAIN_20005_KEYCHAIN_NOT_OWNER,
+            code=ErrorCode.KEYCHAIN_20005_KEYCHAIN_UPDATE_DENIED,
             status_code=status.HTTP_403_FORBIDDEN,
         )
     
@@ -170,7 +170,7 @@ async def delete_keychain(
     # 如果启用了鉴权，检查权限
     if current_user and keychain.created_by != current_user.id:
         raise AppEx(
-            code=ErrorCode.KEYCHAIN_20004_KEYCHAIN_NOT_OWNER,
+            code=ErrorCode.KEYCHAIN_20004_KEYCHAIN_DELETE_DENIED,
             status_code=status.HTTP_403_FORBIDDEN,
         )
     

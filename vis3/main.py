@@ -14,6 +14,7 @@ from vis3.internal.api import initial_routers
 from vis3.internal.common.db import init_tables
 from vis3.internal.common.exceptions import add_exception_handler
 from vis3.internal.config import settings
+from vis3.internal.middleware.tracing import TracingMiddleWare
 from vis3.version import version
 
 app = FastAPI(
@@ -55,6 +56,7 @@ class NoCacheStaticFiles(StaticFiles):
 init_tables()
 run_db_migrations()
 initial_routers(app)
+app.add_middleware(TracingMiddleWare)
 add_exception_handler(app)
 
 app.mount("", NoCacheStaticFiles(packages=["vis3.internal"], html=True))

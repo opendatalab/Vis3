@@ -168,6 +168,10 @@ async def get_bucket(path: str, db: Session, id: int | None = None) -> Tuple[Buc
         endpoint_url=bucket.endpoint,
         access_key_id=bucket.keychain.access_key_id,
         secret_access_key=bucket.keychain.decrypted_secret_key_id,
+        region_name=bucket.region or "us-east-1",
+        addressing_style=bucket.addressing_style or "auto",
+        signature_version=bucket.signature_version or "s3v4",
+        verify_ssl=True if bucket.verify_ssl is None else bool(bucket.verify_ssl),
     )
 
     return bucket, s3_reader
@@ -389,6 +393,10 @@ async def get_buckets_or_objects(
                 path=bucket.path,
                 owner=bucket.user.username if bucket.user else None,
                 endpoint=bucket.endpoint,
+                addressing_style=bucket.addressing_style,
+                region=bucket.region,
+                signature_version=bucket.signature_version,
+                verify_ssl=bucket.verify_ssl,
                 last_modified=None,
                 size=None,
             )

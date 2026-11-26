@@ -46,11 +46,15 @@ export default function KeyChainForm({
   }
 
   const handleSaveCreate = (values: KeychainCreateBody) => {
-    createKeychain(values).then(() => {
-      queryClient.invalidateQueries({ queryKey: ['my_keychain'] })
-      handleClose()
-      message.success(t('keychain.added'))
-    })
+    createKeychain(values)
+      .then(() => {
+        queryClient.invalidateQueries({ queryKey: ['my_keychain'] })
+        handleClose()
+        message.success(t('keychain.added'))
+      })
+      .catch((error) => {
+        console.error('Failed to create keychain', error)
+      })
   }
 
   const handleOk = () => {

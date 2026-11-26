@@ -14,7 +14,7 @@ import BlockPreviewer from '../components/BlockPreviewer'
 import BucketHeader from '../components/BlockPreviewer/Header'
 import type { BucketEditModalRef } from '../components/BucketEditModal'
 import BucketEditModal from '../components/BucketEditModal'
-import BucketManager, { endpointValidator, pathValidator, useKeyOptions } from '../components/BucketManager'
+import BucketManager, { endpointValidator, pathValidator, S3AdvancedFields, useKeyOptions } from '../components/BucketManager'
 import DirectoryTree, { DirectoryTreeProvider } from '../components/DirectoryTree'
 
 export const Route = createFileRoute('/')({
@@ -29,9 +29,14 @@ function Empty({ className }: { className?: string }) {
   const queryClient = useQueryClient()
 
   const onFinish = async (values: any) => {
-    await createBucketMutation(values)
-    queryClient.invalidateQueries({ queryKey: ['bucket'] })
-    form.resetFields()
+    try {
+      await createBucketMutation(values)
+      queryClient.invalidateQueries({ queryKey: ['bucket'] })
+      form.resetFields()
+    }
+    catch (error) {
+      console.error('Failed to create bucket', error)
+    }
   }
 
   const supportedCloudPlatforms = [
@@ -147,6 +152,7 @@ function Empty({ className }: { className?: string }) {
           >
             <Input placeholder={t('bucketForm.pathPlaceholder')} />
           </Form.Item>
+          <S3AdvancedFields form={form} />
           <Form.Item>
             <Button block type="primary" size="large" loading={isPending} onClick={form.submit}>{t('bucketForm.add')}</Button>
           </Form.Item>

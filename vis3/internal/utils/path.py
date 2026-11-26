@@ -7,6 +7,62 @@ from vis3.internal.common.exceptions import AppEx, ErrorCode
 
 __re_s3_path = re.compile("^s3a?://([^/]+)(?:/(.*))?$")
 
+
+def normalize_endpoint(endpoint: str | None) -> str:
+    """规范化并校验 S3 Endpoint URL"""
+    if endpoint is None:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30009_INVALID_ENDPOINT,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Endpoint cannot be empty",
+            suggestion="Please provide a valid HTTP/HTTPS endpoint URL, e.g. http://10.0.0.1:9000",
+        )
+
+    cleaned = urllib.parse.unquote(str(endpoint)).strip()
+    if not cleaned:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30009_INVALID_ENDPOINT,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Endpoint cannot be empty",
+            suggestion="Please provide a valid HTTP/HTTPS endpoint URL, e.g. http://10.0.0.1:9000",
+        )
+
+    if "://" not in cleaned:
+        cleaned = f"http://{cleaned}"
+
+    try:
+        parsed = urllib.parse.urlparse(cleaned)
+        port = parsed.port
+    except ValueError as exc:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30009_INVALID_ENDPOINT,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Malformed endpoint URL '{cleaned}': {exc}",
+            suggestion="Check endpoint format, e.g. http(s)://host[:port]",
+        ) from exc
+
+    if parsed.scheme.lower() not in ("http", "https") or not parsed.hostname:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30009_INVALID_ENDPOINT,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid endpoint URL '{cleaned}': scheme must be http/https and hostname is required",
+            suggestion="Check endpoint format, e.g. http(s)://host[:port]",
+        )
+
+    if port is not None and not (1 <= port <= 65535):
+        raise AppEx(
+            code=ErrorCode.BUCKET_30009_INVALID_ENDPOINT,
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid endpoint port '{port}'",
+            suggestion="Port must be between 1 and 65535",
+        )
+
+    scheme = parsed.scheme.lower()
+    netloc = parsed.netloc
+    path = parsed.path.rstrip("/")
+    return f"{scheme}://{netloc}{path}" if path else f"{scheme}://{netloc}"
+
+
 def accurate_s3_path(path: str | None) -> str | None:
     if path and path.strip() != "" and path != "/":
         path = urllib.parse.unquote(path) if not is_s3_path(path) else path

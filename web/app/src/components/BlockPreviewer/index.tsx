@@ -6,14 +6,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditOutlined, KeyOutlined } from '@ant-design/icons'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate } from '@tanstack/react-router'
-import { Button, List, message, Modal, Popconfirm, Tag } from 'antd'
+import { Button, List, message, Modal, Popconfirm, Result, Tag } from 'antd'
 import { correctPath } from './Header'
 
 import BucketIcon from '@/assets/bucket.svg?react'
 import DeleteSvg from '@/assets/delete.svg?react'
 import { BucketDataWithFullPath, deleteBucket, digBucket, filterBucket } from '../../api/bucket'
 import { ROOT_BLOCK_ID } from '../../constant'
-import { download, gid } from '../../utils'
+import { download, gid, handleBucketError } from '../../utils'
+import { formatApiError } from '../../utils/request'
 import BucketEditModal, { BucketEditModalRef } from '../BucketEditModal'
 
 import _ from 'lodash'
@@ -84,7 +85,14 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
     select: (data: any) => data.data as BucketDataWithFullPath[],
   }), [bucketQueryKey])
 
-  const { data, isLoading } = useQuery(bucketQueryOptions)
+  const { data, isLoading, isError, error, refetch } = useQuery(bucketQueryOptions)
+  const { t } = useTranslation()
+
+  useEffect(() => {
+    if (isError && error && path) {
+      handleBucketError(error as any, path)
+    }
+  }, [isError, error, path])
 
   const handlePathCorrection = useCallback((path: string) => {
     if (id === ROOT_BLOCK_ID) {
@@ -138,6 +146,34 @@ function BucketBlockWrapper({ block, onClose, pageSize: propPageSize = 50, pageN
 
   const isRootBlock = id === ROOT_BLOCK_ID
   const pathType = getPathType(path)
+
+  if (isError) {
+    const formatted = formatApiError(error)
+    return (
+      <div
+        className="h-full flex items-center justify-center bg-white rounded-md border border-gray-200 p-6"
+        style={props.style}
+      >
+        <Result
+          status="error"
+          title={t('server.loadFailed')}
+          subTitle={formatted.message}
+          extra={(
+            <div className="flex gap-2 justify-center">
+              <Button type="primary" onClick={() => refetch()}>
+                {t('server.retry')}
+              </Button>
+              {!isRootBlock && (
+                <Button onClick={onClose}>
+                  {t('renderer.close')}
+                </Button>
+              )}
+            </div>
+          )}
+        />
+      </div>
+    )
+  }
 
   return (
     <BucketBlock

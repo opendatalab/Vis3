@@ -1,20 +1,39 @@
+import time
+import uuid
+from contextvars import ContextVar
+
 from loguru import logger
-from starlette.requests import Request
-from starlette.concurrency import iterate_in_threadpool
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+request_id_ctx: ContextVar[str] = ContextVar("request_id", default="")
+
+
+def get_request_id() -> str:
+    """获取当前请求的 request_id"""
+    return request_id_ctx.get()
 
 
 class TracingMiddleWare(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        scope = request.scope
-        logger.info(f"{scope['path']} start")
+        request_id = request.headers.get("X-Request-Id") or f"req_{uuid.uuid4().hex[:12]}"
+        token = request_id_ctx.set(request_id)
+        request.state.request_id = request_id
 
-        response = await call_next(request)
+        start = time.perf_counter()
+        method = request.method
+        path = request.url.path
 
-        # uncomments for logging response body
-        # response_body = [chunk async for chunk in response.body_iterator]
-        # response.body_iterator = iterate_in_threadpool(iter(response_body))
-        # logger.info(f"response_body={(b''.join(response_body)).decode()}")
+        try:
+            with logger.contextualize(request_id=request_id):
+                logger.debug(f"[{request_id}] {method} {path} start")
+                response = await call_next(request)
+                duration_ms = (time.perf_counter() - start) * 1000
+                response.headers["X-Request-Id"] = request_id
+                logger.debug(
+                    f"[{request_id}] {method} {path} -> {response.status_code} ({duration_ms:.1f} ms)"
+                )
+                return response
+        finally:
+            request_id_ctx.reset(token)
 
-        logger.info(f"{scope['path']} end")
-        return response

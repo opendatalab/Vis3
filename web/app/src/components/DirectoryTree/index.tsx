@@ -137,33 +137,39 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
 
     const fragments = extractPath(path).slice(0, -1)
     setLoading(true)
-    const responses = await Promise.all([
-      queryClient.fetchQuery({ queryKey: getBucketQueryKey(), staleTime: 10000, queryFn: () => digBucket({ path: '/' }) }),
-      ...fragments.map(fragment => 
-        queryClient.fetchQuery({ queryKey: getBucketQueryKey(fragment.fullPath), staleTime: 10000, queryFn: () => digBucket({ path: fragment.fullPath, id: search.id ? Number(search.id) : undefined }) })
-      )
-    ])
-    .finally(() => {
-      setLoading(false)
-    })
-    const _treeDataMap = responses.reduce((acc: Record<string, TreeMapItem>, item, index) => {
-      if (index === 0) {
-        acc['s3://'] = {
-          total: item.total ?? 0,
-          data: item.data as BucketData[],
-          pageNo: item.page_no ?? 1,
+    try {
+      const responses = await Promise.all([
+        queryClient.fetchQuery({ queryKey: getBucketQueryKey(), staleTime: 10000, queryFn: () => digBucket({ path: '/' }) }),
+        ...fragments.map(fragment => 
+          queryClient.fetchQuery({ queryKey: getBucketQueryKey(fragment.fullPath), staleTime: 10000, queryFn: () => digBucket({ path: fragment.fullPath, id: search.id ? Number(search.id) : undefined }) })
+        )
+      ])
+      const _treeDataMap = responses.reduce((acc: Record<string, TreeMapItem>, item, index) => {
+        if (index === 0) {
+          acc['s3://'] = {
+            total: item.total ?? 0,
+            data: item.data as BucketData[],
+            pageNo: item.page_no ?? 1,
+          }
+        } else if (item.data?.length) {
+          acc[`${item.data[0].id}-${fragments[index - 1].fullPath}`] = {
+            total: item.total ?? 0,
+            data: item.data as BucketData[],
+            pageNo: item.page_no ?? 1,
+          }
         }
-      } else {
-        acc[`${item.data[0].id}-${fragments[index - 1].fullPath}`] = {
-          total: item.total ?? 0,
-          data: item.data as BucketData[],
-          pageNo: item.page_no ?? 1,
-        }
-      }
-      return acc
-    }, {})
+        return acc
+      }, {})
 
-    setTreeDataMap(_treeDataMap)
+      setTreeDataMap(_treeDataMap)
+    }
+    catch (error) {
+      openedRef.current = false
+      console.error('Failed to load directory tree', error)
+    }
+    finally {
+      setLoading(false)
+    }
   }, [path, search.id])
 
   useEffect(() => {
@@ -199,23 +205,28 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         fullPath = `${fullPath}/`
       }
 
-      const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(fullPath, undefined, bucketId), staleTime: 10000, queryFn: () => digBucket({ path: fullPath, id: bucketId }) })
+      try {
+        const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(fullPath, undefined, bucketId), staleTime: 10000, queryFn: () => digBucket({ path: fullPath, id: bucketId }) })
 
-      setTreeDataMap((pre) => {
-        const key = `${bucketId}-${fullPath}`
-        if (pre[key]) {
-          return pre
-        }
+        setTreeDataMap((pre) => {
+          const key = `${bucketId}-${fullPath}`
+          if (pre[key]) {
+            return pre
+          }
 
-        return {
-          ...pre,
-          [key]: {
-            total: response.total ?? 0,
-            data: response.data as BucketData[],
-            pageNo: response.page_no ?? 1,
-          },
-        }
-      })
+          return {
+            ...pre,
+            [key]: {
+              total: response.total ?? 0,
+              data: response.data as BucketData[],
+              pageNo: response.page_no ?? 1,
+            },
+          }
+        })
+      }
+      catch (error) {
+        console.error('Failed to expand directory node', error)
+      }
     },
     [path],
   )
@@ -230,21 +241,28 @@ export default function DirectoryTree({ treeRef, className }: DirectoryTreeProps
         const _key = `${raw.id}-${raw.path}`
         const pageNo = _.get(treeDataMap, [_key, 'pageNo'], 1) + 1
         setTreeLoading(true)
-        const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(raw.path, pageNo, raw.id), staleTime: 10000, queryFn: () => digBucket({ path: raw.path, id: raw.id, pageNo }) })
+        try {
+          const response = await queryClient.fetchQuery({ queryKey: getBucketQueryKey(raw.path, pageNo, raw.id), staleTime: 10000, queryFn: () => digBucket({ path: raw.path, id: raw.id, pageNo }) })
 
-        setTreeDataMap((pre) => {
-          const exist = pre[_key]
+          setTreeDataMap((pre) => {
+            const exist = pre[_key]
 
-          return {
-            ...pre,
-            [_key]: {
-              total: response.total + (exist?.total ?? 0),
-              data: [...exist?.data ?? [], ...response.data as BucketData[]],
-              pageNo,
-            },
-          }
-        })
-        setTreeLoading(false)
+            return {
+              ...pre,
+              [_key]: {
+                total: response.total + (exist?.total ?? 0),
+                data: [...exist?.data ?? [], ...response.data as BucketData[]],
+                pageNo,
+              },
+            }
+          })
+        }
+        catch (error) {
+          console.error('Failed to load more directory items', error)
+        }
+        finally {
+          setTreeLoading(false)
+        }
         return
       }
 

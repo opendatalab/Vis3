@@ -7,6 +7,7 @@ import type { LoginPayload } from '../../api/user'
 import { getUserInfo } from '../../api/user'
 import { useLogin } from '../../api/user.query'
 import LangSwitcher from '../../components/LangSwitcher'
+import { formatApiError } from '../../utils/request'
 
 export const Route = createFileRoute('/login/')({
   component: RouteComponent,
@@ -45,7 +46,7 @@ function RouteComponent() {
     }
     catch (error) {
       console.error('login failed', error)
-      message.error(t('account.usernameIncorrect'))
+      message.error(formatApiError(error).message)
     }
   }
 
