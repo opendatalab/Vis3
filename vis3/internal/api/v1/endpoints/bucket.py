@@ -57,6 +57,23 @@ async def read_bucket_request(
 
     return result
 
+def _to_bucket_response(
+    bucket, created_by: str | None = None
+) -> BucketResponse:
+    return BucketResponse(
+        id=bucket.id,
+        path=bucket.path,
+        endpoint=bucket.endpoint,
+        keychain_id=bucket.keychain_id,
+        created_by=created_by,
+        addressing_style=bucket.addressing_style,
+        region=bucket.region,
+        signature_version=bucket.signature_version,
+        verify_ssl=bucket.verify_ssl,
+        type=PathType.Bucket,
+    )
+
+
 @router.post("/bucket", summary="创建bucket")
 async def create_bucket_request(
     bucket_in: BucketCreateBody,
@@ -67,14 +84,7 @@ async def create_bucket_request(
     创建bucket
     """
     result = await bucket_crud.create(db, obj_in=bucket_in, created_by=current_user.id if current_user else None)
-    return BucketResponse(
-        id=result.id,
-        path=result.path,
-        endpoint=result.endpoint,
-        keychain_id=result.keychain_id,
-        created_by=current_user.username if current_user else None,
-        type=PathType.Bucket,
-    )
+    return _to_bucket_response(result, current_user.username if current_user else None)
 
 @router.post("/bucket/batch", summary="批量创建bucket")
 async def create_batch_bucket_request(
@@ -86,14 +96,8 @@ async def create_batch_bucket_request(
     批量创建bucket
     """
     result = await bucket_crud.create_batch(db, obj_in=bucket_in, created_by=current_user.id if current_user else None)
-    return [BucketResponse(
-        id=bucket.id,
-        path=bucket.path,
-        endpoint=bucket.endpoint,
-        keychain_id=bucket.keychain_id,
-        created_by=current_user.username if current_user else None,
-        type=PathType.Bucket,
-    ) for bucket in result]
+    username = current_user.username if current_user else None
+    return [_to_bucket_response(bucket, username) for bucket in result]
 
 @router.patch("/bucket/{id}", summary="更新bucket")
 async def update_bucket_request(
@@ -106,16 +110,16 @@ async def update_bucket_request(
     更新bucket
     """
     result = await bucket_crud.update(db, id=id, obj_in=BucketUpdatePayload(
-        **bucket_in.model_dump(),
+        **bucket_in.model_dump(exclude_unset=True),
         updated_by=current_user.id if current_user else None,
     ))
-    return BucketResponse(
-        id=result.id,
-        path=result.path,
-        endpoint=result.endpoint,
-        created_by=current_user.username if current_user else None,
-        type=PathType.Bucket,
-    )
+    if not result:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30006_CONFIG_FILE_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Bucket {id} not found",
+        )
+    return _to_bucket_response(result, current_user.username if current_user else None)
 
 @router.get("/bucket/filter", summary="过滤bucket")
 async def filter_bucket_request(
@@ -128,13 +132,7 @@ async def filter_bucket_request(
     buckets = await bucket_crud.list_by_path(db, path=f"s3://{bucket_name}/")
 
     return ListResponse[BucketResponse](
-        data=[BucketResponse(
-            id=bucket.id,
-            path=bucket.path,
-            type=PathType.Bucket,
-            endpoint=bucket.endpoint,
-            keychain_id=bucket.keychain_id,
-        ) for bucket in buckets],
+        data=[_to_bucket_response(bucket) for bucket in buckets],
         total=len(buckets)
     )
 
@@ -186,6 +184,10 @@ async def validate_path_accessibility_request(
     path: str,
     endpoint: str,
     keychain_id: int,
+    addressing_style: str = "auto",
+    region: str | None = None,
+    signature_version: str = "auto",
+    verify_ssl: bool = True,
     db: Session = Depends(get_db),
 ):
     """
@@ -194,18 +196,32 @@ async def validate_path_accessibility_request(
     path = accurate_s3_path(path)
     endpoint = urllib.parse.unquote(endpoint)
     keychain = await keychain_crud.get(db, id=keychain_id)
-    result = await validate_path_accessibility(path, endpoint, keychain.access_key_id, keychain.decrypted_secret_key_id)
+    if not keychain:
+        raise AppEx(
+            code=ErrorCode.KEYCHAIN_20001_KEYCHAIN_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Keychain {keychain_id} not found",
+        )
+    result = await validate_path_accessibility(
+        path,
+        endpoint,
+        keychain.access_key_id,
+        keychain.decrypted_secret_key_id,
+        addressing_style=addressing_style,
+        region=region,
+        signature_version=signature_version,
+        verify_ssl=verify_ssl,
+    )
 
     return OkResponse(data=result)
 
 
 @router.get("/bucket/ping", summary="验证endpoint是否可用")
-async def make_ping_request(url: str):
+async def make_ping_request(url: str, verify_ssl: bool = True):
     """
     验证endpoint是否可用
     """
-
-    result = ping_host(url)
+    result = await ping_host(url, verify_ssl=verify_ssl)
 
     return OkResponse(data=result)
 
@@ -226,14 +242,14 @@ async def get_bucket_request(
     else:
         result = await bucket_crud.get_by_user(db, id=id, user_id=current_user.id)
 
-    return BucketResponse(
-        id=result.id,
-        path=result.path,
-        endpoint=result.endpoint,
-        keychain_id=result.keychain_id,
-        created_by=current_user.username if current_user else None,
-        type=PathType.Bucket,
-    )
+    if not result:
+        raise AppEx(
+            code=ErrorCode.BUCKET_30006_CONFIG_FILE_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Bucket {id} not found",
+        )
+
+    return _to_bucket_response(result, current_user.username if current_user else None)
     
 
 @router.delete("/bucket/{id}", summary="删除bucket")

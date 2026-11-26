@@ -18,6 +18,10 @@ class BucketResponse(BaseModel):
     # bucket only
     endpoint: str | None = None
     created_by: str | None = None
+    addressing_style: str | None = None
+    region: str | None = None
+    signature_version: str | None = None
+    verify_ssl: bool | None = None
     # file only
     mimetype: str | None = None
     size: int | None = None

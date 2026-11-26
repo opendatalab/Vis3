@@ -7,6 +7,7 @@ import type { RegisterPayload } from '../../api/user'
 import { getUserInfo } from '../../api/user'
 import { useRegister } from '../../api/user.query'
 import LangSwitcher from '../../components/LangSwitcher'
+import { formatApiError } from '../../utils/request'
 
 export const Route = createFileRoute('/register/')({
   component: RouteComponent,
@@ -56,7 +57,7 @@ function RouteComponent() {
     }
     catch (error: any) {
       console.error('register failed', error)
-      message.error(error.response?.data?.detail || t('account.registerFailed'))
+      message.error(formatApiError(error).message || t('account.registerFailed'))
     }
   }
 

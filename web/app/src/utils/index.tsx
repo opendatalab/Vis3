@@ -1,6 +1,8 @@
 import { i18n } from "@vis3/kit"
 import { Button, Modal } from "antd"
 import { AxiosError } from "axios"
+import { getDownloadUrl } from "../api/bucket"
+import { formatApiError } from "./request"
 
 export function gid() {
   return Math.random().toString(36).substring(2, 15)
@@ -81,22 +83,17 @@ export function downloadFromUrl(url: string, name?: string) {
 
 export async function download(fullPath: string) {
   if (!fullPath.startsWith('s3://')) {
-    throw new Error('s3路径必须以s3://开头')
+    throw new Error(i18n.t('bucket.pathMustStartWithS3'))
   }
 
   const basename = fullPath.split('/').pop()!
 
   try {
-    const params = { path: fullPath } as any
-
-    const searchParams = new URLSearchParams(params)
-    const downloadUrl = `${window.__CONFIG__.BASE_URL ?? ''}/api/v1/bucket/download?${searchParams.toString()}`
-
-    const presignedUrl = await fetch(downloadUrl).then(res => res.json())
+    const presignedUrl = await getDownloadUrl({ path: fullPath })
     downloadFromUrl(presignedUrl, basename)
   }
   catch (error) {
-    throw new Error('下载失败')
+    throw new Error(formatApiError(error).message)
   }
 }
 

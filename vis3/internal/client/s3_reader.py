@@ -12,16 +12,17 @@ from typing import Any, AsyncIterator, Optional, Tuple, Union
 
 import boto3
 from botocore.client import Config
-from botocore.exceptions import ClientError, NoCredentialsError
-from fastapi import HTTPException, status
+from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
+from botocore.parsers import ResponseParserError
+from fastapi import status
 from fastapi.responses import StreamingResponse
 from loguru import logger
 
-from vis3.internal.common.exceptions import AppEx, ErrorCode
+from vis3.internal.common.exceptions import AppEx, ErrorCode, translate_s3_exception
 from vis3.internal.models.bucket import Bucket
 from vis3.internal.schema import JsonRow
 from vis3.internal.utils import json_dumps, timer
-from vis3.internal.utils.path import extract_bytes_range
+from vis3.internal.utils.path import extract_bytes_range, normalize_endpoint
 
 
 class FakeRedis:
@@ -169,9 +170,12 @@ class S3Reader:
         bucket: Bucket,
         access_key_id: str,
         secret_access_key: str,
-        region_name: str = "us-east-1",
+        region_name: str | None = "us-east-1",
         bucket_name: str | None = None,
         endpoint_url: str | None = None,
+        addressing_style: str = "auto",
+        signature_version: str = "s3v4",
+        verify_ssl: bool = True,
     ):
         self.bucket_name = bucket_name
         self.key = key
@@ -180,8 +184,11 @@ class S3Reader:
         self.key_without_query = key.split("?")[0]
         self.access_key_id = access_key_id
         self.secret_access_key = secret_access_key
-        self.region_name = region_name
+        self.region_name = (region_name or "").strip() or "us-east-1"
         self.endpoint_url = endpoint_url
+        self.addressing_style = (addressing_style or "auto").lower()
+        self.signature_version = (signature_version or "s3v4").lower()
+        self.verify_ssl = True if verify_ssl is None else bool(verify_ssl)
         self.is_compressed = self.key_without_query.endswith(".gz")
         self._header_info = None
         self._arrow_fs = None
@@ -191,7 +198,15 @@ class S3Reader:
         self._object_version_marker = None
 
         if self.access_key_id and self.secret_access_key:
-            self.client = S3Reader.get_client(self.access_key_id, self.secret_access_key, self.endpoint_url, self.region_name)
+            self.client = S3Reader.get_client(
+                self.access_key_id,
+                self.secret_access_key,
+                self.endpoint_url,
+                self.region_name,
+                addressing_style=self.addressing_style,
+                signature_version=self.signature_version,
+                verify_ssl=self.verify_ssl,
+            )
 
     @staticmethod
     async def _run_in_executor(func, *args, **kwargs):
@@ -226,40 +241,58 @@ class S3Reader:
         return range_header
     
     @staticmethod
-    def get_client(ak: str, sk: str, endpoint: str, region_name: str):
+    def get_client(
+        ak: str,
+        sk: str,
+        endpoint: str | None,
+        region_name: str | None = "us-east-1",
+        addressing_style: str = "auto",
+        signature_version: str = "s3v4",
+        verify_ssl: bool = True,
+        connect_timeout: int = 10,
+        read_timeout: int = 60,
+        max_attempts: int = 3,
+    ):
+        normalized_endpoint = normalize_endpoint(endpoint) if endpoint else None
+        style = (addressing_style or "auto").lower()
+        if style not in ("auto", "virtual", "path"):
+            style = "auto"
+        if style == "auto" and normalized_endpoint:
+            from vis3.internal.utils import is_ip_or_single_label_host
+
+            if is_ip_or_single_label_host(normalized_endpoint):
+                style = "path"
+
+        sig = (signature_version or "s3v4").lower()
+        if sig not in ("s3v4", "s3"):
+            sig = "s3v4"
+
+        effective_region = (region_name or "").strip() or "us-east-1"
+
         try:
             return boto3.client(
                 "s3",
                 aws_access_key_id=ak,
                 aws_secret_access_key=sk,
-                region_name=region_name,
-                endpoint_url=endpoint,
-                config=Config(s3={"addressing_style": "virtual"}, signature_version='s3v4')
+                region_name=effective_region,
+                endpoint_url=normalized_endpoint,
+                verify=True if verify_ssl is None else bool(verify_ssl),
+                config=Config(
+                    s3={"addressing_style": style},
+                    signature_version=sig,
+                    connect_timeout=connect_timeout,
+                    read_timeout=read_timeout,
+                    retries={"max_attempts": max_attempts, "mode": "standard"},
+                ),
             )
-        except Exception:
-            # TODO: 错误类型
-            return boto3.client(
-                "s3",
-                aws_access_key_id=ak,
-                aws_secret_access_key=sk,
-                endpoint_url=endpoint,
-                config=Config(s3={"addressing_style": "path"}, retries={"max_attempts": 8}, signature_version='s3v4'),
-            )
+        except (BotoCoreError, ValueError) as exc:
+            raise translate_s3_exception(
+                exc, endpoint=normalized_endpoint or ""
+            ) from exc
 
     async def head_object(self):
         """
         获取 S3 对象的头部信息。
-
-        Args:
-            key: S3 对象的键
-
-        Returns:
-            dict: 对象的头部信息
-
-        Raises:
-            ValueError: 当 bucket 不存在时
-            PermissionError: 当没有访问权限时
-            ClientError: 其他 S3 客户端错误
         """
         try:
             with timer("head_object"):
@@ -284,35 +317,13 @@ class S3Reader:
                 self._object_version_marker = new_marker
 
                 return header_info
-        except ClientError as e:
-            error_code = e.response["Error"]["Code"]
-            if error_code == "NoSuchBucket":
-                raise AppEx(
-                    code=ErrorCode.S3_CLIENT_40002_NO_SUCH_BUCKET,
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Bucket {self.bucket_name} does not exist",
-                )
-            elif error_code == "AccessDenied":
-                raise AppEx(
-                    code=ErrorCode.S3_CLIENT_40001_ACCESS_DENIED,
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Access denied to bucket {self.bucket_name}",
-                )
-            elif error_code == "404":
-                raise AppEx(
-                    code=ErrorCode.S3_CLIENT_40003_NOT_FOUND,
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Object {self.key_without_query} does not exist in bucket {self.bucket_name}",
-                )
-            else:
-                raise
-        except Exception as e:
-            if isinstance(e, NoCredentialsError):
-                raise AppEx(
-                    code=ErrorCode.S3_CLIENT_40001_ACCESS_DENIED,
-                    status_code=status.HTTP_403_FORBIDDEN,
-                )
-            raise
+        except (ClientError, BotoCoreError, ResponseParserError) as e:
+            raise translate_s3_exception(
+                e,
+                bucket=self.bucket_name or "",
+                key=self.key_without_query,
+                endpoint=self.endpoint_url or "",
+            ) from e
 
     async def _detect_mime_by_content(self) -> str:
         """
@@ -402,8 +413,9 @@ class S3Reader:
                 "Bucket": self.bucket_name,
                 "Prefix": self.key_without_query,
                 "MaxKeys": page_size,
-                "Delimiter": "/" if not recursive else None,
             }
+            if not recursive:
+                operation_parameters["Delimiter"] = "/"
             if marker:
                 operation_parameters["Marker"] = marker
 
@@ -411,18 +423,19 @@ class S3Reader:
                 result = await S3Reader._run_in_executor(
                     self.client.list_objects, **operation_parameters
                 )
-            except ClientError as e:
-                error_code = e.response["Error"]["Code"]
-                if error_code == "NoSuchBucket":
-                    raise ValueError(f"Bucket {self.bucket_name} does not exist")
-                elif error_code == "AccessDenied":
-                    raise PermissionError(f"Access denied to bucket {self.bucket_name}")
-                else:
-                    raise
+            except (ClientError, BotoCoreError, ResponseParserError) as e:
+                raise translate_s3_exception(
+                    e,
+                    bucket=self.bucket_name or "",
+                    key=self.key_without_query,
+                    endpoint=self.endpoint_url or "",
+                ) from e
 
             contents = result.get("Contents", [])
             common_prefixes = result.get("CommonPrefixes", [])
             next_marker = result.get("NextMarker")
+            if not next_marker and result.get("IsTruncated") and contents:
+                next_marker = contents[-1].get("Key")
 
             if current_page == page_no:
                 for content in contents:
@@ -490,11 +503,10 @@ class S3Reader:
                 Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range=self._get_range_header(start=start, length=length),
-                RequestPayer="requester",
             )
             stream = response["Body"]
-            # 读取 StreamingBody 的内容
-            content = await stream.read()
+            # 读取 StreamingBody 的内容（同步方法需在 executor 中执行）
+            content = await S3Reader._run_in_executor(stream.read)
             file_obj = io.BytesIO(content)
 
             def process_warc():
@@ -600,12 +612,21 @@ class S3Reader:
                 next=self._make_location(start + length, 0),
                 metadata={"content_length": result.get("content_length", 0)},
             )
+        except (ClientError, BotoCoreError, ResponseParserError) as e:
+            raise translate_s3_exception(
+                e,
+                bucket=self.bucket_name or "",
+                key=self.key_without_query,
+                endpoint=self.endpoint_url or "",
+            ) from e
+        except AppEx:
+            raise
         except Exception as e:
             raise AppEx(
-                code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+                code=ErrorCode.SERVER_60001_READ_ERROR,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error reading record: {str(e)}",
-            )
+                detail=f"Error reading WARC record: {str(e)}",
+            ) from e
 
     async def read_by_range(
         self, start_byte: int, end_byte: int | None = None
@@ -630,12 +651,19 @@ class S3Reader:
                 Bucket=self.bucket_name,
                 Key=self.key_without_query,
                 Range=f"bytes={start_byte}-{end_byte}"
-                if end_byte
+                if end_byte is not None
                 else f"bytes={start_byte}-",
-                RequestPayer="requester",
             )
 
-        response = await S3Reader._run_in_executor(get_object)
+        try:
+            response = await S3Reader._run_in_executor(get_object)
+        except (ClientError, BotoCoreError, ResponseParserError) as e:
+            raise translate_s3_exception(
+                e,
+                bucket=self.bucket_name or "",
+                key=self.key_without_query,
+                endpoint=self.endpoint_url or "",
+            ) from e
         stream = response["Body"]
         current_byte = start_byte
 
@@ -683,13 +711,14 @@ class S3Reader:
 
     async def get_object_owner(self):
         try:
+            owner = None
             async for _, details, _ in self.list_objects(limit=1):
                 owner = details.get("Owner")
 
             return f"{owner.get('DisplayName')}/{owner.get('ID')}" if owner else None
 
         except Exception as e:
-            print(e)
+            logger.warning(f"Failed to fetch object owner for {self.path}: {e}")
             return None
 
     def _make_location(self, start: int, offset: Optional[int] = None):
@@ -707,20 +736,31 @@ class S3Reader:
             fs_kwargs["secret_key"] = self.secret_access_key
 
         if self.endpoint_url:
-            parsed = urllib.parse.urlparse(self.endpoint_url)
+            normalized = normalize_endpoint(self.endpoint_url)
+            parsed = urllib.parse.urlparse(normalized)
             if parsed.scheme:
                 fs_kwargs["scheme"] = parsed.scheme
-            fs_kwargs["endpoint_override"] = self.endpoint_url
+            fs_kwargs["endpoint_override"] = normalized
+
+        if self.addressing_style == "virtual":
+            fs_kwargs["force_virtual_addressing"] = True
+        elif self.addressing_style == "path":
+            fs_kwargs["force_virtual_addressing"] = False
 
         # For preview reads we only need small slices, so reduce the readahead block to 1MB
         fs_kwargs["default_block_size"] = MAX_END
 
         with self._arrow_fs_lock:
             if self._arrow_fs is None:
-                try:
-                    self._arrow_fs = fs_module.S3FileSystem(**fs_kwargs)
-                except TypeError:
-                    fs_kwargs.pop("default_block_size", None)
+                for optional_key in (None, "default_block_size", "force_virtual_addressing"):
+                    if optional_key:
+                        fs_kwargs.pop(optional_key, None)
+                    try:
+                        self._arrow_fs = fs_module.S3FileSystem(**fs_kwargs)
+                        break
+                    except TypeError:
+                        continue
+                if self._arrow_fs is None:
                     self._arrow_fs = fs_module.S3FileSystem(**fs_kwargs)
 
         return self._arrow_fs
@@ -831,7 +871,8 @@ class S3Reader:
             from pyarrow import fs
             from pyarrow import parquet as pq
         except ModuleNotFoundError as exc:
-            raise HTTPException(
+            raise AppEx(
+                code=ErrorCode.SERVER_60001_READ_ERROR,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="pyarrow is required for reading parquet files",
             ) from exc
@@ -918,11 +959,21 @@ class S3Reader:
             rows, schema_fields, total_rows = await self._run_in_executor(
                 _load_parquet_preview
             )
+        except AppEx:
+            raise
+        except (ClientError, BotoCoreError, ResponseParserError) as exc:
+            raise translate_s3_exception(
+                exc,
+                bucket=self.bucket_name or "",
+                key=self.key_without_query,
+                endpoint=self.endpoint_url or "",
+            ) from exc
         except Exception as exc:
             logger.error(f"Failed to read parquet file {self.key_without_query}: {exc}")
-            raise HTTPException(
+            raise AppEx(
+                code=ErrorCode.SERVER_60001_READ_ERROR,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to read parquet file",
+                detail=f"Failed to read parquet file: {exc}",
             ) from exc
 
         preview_payload = {
@@ -1041,7 +1092,6 @@ class S3Reader:
                             Bucket=self.bucket_name,
                             Key=self.key_without_query,
                             Range=range_header,
-                            RequestPayer="requester",
                         )
 
                     response = await self._run_in_executor(get_object_sync)
@@ -1088,33 +1138,20 @@ class S3Reader:
                     # 更新下一次读取的起始位置
                     current_start += len(chunk)
                     
-                except ClientError as e:
-                    error_code = e.response["Error"]["Code"]
-                    if error_code == "NoSuchKey":
-                        raise AppEx(
-                            code=ErrorCode.S3_CLIENT_40003_NOT_FOUND,
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Object {self.key_without_query} not found",
-                        )
-                    elif error_code == "AccessDenied":
-                        raise AppEx(
-                            code=ErrorCode.S3_CLIENT_40001_ACCESS_DENIED,
-                            status_code=status.HTTP_403_FORBIDDEN,
-                            detail=f"Access denied to object {self.key_without_query}",
-                        )
-                    else:
-                        raise AppEx(
-                            code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
-                            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                            detail=f"S3 client error: {str(e)}",
-                        )
+                except (ClientError, BotoCoreError, ResponseParserError) as e:
+                    raise translate_s3_exception(
+                        e,
+                        bucket=self.bucket_name or "",
+                        key=self.key_without_query,
+                        endpoint=self.endpoint_url or "",
+                    ) from e
                 except Exception as e:
                     logger.error(f"Error reading S3 object: {e}")
                     raise AppEx(
-                        code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
+                        code=ErrorCode.SERVER_60001_READ_ERROR,
                         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                         detail=f"Failed to read object: {str(e)}",
-                    )
+                    ) from e
 
             # 如果达到最大限制还没找到换行符，返回所有内容
             try:
@@ -1218,9 +1255,22 @@ class S3Reader:
                 offset=original_length,
             )
 
+        except AppEx:
+            raise
+        except (ClientError, BotoCoreError, ResponseParserError) as e:
+            raise translate_s3_exception(
+                e,
+                bucket=self.bucket_name or "",
+                key=self.key_without_query,
+                endpoint=self.endpoint_url or "",
+            ) from e
         except Exception as e:
             logger.error(f"Error reading gz file: {e}")
-            return JsonRow(value="", loc=self._make_location(start, 0), offset=0)
+            raise AppEx(
+                code=ErrorCode.SERVER_60001_READ_ERROR,
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to read gzip file: {str(e)}",
+            ) from e
 
     async def get_s3_presigned_url(self, as_attachment=True) -> str:
         params = {"Bucket": self.bucket_name, "Key": self.key_without_query}
@@ -1236,12 +1286,19 @@ class S3Reader:
 
     async def download(self, as_attachment=True) -> StreamingResponse:
         try:
-            return await self.get_s3_presigned_url(as_attachment=as_attachment) 
+            return await self.get_s3_presigned_url(as_attachment=as_attachment)
+        except AppEx:
+            raise
+        except (ClientError, BotoCoreError, ResponseParserError) as e:
+            raise translate_s3_exception(
+                e,
+                bucket=self.bucket_name or "",
+                key=self.key_without_query,
+                endpoint=self.endpoint_url or "",
+            ) from e
         except Exception as e:
-            if isinstance(e, HTTPException):
-                raise
             raise AppEx(
                 code=ErrorCode.S3_CLIENT_40004_UNKNOWN_ERROR,
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to prepare download: {str(e)}",
-            )
+            ) from e

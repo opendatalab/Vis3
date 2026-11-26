@@ -1,7 +1,7 @@
 import Icon, { ExportOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { useQueryClient } from '@tanstack/react-query'
 import { i18n, useTranslation } from '@vis3/kit'
-import { Alert, Button, Divider, Form, FormInstance, Input, message, Select, Tooltip } from 'antd'
+import { Alert, Button, Collapse, Divider, Form, FormInstance, Input, message, Select, Switch, Tooltip } from 'antd'
 import type { FormProps } from 'antd/lib'
 import _ from 'lodash'
 import type { MutableRefObject } from 'react'
@@ -12,14 +12,32 @@ import DeleteSvg from '@/assets/delete.svg?react'
 import { filterBucket, isBucketAccessible, ping } from '../../api/bucket'
 import { useBatchCreateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
+import { formatApiError, formatDiagnosticError } from '../../utils/request'
 import PopPanel from '../PopPanel'
+
+function resolveFieldPath(field: string, target: string): (string | number)[] {
+  const replaced = field.replace(/([^.]+)$/, target)
+  return replaced.split('.').map(part => (/^\d+$/.test(part) ? Number(part) : part))
+}
 
 export function pathValidator(keyOptions: any, isCreate: boolean = true): any {
   return (form: FormInstance<any>) => ({
     validator: async (_meta: any, value: string) => {
+      const field = String(_meta.field || 'path')
+      const endpointPath = resolveFieldPath(field, 'endpoint')
+      const keychainPath = resolveFieldPath(field, 'keychain_id')
+      const stylePath = resolveFieldPath(field, 'addressing_style')
+      const regionPath = resolveFieldPath(field, 'region')
+      const sigPath = resolveFieldPath(field, 'signature_version')
+      const sslPath = resolveFieldPath(field, 'verify_ssl')
+
+      const endpoint = form.getFieldValue(endpointPath)
+      const keychain_id = form.getFieldValue(keychainPath)
+      const addressing_style = form.getFieldValue(stylePath) || 'auto'
+      const region = form.getFieldValue(regionPath) || undefined
+      const signature_version = form.getFieldValue(sigPath) || 'auto'
+      const verify_ssl = form.getFieldValue(sslPath) ?? true
       const values = form.getFieldsValue()
-      const endpoint = _.get(values, _meta.field.replace('path', 'endpoint'))
-      const keychain_id = _.get(values, _meta.field.replace('path', 'keychain_id'))
 
       if (!keychain_id) {
         return Promise.reject(new Error(i18n.t('bucketForm.keychainIdRequired')))
@@ -38,19 +56,22 @@ export function pathValidator(keyOptions: any, isCreate: boolean = true): any {
       }
 
       // 同一个keychain下，path不能重复
-      let duplicatedPaths = _.filter(values.buckets, (item: any) => item && item.path === value && item.keychain_id === keychain_id)
+      const duplicatedPaths = _.filter(values.buckets, (item: any) => item && item.path === value && item.keychain_id === keychain_id)
       if (duplicatedPaths.length > 1) {
         return Promise.reject(new Error(i18n.t('bucketForm.pathDuplicated')))
       }
 
-      
       if (isCreate) {
-        // 检查服务器有无重复路径
-        const existingBuckets = await filterBucket(value)
-        const duplicatedPath = _.find(existingBuckets.data, (item: any) => item.keychain_id === keychain_id)
+        try {
+          const existingBuckets = await filterBucket(value, { silentErrorToast: true })
+          const duplicatedPath = _.find(existingBuckets.data, (item: any) => item.keychain_id === keychain_id)
 
-        if (duplicatedPath) {
-          return Promise.reject(new Error(i18n.t('bucketForm.duplicatedPathExists')))
+          if (duplicatedPath) {
+            return Promise.reject(new Error(i18n.t('bucketForm.duplicatedPathExists')))
+          }
+        }
+        catch (error) {
+          return Promise.reject(new Error(formatApiError(error).message))
         }
       }
 
@@ -61,25 +82,51 @@ export function pathValidator(keyOptions: any, isCreate: boolean = true): any {
           return Promise.reject(new Error(i18n.t('bucketForm.keychainIdRequired')))
         }
 
-        const accessibleResult = await isBucketAccessible({
-          endpoint,
-          keychain_id: correctKey.value,
-          path: value,
-        })
+        const accessibleResp = await isBucketAccessible(
+          {
+            endpoint,
+            keychain_id: correctKey.value,
+            path: value,
+            addressing_style,
+            region,
+            signature_version,
+            verify_ssl,
+          },
+          { silentErrorToast: true },
+        )
 
-        if (_.get(accessibleResult, 'data')) {
+        const payload = _.get(accessibleResp, 'data')
+        if (typeof payload === 'boolean') {
+          return payload
+            ? Promise.resolve()
+            : Promise.reject(new Error(i18n.t('bucketForm.noPermission')))
+        }
+
+        if (payload?.accessible) {
+          const detected = payload.detected_config
+          if (detected) {
+            if (addressing_style === 'auto' && detected.addressing_style) {
+              form.setFieldValue(stylePath, detected.addressing_style)
+            }
+            if (!region && detected.region) {
+              form.setFieldValue(regionPath, detected.region)
+            }
+            if (signature_version === 'auto' && detected.signature_version) {
+              form.setFieldValue(sigPath, detected.signature_version)
+            }
+          }
           return Promise.resolve()
         }
-        else {
-          return Promise.reject(new Error(i18n.t('bucketForm.noPermission')))
-        }
+
+        return Promise.reject(new Error(formatDiagnosticError(payload, 'bucketForm.noPermission')))
       }
       catch (error) {
-        return Promise.reject(new Error(_.get(error, 'message')))
+        return Promise.reject(new Error(formatApiError(error).message))
       }
     },
   })
 }
+
 export const OPEN_BUCKET_MANAGER_EVENT = 'open-bucket-manager'
 
 export function openBucketManager(initialValues?: any) {
@@ -89,22 +136,127 @@ export function openBucketManager(initialValues?: any) {
   document.dispatchEvent(event)
 }
 
-export function endpointValidator() {
+export function endpointValidator(form?: Pick<FormInstance<any>, 'getFieldValue'>) {
   return {
     async validator(_meta: any, value: string) {
       if (!value) {
         return Promise.reject(new Error(i18n.t('bucketForm.endpointRequired')))
       }
 
-      const result = await ping(value)
+      const field = String(_meta.field || 'endpoint')
+      const sslPath = resolveFieldPath(field, 'verify_ssl')
+      const verifySsl = form?.getFieldValue ? (form.getFieldValue(sslPath) ?? true) : true
 
-      if (_.get(result, 'data', false)) {
-        return Promise.resolve(i18n.t('bucketForm.endpointAccessible'))
+      try {
+        const result = await ping(value, verifySsl, { silentErrorToast: true })
+        const payload = _.get(result, 'data')
+
+        if (typeof payload === 'boolean') {
+          return payload
+            ? Promise.resolve(i18n.t('bucketForm.endpointAccessible'))
+            : Promise.reject(new Error(i18n.t('bucketForm.endpointInvalid')))
+        }
+
+        if (payload?.reachable) {
+          return Promise.resolve(i18n.t('bucketForm.endpointAccessible'))
+        }
+
+        return Promise.reject(new Error(formatDiagnosticError(payload, 'bucketForm.endpointInvalid')))
       }
-
-      return Promise.reject(new Error(i18n.t('bucketForm.endpointInvalid')))
+      catch (error) {
+        return Promise.reject(new Error(formatApiError(error).message))
+      }
     },
   }
+}
+
+export function S3AdvancedFields({
+  form,
+  namePrefix = [],
+}: {
+  form: FormInstance<any>
+  namePrefix?: (string | number)[]
+}) {
+  const { t } = useTranslation()
+
+  const triggerRevalidate = () => {
+    const pathField = [...namePrefix, 'path']
+    const endpointField = [...namePrefix, 'endpoint']
+    if (form.getFieldValue(endpointField)) {
+      form.validateFields([endpointField]).catch(() => {})
+    }
+    if (form.getFieldValue(pathField)) {
+      form.validateFields([pathField]).catch(() => {})
+    }
+  }
+
+  return (
+    <Collapse
+      ghost
+      size="small"
+      className="!bg-gray-50 !rounded-md"
+      items={[
+        {
+          key: 'advanced',
+          label: <span className="text-xs text-gray-600">{t('bucketForm.advancedOptions')}</span>,
+          children: (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Form.Item
+                className="!mb-0"
+                label={t('bucketForm.addressingStyle')}
+                name={[...namePrefix, 'addressing_style']}
+                initialValue="auto"
+              >
+                <Select
+                  onChange={triggerRevalidate}
+                  options={[
+                    { label: t('bucketForm.addressingStyleAuto'), value: 'auto' },
+                    { label: t('bucketForm.addressingStylePath'), value: 'path' },
+                    { label: t('bucketForm.addressingStyleVirtual'), value: 'virtual' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item
+                className="!mb-0"
+                label={t('bucketForm.signatureVersion')}
+                name={[...namePrefix, 'signature_version']}
+                initialValue="auto"
+              >
+                <Select
+                  onChange={triggerRevalidate}
+                  options={[
+                    { label: t('bucketForm.signatureVersionAuto'), value: 'auto' },
+                    { label: t('bucketForm.signatureVersionV4'), value: 's3v4' },
+                    { label: t('bucketForm.signatureVersionV2'), value: 's3' },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item
+                className="!mb-0"
+                label={t('bucketForm.region')}
+                name={[...namePrefix, 'region']}
+              >
+                <Input
+                  placeholder={t('bucketForm.regionPlaceholder')}
+                  onBlur={triggerRevalidate}
+                />
+              </Form.Item>
+              <Form.Item
+                className="!mb-0"
+                label={t('bucketForm.verifySsl')}
+                tooltip={t('bucketForm.verifySslTooltip')}
+                name={[...namePrefix, 'verify_ssl']}
+                valuePropName="checked"
+                initialValue={true}
+              >
+                <Switch onChange={triggerRevalidate} />
+              </Form.Item>
+            </div>
+          ),
+        },
+      ]}
+    />
+  )
 }
 
 export interface BucketCreateFormProps {
@@ -190,10 +342,15 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
       message.error(t('bucketForm.atLeastOnePath'))
       return
     }
-    await batchCreateBucketMutation(values.buckets)
-    message.success(t('bucketForm.pathAdded'))
-    onClose()
-    queryClient.invalidateQueries({ queryKey: ['bucket'] })
+    try {
+      await batchCreateBucketMutation(values.buckets)
+      message.success(t('bucketForm.pathAdded'))
+      onClose()
+      queryClient.invalidateQueries({ queryKey: ['bucket'] })
+    }
+    catch (error) {
+      console.error('Failed to add bucket paths', error)
+    }
   }
 
   const handleSave = () => {
@@ -207,6 +364,9 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
           keychain_id: keyOptions[0]?.value,
           endpoint: '',
           path: '',
+          addressing_style: 'auto',
+          signature_version: 'auto',
+          verify_ssl: true,
         }
       ]
     }
@@ -321,11 +481,19 @@ export default function BucketManager({ modalRef, className, showTrigger = true 
                         >
                           <Input placeholder={t('bucketForm.pathPlaceholder')} />
                         </Form.Item>
+                        <S3AdvancedFields form={form} namePrefix={[index]} />
                         {fields.length > 1 && index < fields.length - 1 && <Divider />}
                       </div>
                     ))
                   }
-                  <Button className="mt-6" block icon={<PlusOutlined />} onClick={() => add()}>{t('bucketForm.add')}</Button>
+                  <Button
+                    className="mt-6"
+                    block
+                    icon={<PlusOutlined />}
+                    onClick={() => add({ addressing_style: 'auto', signature_version: 'auto', verify_ssl: true })}
+                  >
+                    {t('bucketForm.add')}
+                  </Button>
                 </>
               )}
             </Form.List>

@@ -6,7 +6,7 @@ import { useEffect, useImperativeHandle, useState } from 'react'
 
 import { useBucket, useUpdateBucket } from '../../api/bucket.query'
 import { useAllKeychains } from '../../api/keychain.query'
-import { endpointValidator, pathValidator } from '../BucketManager'
+import { endpointValidator, pathValidator, S3AdvancedFields } from '../BucketManager'
 
 export interface BucketEditModalRef {
   open: (id: number) => void
@@ -50,27 +50,32 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
   }
 
   const handleOk = async () => {
-    await form.validateFields()
-    const values = form.getFieldsValue()
-    const endpoint = _.get(values, 'endpoint')
-    const keychain_id = _.get(values, 'keychain_id')
-    const path = _.get(values, 'path')
-    const name = _.get(values, 'name')
+    try {
+      await form.validateFields()
+      const values = form.getFieldsValue()
 
-    await updateBucket({
-      id: id!,
-      body: {
-        endpoint,
-        keychain_id,
-        path,
-        name,
-      },
-    })
+      await updateBucket({
+        id: id!,
+        body: {
+          endpoint: _.get(values, 'endpoint'),
+          keychain_id: _.get(values, 'keychain_id'),
+          path: _.get(values, 'path'),
+          name: _.get(values, 'name'),
+          addressing_style: _.get(values, 'addressing_style'),
+          region: _.get(values, 'region'),
+          signature_version: _.get(values, 'signature_version'),
+          verify_ssl: _.get(values, 'verify_ssl'),
+        },
+      })
 
-    queryClient.invalidateQueries({ queryKey: ['bucket'] })
-    message.success(t('bucketUpdated'))
-    setIsOpen(false)
-    setId(null)
+      queryClient.invalidateQueries({ queryKey: ['bucket'] })
+      message.success(t('bucketUpdated'))
+      setIsOpen(false)
+      setId(null)
+    }
+    catch (error) {
+      console.error('Failed to update bucket', error)
+    }
   }
   return (
     <Modal title={t('editBucket')} open={isOpen} onCancel={handleCancel} onOk={handleOk} loading={isLoading}>
@@ -98,6 +103,7 @@ export default function BucketEditModal({ modalRef }: BucketEditModalProps) {
         <Form.Item label={t('bucketForm.keychainId')} name="keychain_id" rules={[{ required: true, message: t('bucketForm.keychainIdRequired') }]}>
           <Select options={keychainOptions} />
         </Form.Item>
+        <S3AdvancedFields form={form} />
       </Form>
     </Modal>
   )

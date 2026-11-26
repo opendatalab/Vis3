@@ -32,13 +32,10 @@ def get_db() -> Generator:
         db = SessionLocal()
         yield db
         db.commit()
-    except Exception as e:
-        logger.error(e)
+    except Exception:
         if db:
             db.rollback()
-
-        raise e
+        raise
     finally:
         if db:
-            db.close()
             db.close()

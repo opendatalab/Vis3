@@ -1,4 +1,5 @@
 import base64
+import ipaddress
 import json
 import os
 import re
@@ -12,13 +13,18 @@ from contextlib import contextmanager
 import httpx
 import orjson
 import pkg_resources
-from botocore.exceptions import ClientError
+from botocore.exceptions import (
+    BotoCoreError,
+    ClientError,
+    EndpointConnectionError,
+    SSLError,
+)
+from botocore.parsers import ResponseParserError
 from bs4 import BeautifulSoup
-from fastapi import status
 from loguru import logger
 
-from vis3.internal.common.exceptions import AppEx, ErrorCode
-from vis3.internal.utils.path import split_s3_path
+from vis3.internal.common.exceptions import AppEx, ErrorCode, translate_s3_exception
+from vis3.internal.utils.path import normalize_endpoint, split_s3_path
 
 
 @contextmanager
@@ -56,51 +62,253 @@ def should_not_read_as_raw(mimetype: str):
     return result
 
 
-def ping_host(url: str) -> bool:
-    url = urllib.parse.unquote(url)
-    
-    if not url.startswith("http") and not url.startswith("https"):
-        url = "http://" + url
+def is_ip_or_single_label_host(endpoint: str) -> bool:
+    """判断 Endpoint 主机名是否为 IP 或单段内网主机名（如 localhost）"""
+    try:
+        hostname = urllib.parse.urlparse(endpoint).hostname or ""
+    except ValueError:
+        return False
+    if not hostname:
+        return False
+    try:
+        ipaddress.ip_address(hostname)
+        return True
+    except ValueError:
+        return "." not in hostname
+
+
+def _diagnostic_from_app_ex(ex: AppEx) -> dict:
+    return {
+        "err_code": ex.code,
+        "error_key": ex.error_key,
+        "msg": ex.msg,
+        "detail": ex.detail,
+        "suggestion": ex.suggestion,
+    }
+
+
+async def ping_host(url: str, verify_ssl: bool = True) -> dict:
+    """异步检测 S3 Endpoint 连通性，返回结构化诊断结果而不抛出 500"""
+    try:
+        normalized = normalize_endpoint(url)
+    except AppEx as ex:
+        return {"reachable": False, **_diagnostic_from_app_ex(ex)}
 
     try:
-        response = httpx.get(url, timeout=5)
-        # 检查状态码是否在有效范围内
-        return response.status_code < 500
-    except httpx.RequestError:
-        return False
-    except Exception:
-        raise AppEx(
-            code=ErrorCode.PING_50000_ERROR,
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        async with httpx.AsyncClient(
+            timeout=5.0, verify=verify_ssl, follow_redirects=False
+        ) as client:
+            response = await client.get(normalized)
+
+        if response.status_code < 500 or response.status_code == 501:
+            return {"reachable": True, "status_code": response.status_code}
+
+        return {
+            "reachable": False,
+            "err_code": ErrorCode.S3_CLIENT_40005_ENDPOINT_UNREACHABLE.err_code,
+            "error_key": ErrorCode.S3_CLIENT_40005_ENDPOINT_UNREACHABLE.error_key,
+            "msg": ErrorCode.S3_CLIENT_40005_ENDPOINT_UNREACHABLE.default_msg,
+            "detail": f"Endpoint responded with HTTP {response.status_code}",
+            "suggestion": "Check whether the S3 gateway service at this endpoint is healthy.",
+        }
+    except httpx.TimeoutException as exc:
+        return {
+            "reachable": False,
+            "err_code": ErrorCode.S3_CLIENT_40007_TIMEOUT.err_code,
+            "error_key": ErrorCode.S3_CLIENT_40007_TIMEOUT.error_key,
+            "msg": ErrorCode.S3_CLIENT_40007_TIMEOUT.default_msg,
+            "detail": str(exc) or "Connection to endpoint timed out",
+            "suggestion": "Check network reachability, firewall rules, and endpoint port.",
+        }
+    except httpx.InvalidURL as exc:
+        return {
+            "reachable": False,
+            "err_code": ErrorCode.BUCKET_30009_INVALID_ENDPOINT.err_code,
+            "error_key": ErrorCode.BUCKET_30009_INVALID_ENDPOINT.error_key,
+            "msg": ErrorCode.BUCKET_30009_INVALID_ENDPOINT.default_msg,
+            "detail": str(exc),
+            "suggestion": "Check endpoint URL format.",
+        }
+    except httpx.RequestError as exc:
+        err_text = str(exc)
+        is_ssl = "ssl" in err_text.lower() or "certificate" in err_text.lower()
+        code = (
+            ErrorCode.S3_CLIENT_40006_SSL_ERROR
+            if is_ssl
+            else ErrorCode.S3_CLIENT_40005_ENDPOINT_UNREACHABLE
         )
-    
-async def validate_path_accessibility(path: str, endpoint: str, ak: str, sk: str):
+        suggestion = (
+            "SSL/TLS verification failed. For private or self-signed certificates, disable 'Verify SSL' in Advanced Options."
+            if is_ssl
+            else "Cannot reach endpoint. Check URL, DNS, port, and network connectivity."
+        )
+        return {
+            "reachable": False,
+            "err_code": code.err_code,
+            "error_key": code.error_key,
+            "msg": code.default_msg,
+            "detail": err_text,
+            "suggestion": suggestion,
+        }
+
+
+def _extract_region_hint(exc: ClientError) -> str | None:
+    response = exc.response or {}
+    err_info = response.get("Error", {}) or {}
+    headers = (response.get("ResponseMetadata", {}) or {}).get("HTTPHeaders", {}) or {}
+    region = err_info.get("Region") or headers.get("x-amz-bucket-region")
+    return str(region).strip() if region else None
+
+
+def _is_more_informative_s3_error(candidate: Exception, current: Exception | None) -> bool:
+    if current is None:
+        return True
+    # 真正连上 S3 网关并收到 ClientError 的信息价值高于域名/SSL 失败
+    if isinstance(candidate, ClientError) and not isinstance(current, ClientError):
+        return True
+    if isinstance(current, (EndpointConnectionError, SSLError)) and not isinstance(
+        candidate, (EndpointConnectionError, SSLError)
+    ):
+        return True
+    return False
+
+
+async def validate_path_accessibility(
+    path: str,
+    endpoint: str,
+    ak: str,
+    sk: str,
+    addressing_style: str = "auto",
+    region: str | None = None,
+    signature_version: str = "auto",
+    verify_ssl: bool = True,
+) -> dict:
+    """探测 S3 路径可访问性与兼容配置，返回结构化诊断对象"""
     from vis3.internal.client.s3_reader import S3Reader
 
-    is_endpoint_valid = ping_host(endpoint)
-
-    if not is_endpoint_valid:
-        return False
-
-    client = S3Reader.get_client(
-        ak=ak,
-        sk=sk,
-        endpoint=endpoint,
-        region_name=None,
-    )
-    bucket_name, prefix = split_s3_path(path)
-
-    def _list_objects():
-        return client.list_objects(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
-
     try:
-        res = await S3Reader._run_in_executor(_list_objects)
-        contents = res.get("Contents", [])
-        logger.info(contents)
-    except ClientError:
-        return False
+        normalized_endpoint = normalize_endpoint(endpoint)
+    except AppEx as ex:
+        return {"accessible": False, **_diagnostic_from_app_ex(ex)}
 
-    return True
+    bucket_name, prefix = split_s3_path(path)
+    if not bucket_name:
+        return {
+            "accessible": False,
+            **_diagnostic_from_app_ex(
+                AppEx(
+                    code=ErrorCode.BUCKET_30003_INVALID_PATH,
+                    detail="S3 path must include a valid bucket name, e.g. s3://my-bucket/",
+                )
+            ),
+        }
+
+    style = (addressing_style or "auto").lower()
+    if style in ("virtual", "path"):
+        style_candidates = [style]
+    else:
+        prefer_path = (
+            is_ip_or_single_label_host(normalized_endpoint)
+            or (normalized_endpoint.startswith("https://") and "." in bucket_name)
+        )
+        style_candidates = ["path", "virtual"] if prefer_path else ["virtual", "path"]
+
+    sig = (signature_version or "auto").lower()
+    sig_candidates = [sig] if sig in ("s3v4", "s3") else ["s3v4", "s3"]
+    base_region = (region or "").strip() or "us-east-1"
+
+    best_exc: Exception | None = None
+
+    async def _try_list(
+        test_style: str, test_region: str, test_sig: str
+    ) -> tuple[bool, Exception | None]:
+        client = S3Reader.get_client(
+            ak=ak,
+            sk=sk,
+            endpoint=normalized_endpoint,
+            region_name=test_region,
+            addressing_style=test_style,
+            signature_version=test_sig,
+            verify_ssl=verify_ssl,
+            connect_timeout=5,
+            read_timeout=15,
+            max_attempts=1,
+        )
+
+        def _list_objects():
+            return client.list_objects(Bucket=bucket_name, Prefix=prefix, MaxKeys=1)
+
+        try:
+            res = await S3Reader._run_in_executor(_list_objects)
+            logger.debug(f"S3 probe succeeded ({test_style}, {test_region}, {test_sig}): {len(res.get('Contents', []))} keys")
+            return True, None
+        except (ClientError, BotoCoreError, ResponseParserError, ValueError) as exc:
+            return False, exc
+
+    for test_style in style_candidates:
+        for sig_idx, test_sig in enumerate(sig_candidates):
+            ok, exc = await _try_list(test_style, base_region, test_sig)
+            if ok:
+                return {
+                    "accessible": True,
+                    "detected_config": {
+                        "addressing_style": test_style,
+                        "region": base_region,
+                        "signature_version": test_sig,
+                        "verify_ssl": verify_ssl,
+                    },
+                }
+
+            if exc is not None:
+                if _is_more_informative_s3_error(exc, best_exc):
+                    best_exc = exc
+
+                # 若 S3 返回明确的 Region 提示，立即使用该 Region 重试一次
+                if isinstance(exc, ClientError):
+                    hinted_region = _extract_region_hint(exc)
+                    if hinted_region and hinted_region != base_region:
+                        ok_region, exc_region = await _try_list(
+                            test_style, hinted_region, test_sig
+                        )
+                        if ok_region:
+                            return {
+                                "accessible": True,
+                                "detected_config": {
+                                    "addressing_style": test_style,
+                                    "region": hinted_region,
+                                    "signature_version": test_sig,
+                                    "verify_ssl": verify_ssl,
+                                },
+                            }
+                        if exc_region is not None and _is_more_informative_s3_error(
+                            exc_region, best_exc
+                        ):
+                            best_exc = exc_region
+
+                    err_code = str((exc.response or {}).get("Error", {}).get("Code", ""))
+                    # 仅在疑似签名版本不兼容时尝试降级到 s3 (V2)，避免无意义重试
+                    if (
+                        sig_idx == 0
+                        and len(sig_candidates) > 1
+                        and err_code
+                        in {
+                            "SignatureDoesNotMatch",
+                            "AuthorizationHeaderMalformed",
+                            "InvalidRequest",
+                            "NotImplemented",
+                        }
+                    ):
+                        continue
+
+            break
+
+    translated = translate_s3_exception(
+        best_exc or RuntimeError("S3 accessibility check failed"),
+        bucket=bucket_name,
+        key=prefix,
+        endpoint=normalized_endpoint,
+    )
+    return {"accessible": False, **_diagnostic_from_app_ex(translated)}
 
 
 def convert_mobi_stream_to_html(mobi_content: bytes) -> str:

@@ -1,7 +1,18 @@
 import type { AxiosRequestConfig } from 'axios'
 
 import { BaseBucketType } from '@vis3/kit'
+import type { ApiErrorResponse } from '../utils/request'
 import request from '../utils/request'
+
+export type S3AddressingStyle = 'auto' | 'virtual' | 'path'
+export type S3SignatureVersion = 'auto' | 's3v4' | 's3'
+
+export interface S3CompatOptions {
+  addressing_style?: S3AddressingStyle
+  region?: string
+  signature_version?: S3SignatureVersion
+  verify_ssl?: boolean
+}
 
 export interface BucketParams {
   path?: string
@@ -17,13 +28,18 @@ export interface BucketDataWithFullPath extends BucketData {
 export interface BucketData extends BaseBucketType {
   name: string
   id?: number
+  endpoint?: string
+  addressing_style?: S3AddressingStyle
+  region?: string
+  signature_version?: S3SignatureVersion
+  verify_ssl?: boolean
 
   keychain_name: string | null
   keychain_id: number | null
 }
 
-export interface BucketCreateBody {
-  name: string
+export interface BucketCreateBody extends S3CompatOptions {
+  name?: string
   path: string
   endpoint: string
   keychain_id: number
@@ -37,6 +53,16 @@ export interface BucketResponse {
   data: BucketData[]
   total: number
   page_no: number
+}
+
+export interface PingResult extends ApiErrorResponse {
+  reachable: boolean
+  status_code?: number
+}
+
+export interface AccessibleResult extends ApiErrorResponse {
+  accessible: boolean
+  detected_config?: S3CompatOptions
 }
 
 export async function digBucket({ pageNo, pageSize, path, id }: BucketParams = {}, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
@@ -77,11 +103,12 @@ export async function createBatchBucket(body: BatchBucketCreateBody[]): Promise<
   return request.post('/bucket/batch', body)
 }
 
-export async function filterBucket(path: string): Promise<BucketResponse> {
+export async function filterBucket(path: string, options?: AxiosRequestConfig<any>): Promise<BucketResponse> {
   return request.get('/bucket/filter', {
     params: {
       path,
     },
+    ...options,
   })
 }
 
@@ -95,7 +122,7 @@ export interface DownloadParams {
   as_attachment?: boolean
 }
 
-export interface HeaderParams {
+export interface HeaderParams extends S3CompatOptions {
   endpoint: string
   path: string
   keychain_id: number
@@ -107,17 +134,27 @@ export async function getDownloadUrl(params: DownloadParams): Promise<string> {
   })
 }
 
-export async function isBucketAccessible(params: HeaderParams): Promise<string> {
+export async function isBucketAccessible(
+  params: HeaderParams,
+  options?: AxiosRequestConfig<any>,
+): Promise<{ data: AccessibleResult | boolean }> {
   return request('/bucket/accessible', {
     params,
+    ...options,
   })
 }
 
-export async function ping(url: string): Promise<string> {
+export async function ping(
+  url: string,
+  verifySsl: boolean = true,
+  options?: AxiosRequestConfig<any>,
+): Promise<{ data: PingResult | boolean }> {
   return request('/bucket/ping', {
     params: {
       url,
+      verify_ssl: verifySsl,
     },
+    ...options,
   })
 }
 
